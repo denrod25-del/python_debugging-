@@ -18,6 +18,17 @@ const DEFAULT_MAX_TOKENS = 1024;
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 
+// Return the contract's error shape when the body isn't valid JSON, instead of
+// falling through to Express's default HTML 400.
+app.use((err, req, res, next) => {
+  if (err && err.type === "entity.parse.failed") {
+    const allow = (process.env.ALLOWED_ORIGIN || "").trim() || "*";
+    res.set("Access-Control-Allow-Origin", allow);
+    return res.status(400).json({ error: "Invalid JSON body." });
+  }
+  next(err);
+});
+
 function setCors(res) {
   const allow = (process.env.ALLOWED_ORIGIN || "").trim() || "*";
   res.set("Access-Control-Allow-Origin", allow);

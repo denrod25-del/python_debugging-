@@ -35,7 +35,7 @@ deploy, `scripts/99-status.sh` prints exactly what to paste:
 
 ## Layout
 
-```
+```text
 deploy.sh              orchestrator: runs all phases in order
 scripts/               phased deploy scripts (00 → 99); see CLAUDE.md
 pydojo-landing/        landing page      ← DEPLOYED

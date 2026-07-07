@@ -27,9 +27,17 @@ push_folder() {
       ok "  Initialized git in $folder"
     fi
 
-    # Ensure at least one user.name/email is set (Vercel git-push requires it).
-    git config user.name  >/dev/null 2>&1 || git config user.name  "$(gh api user --jq '.login')"
-    git config user.email >/dev/null 2>&1 || git config user.email "$(gh api user --jq '.email // empty' 2>/dev/null || echo "${GITHUB_USER}@users.noreply.github.com")"
+    # Ensure a git identity is set (Vercel git-push requires it). gh returns a
+    # null/empty email for accounts without a public email, so fall back to a
+    # noreply address whenever the resolved value is empty.
+    if ! git config user.name >/dev/null 2>&1; then
+      git config user.name "$(gh api user --jq '.login' 2>/dev/null || echo "$GITHUB_USER")"
+    fi
+    if ! git config user.email >/dev/null 2>&1; then
+      gh_email="$(gh api user --jq '.email // empty' 2>/dev/null || true)"
+      [ -n "$gh_email" ] || gh_email="${GITHUB_USER}@users.noreply.github.com"
+      git config user.email "$gh_email"
+    fi
 
     # Point origin at HTTPS URL (gh auth token handles the push).
     local remote_url="https://github.com/${slug}.git"
@@ -41,7 +49,8 @@ push_folder() {
 
     git add -A
     if ! git diff --cached --quiet 2>/dev/null || [[ -z "$(git rev-parse -q --verify HEAD 2>/dev/null || echo)" ]]; then
-      git commit -m "Deploy $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >/dev/null 2>&1 || true
+      git commit -m "Deploy $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >/dev/null 2>&1 \
+        || die "  Commit failed in $folder (check git user.name/user.email)"
       ok "  Committed changes"
     else
       ok "  Nothing to commit"

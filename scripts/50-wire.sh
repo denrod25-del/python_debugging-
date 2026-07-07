@@ -23,19 +23,19 @@ ok "  Rendered $out"
 
 # Commit + push the landing sub-repo if it was initialised in step 10.
 if [[ -d "$LANDING_REPO_NAME/.git" ]]; then
-  ( cd "$LANDING_REPO_NAME"
+  ( cd "$LANDING_REPO_NAME" || exit 1
     git add -A
     if git diff --cached --quiet 2>/dev/null; then
       ok "  Landing repo already up to date"
     else
-      git commit -m "Wire landing to deployed app URL" >/dev/null 2>&1 || true
+      git commit -m "Wire landing to deployed app URL" >/dev/null 2>&1 || exit 1
       if ! git push origin main >/dev/null 2>&1; then
         warn "  Normal push failed — trying --force-with-lease"
-        git push origin main --force-with-lease
+        git push origin main --force-with-lease || exit 1
       fi
       ok "  Pushed landing"
     fi
-  )
+  ) || die "Failed to commit/push $LANDING_REPO_NAME"
 else
   warn "  $LANDING_REPO_NAME has no .git — skipping push (run 10-github.sh to enable)"
 fi

@@ -340,9 +340,10 @@
 </div>
 
 <script>
-  // Point every "launch" link at the deployed dojo URL. The deploy's wire step
-  // (scripts/50-wire.sh) substitutes __APP_URL__ with the real app URL. You can
-  // still override at runtime by setting window.PYDOJO_URL before this script.
+  // Point every "launch" link at the deployed dojo URL. On deploy,
+  // scripts/50-wire.sh renders this file from index.template.html (replacing the
+  // launch-URL placeholder with the real app URL) and overwrites index.html
+  // entirely. Override at runtime by setting window.PYDOJO_URL before this script.
   (function(){
     const url = (window.PYDOJO_URL || '__APP_URL__');
     const ids = ['navLaunch','heroLaunch','finalLaunch','footLaunch'];

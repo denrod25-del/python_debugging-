@@ -59,7 +59,7 @@ state_set() {
 # Return the production URL of a Vercel project deployed from the given folder.
 vercel_prod_url() {
   local folder="$1"
-  ( cd "$folder" && vercel_cli inspect --scope "${VERCEL_SCOPE:-}" 2>/dev/null || true ) \
+  ( cd "$folder" && vercel_cli inspect 2>/dev/null || true ) \
     | grep -oE 'https://[a-zA-Z0-9.-]+' \
     | head -1
 }

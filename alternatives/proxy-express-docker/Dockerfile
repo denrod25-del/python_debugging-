@@ -9,6 +9,9 @@ RUN npm install --omit=dev
 
 COPY server.js ./
 
+# Drop root — the node:alpine image ships a non-root `node` user.
+USER node
+
 ENV PORT=8080
 EXPOSE 8080
 

@@ -6,7 +6,7 @@ drop-in replacements for hosts other than Vercel, kept here for reference.
 
 Each exposes the **same contract** as `pydojo-proxy`:
 
-```
+```text
 POST /api/ai   (or /  for the worker)
 { "prompt": "…", "system": "…" }   or   { "messages": [...] }
 → { "text": "…", "model": "…", "usage": {…} }

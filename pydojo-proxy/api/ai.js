@@ -90,6 +90,8 @@ export default async function handler(req) {
     body.system = payload.system;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000);
   let upstream;
   try {
     upstream = await fetch(ANTHROPIC_URL, {
@@ -100,9 +102,13 @@ export default async function handler(req) {
         "anthropic-version": ANTHROPIC_VERSION,
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
   } catch (e) {
-    return json({ error: "Failed to reach Anthropic API: " + (e?.message || e) }, 502);
+    const msg = e?.name === "AbortError" ? "Anthropic API request timed out." : "Failed to reach Anthropic API: " + (e?.message || e);
+    return json({ error: msg }, 502);
+  } finally {
+    clearTimeout(timeout);
   }
 
   const data = await upstream.json().catch(() => null);

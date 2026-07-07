@@ -69,7 +69,7 @@ Each script writes deployed URLs to `.deploy-state` (git-ignored), so later scri
 
 ## Handling failures
 
-- If a Vercel CLI command prompts interactively (team selection, project creation confirmation), respond with the appropriate answer. `VERCEL_SCOPE` in `.env` avoids team prompts.
+- If a Vercel CLI command prompts for **team/scope selection**, do not auto-answer it — the wrong account could receive the deploy. Ask the user which scope to use (or set `VERCEL_SCOPE` in `.env` up front to avoid the prompt entirely). For non-account prompts like project-creation confirmation, accept the default.
 - If `gh repo create` fails because the repo exists, that's fine — the script handles this and pushes to the existing repo.
 - If a Vercel deploy fails mid-flight, re-run just that phase. State from previous successful phases persists in `.deploy-state`.
 - If `.deploy-state` gets corrupted, delete it and re-run from `scripts/20-vercel-deploy.sh` — deploys will re-derive URLs.
@@ -98,7 +98,7 @@ Do **not**:
 
 ## Layout
 
-```
+```text
 CLAUDE.md              this file
 README.md              human-readable overview
 DEPLOY-VERCEL.md       human walkthrough (backup reference)
