@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Python Debug Dojo</title>
+<style>
+  :root {
+    --bg:#0e1117; --panel:#161b22; --panel2:#1c2330; --border:#2b3444;
+    --text:#e6edf3; --muted:#9aa7b6; --accent:#4fd1c5; --accent2:#63b3ed;
+    --good:#56d364; --bad:#f85149; --warn:#e3b341; --code:#0b0f16;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.5; }
+  header { display:flex; align-items:center; gap:1rem; padding:.8rem 1.2rem;
+    border-bottom:1px solid var(--border); background:var(--panel); position:sticky; top:0; z-index:5; flex-wrap:wrap; }
+  header h1 { font-size:1.1rem; margin:0; letter-spacing:.3px; }
+  header .logo { color:var(--accent); }
+  nav { display:flex; gap:.4rem; margin-left:auto; flex-wrap:wrap; }
+  nav button { background:transparent; color:var(--muted); border:1px solid transparent;
+    padding:.4rem .8rem; border-radius:8px; cursor:pointer; font-size:.9rem; }
+  nav button:hover { color:var(--text); }
+  nav button.active { color:var(--text); background:var(--panel2); border-color:var(--border); }
+  main { max-width:960px; margin:0 auto; padding:1.2rem; }
+  .view { display:none; }
+  .view.active { display:block; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:1rem 1.1rem; margin-bottom:1rem; }
+  .row { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; }
+  .grow { flex:1 1 auto; }
+  h2 { font-size:1.05rem; margin:.2rem 0 .6rem; }
+  h3 { font-size:.95rem; margin:.8rem 0 .4rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  p.desc { color:var(--muted); margin:.2rem 0 .6rem; }
+  .pill { font-size:.72rem; padding:.15rem .5rem; border-radius:999px; border:1px solid var(--border); color:var(--muted); }
+  .pill.err { color:var(--bad); border-color:#5a2b2b; }
+  button.btn { background:var(--accent); color:#04231f; border:none; padding:.5rem .9rem;
+    border-radius:8px; cursor:pointer; font-weight:600; font-size:.9rem; }
+  button.btn:hover { filter:brightness(1.08); }
+  button.btn.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+  button.btn.alt { background:var(--accent2); color:#062036; }
+  button.btn:disabled { opacity:.5; cursor:not-allowed; }
+  textarea, input[type=text] { width:100%; background:var(--code); color:var(--text); border:1px solid var(--border);
+    border-radius:8px; padding:.6rem .7rem; font-family:var(--mono); font-size:.86rem; }
+  textarea { min-height:190px; resize:vertical; white-space:pre; tab-size:4; }
+  pre { background:var(--code); border:1px solid var(--border); border-radius:8px; padding:.7rem .8rem;
+    overflow:auto; font-family:var(--mono); font-size:.84rem; margin:0; }
+  .out { min-height:2.2rem; white-space:pre-wrap; }
+  .out.good { border-color:#1f6f34; }
+  .out.bad { border-color:#5a2b2b; }
+  .muted { color:var(--muted); }
+  .good { color:var(--good); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.7rem; }
+  .stat { background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:.7rem .8rem; }
+  .stat .n { font-size:1.5rem; font-weight:700; }
+  .stat .l { font-size:.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  label.field { display:block; font-size:.85rem; margin:.6rem 0 .25rem; color:var(--muted); }
+  .hintbox { border-left:3px solid var(--accent2); }
+  .challenge-nav { display:flex; align-items:center; gap:.5rem; }
+  a { color:var(--accent2); }
+  footer { text-align:center; color:var(--muted); font-size:.8rem; padding:1.5rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="logo">◆</span> Python Debug Dojo</h1>
+  <nav>
+    <button data-view="practice" class="active">Practice</button>
+    <button data-view="stats">Stats</button>
+    <button data-view="about">About</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ─── Practice ─────────────────────────────────────────────── -->
+  <section id="practice" class="view active">
+    <div class="card">
+      <div class="row">
+        <div class="challenge-nav">
+          <button class="btn ghost" id="prevBtn">‹ Prev</button>
+          <span class="muted" id="progressLabel">1 / 6</span>
+          <button class="btn ghost" id="nextBtn">Next ›</button>
+        </div>
+        <span class="grow"></span>
+        <span class="pill" id="difficultyPill">easy</span>
+        <span class="pill err" id="errPill">IndexError</span>
+      </div>
+      <h2 id="challengeTitle">Challenge</h2>
+      <p class="desc" id="challengeDesc">…</p>
+      <h3>Buggy code</h3>
+      <textarea id="editor" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:.7rem">
+        <button class="btn" id="runBtn">▶ Run</button>
+        <button class="btn alt" id="checkBtn">✔ Check</button>
+        <button class="btn ghost" id="hintBtn">💡 Get AI hint</button>
+        <button class="btn ghost" id="resetBtn">↺ Reset code</button>
+        <button class="btn ghost" id="solutionBtn">Reveal solution</button>
+      </div>
+      <h3>Output</h3>
+      <pre class="out" id="output">Run the code to see its output.</pre>
+      <div id="hintWrap" style="display:none">
+        <h3>AI hint</h3>
+        <pre class="out hintbox" id="hint"></pre>
+      </div>
+    </div>
+    <p class="muted" style="font-size:.8rem">
+      Goal: fix the bug so <b>Check</b> passes (the program prints the expected output with no error).
+      Python runs in your browser via Pyodide, loaded on first Run.
+    </p>
+  </section>
+
+  <!-- ─── Stats ────────────────────────────────────────────────── -->
+  <section id="stats" class="view">
+    <div class="card">
+      <h2>Your progress</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="n" id="statSolved">0</div><div class="l">Solved</div></div>
+        <div class="stat"><div class="n" id="statTotal">6</div><div class="l">Total</div></div>
+        <div class="stat"><div class="n" id="statStreak">0</div><div class="l">Streak</div></div>
+        <div class="stat"><div class="n" id="statRuns">0</div><div class="l">Runs</div></div>
+      </div>
+      <div class="row" style="margin-top:.8rem">
+        <button class="btn ghost" id="resetProgress">Reset progress</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>AI endpoint</h2>
+      <p class="desc">
+        The dojo asks an AI for hints through your own proxy so your API key stays private.
+        Paste your deployed proxy URL below (it ends in <code>/api/ai</code>), Save, then Test connection.
+        This is stored only in this browser.
+      </p>
+      <label class="field" for="aiEndpoint">AI endpoint URL</label>
+      <input type="text" id="aiEndpoint" placeholder="https://pydojo-proxy.vercel.app/api/ai" autocomplete="off" />
+      <div class="row" style="margin-top:.7rem">
+        <button class="btn" id="saveEndpoint">Save</button>
+        <button class="btn alt" id="testEndpoint">Test connection</button>
+        <span id="endpointStatus" class="muted"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── About ────────────────────────────────────────────────── -->
+  <section id="about" class="view">
+    <div class="card">
+      <h2>About the Python Debug Dojo</h2>
+      <p>Small, focused Python bugs to diagnose and fix — <b>IndexError</b>, <b>TypeError</b>,
+        mutable default arguments, off-by-one logic, and more. Read the broken program, run it,
+        fix it, and Check your work. Stuck? Ask for an AI hint.</p>
+      <p class="muted">Static single-file app. Python executes locally in your browser via Pyodide.
+        AI hints are routed through a proxy you configure under <b>Stats → AI endpoint</b>.</p>
+    </div>
+  </section>
+</main>
+
+<footer>Python Debug Dojo — practice debugging, not memorising.</footer>
+
+<script>
+/* ─── Challenge data ───────────────────────────────────────────── */
+const CHALLENGES = [
+  {
+    id: "indexerror-loop",
+    title: "Off-by-one IndexError",
+    difficulty: "easy",
+    err: "IndexError",
+    desc: "This loop should print every item, but it crashes on the last iteration.",
+    buggy:
+`nums = [10, 20, 30]
+for i in range(len(nums) + 1):
+    print(nums[i])`,
+    solution:
+`nums = [10, 20, 30]
+for i in range(len(nums)):
+    print(nums[i])`,
+    expected: "10\n20\n30",
+  },
+  {
+    id: "typeerror-concat",
+    title: "TypeError: str + int",
+    difficulty: "easy",
+    err: "TypeError",
+    desc: "Build a label from a name and an age. It should print 'Ada is 36'.",
+    buggy:
+`name = "Ada"
+age = 36
+print(name + " is " + age)`,
+    solution:
+`name = "Ada"
+age = 36
+print(name + " is " + str(age))`,
+    expected: "Ada is 36",
+  },
+  {
+    id: "keyerror-get",
+    title: "KeyError on missing key",
+    difficulty: "easy",
+    err: "KeyError",
+    desc: "Look up a score; default to 0 when the player is unknown. Should print 0.",
+    buggy:
+`scores = {"ada": 10, "grace": 7}
+print(scores["linus"])`,
+    solution:
+`scores = {"ada": 10, "grace": 7}
+print(scores.get("linus", 0))`,
+    expected: "0",
+  },
+  {
+    id: "zerodivision",
+    title: "ZeroDivisionError",
+    difficulty: "medium",
+    err: "ZeroDivisionError",
+    desc: "Compute the average of a list. For an empty list it should print 0 instead of crashing.",
+    buggy:
+`def average(xs):
+    return sum(xs) / len(xs)
+
+print(average([]))`,
+    solution:
+`def average(xs):
+    if not xs:
+        return 0
+    return sum(xs) / len(xs)
+
+print(average([]))`,
+    expected: "0",
+  },
+  {
+    id: "factorial-base",
+    title: "Wrong recursion base case",
+    difficulty: "medium",
+    err: "RecursionError",
+    desc: "Recursive factorial. factorial(5) should be 120, but the base case is wrong.",
+    buggy:
+`def factorial(n):
+    if n == 100:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(5))`,
+    solution:
+`def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(5))`,
+    expected: "120",
+  },
+  {
+    id: "mutable-default",
+    title: "Mutable default argument",
+    difficulty: "hard",
+    err: "Logic bug",
+    desc: "add_item should start a fresh cart each call. Two separate carts must not share items. Expected: ['a'] then ['b'].",
+    buggy:
+`def add_item(item, cart=[]):
+    cart.append(item)
+    return cart
+
+print(add_item("a"))
+print(add_item("b"))`,
+    solution:
+`def add_item(item, cart=None):
+    if cart is None:
+        cart = []
+    cart.append(item)
+    return cart
+
+print(add_item("a"))
+print(add_item("b"))`,
+    expected: "['a']\n['b']",
+  },
+];
+
+/* ─── Storage (browser-local) ──────────────────────────────────── */
+const KEY_ENDPOINT = "pydojo.aiEndpoint";
+const KEY_PROGRESS = "pydojo.progress";
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : v; } catch { return def; } },
+  set(k, v)   { try { localStorage.setItem(k, v); } catch {} },
+  getJSON(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
+  setJSON(k, v)   { this.set(k, JSON.stringify(v)); },
+};
+
+let progress = store.getJSON(KEY_PROGRESS, { solved: {}, streak: 0, runs: 0, last: -1 });
+let idx = 0;
+let pyodide = null, pyodideLoading = null;
+
+/* ─── DOM helpers ──────────────────────────────────────────────── */
+const $ = (id) => document.getElementById(id);
+const editor = $("editor");
+
+/* ─── View switching ───────────────────────────────────────────── */
+document.querySelectorAll("nav button").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+    b.classList.add("active");
+    $(b.dataset.view).classList.add("active");
+    if (b.dataset.view === "stats") renderStats();
+  });
+});
+
+/* ─── Challenge rendering ──────────────────────────────────────── */
+function loadChallenge(i, keepCode) {
+  idx = (i + CHALLENGES.length) % CHALLENGES.length;
+  const c = CHALLENGES[idx];
+  $("challengeTitle").textContent = c.title;
+  $("challengeDesc").textContent = c.desc;
+  $("difficultyPill").textContent = c.difficulty;
+  $("errPill").textContent = c.err;
+  $("progressLabel").textContent = `${idx + 1} / ${CHALLENGES.length}`;
+  if (!keepCode) editor.value = c.buggy;
+  const solved = !!progress.solved[c.id];
+  $("output").textContent = solved ? "✔ Solved earlier. Feel free to re-run." : "Run the code to see its output.";
+  $("output").className = "out" + (solved ? " good" : "");
+  $("hintWrap").style.display = "none";
+  $("hint").textContent = "";
+}
+
+$("prevBtn").onclick = () => loadChallenge(idx - 1);
+$("nextBtn").onclick = () => loadChallenge(idx + 1);
+$("resetBtn").onclick = () => { editor.value = CHALLENGES[idx].buggy; $("output").textContent = "Code reset."; $("output").className = "out"; };
+$("solutionBtn").onclick = () => { editor.value = CHALLENGES[idx].solution; $("output").textContent = "Solution revealed — try to understand why it works, then Check."; $("output").className = "out"; };
+
+/* ─── Pyodide (lazy) ───────────────────────────────────────────── */
+async function ensurePyodide() {
+  if (pyodide) return pyodide;
+  if (pyodideLoading) return pyodideLoading;
+  $("output").textContent = "Loading Python runtime (first run only)…";
+  pyodideLoading = (async () => {
+    if (!window.loadPyodide) {
+      await new Promise((res, rej) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js";
+        s.onload = res; s.onerror = () => rej(new Error("Could not load Pyodide from CDN"));
+        document.head.appendChild(s);
+      });
+    }
+    pyodide = await window.loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/" });
+    return pyodide;
+  })();
+  return pyodideLoading;
+}
+
+async function runCode() {
+  const c = CHALLENGES[idx];
+  let py;
+  try {
+    py = await ensurePyodide();
+  } catch (e) {
+    $("output").textContent = "⚠ " + e.message + "\n(Pyodide needs internet access. You can still Reveal solution.)";
+    $("output").className = "out bad";
+    return null;
+  }
+  progress.runs++; store.setJSON(KEY_PROGRESS, progress);
+  const src = editor.value;
+  try {
+    py.runPython(`
+import sys, io
+_buf = io.StringIO()
+_old = sys.stdout
+sys.stdout = _buf
+`);
+    let runErr = null;
+    try {
+      py.runPython(src);
+    } catch (e) {
+      runErr = e;
+    }
+    const out = py.runPython("sys.stdout = _old\n_buf.getvalue()");
+    if (runErr) {
+      const msg = String(runErr.message || runErr).trim();
+      const lastLines = msg.split("\n").slice(-4).join("\n");
+      $("output").textContent = (out ? out + "\n" : "") + lastLines;
+      $("output").className = "out bad";
+      return { output: out, error: lastLines };
+    }
+    $("output").textContent = out.length ? out : "(no output)";
+    $("output").className = "out";
+    return { output: out, error: null };
+  } catch (e) {
+    $("output").textContent = "Runner error: " + (e.message || e);
+    $("output").className = "out bad";
+    return null;
+  }
+}
+
+$("runBtn").onclick = runCode;
+
+$("checkBtn").onclick = async () => {
+  const c = CHALLENGES[idx];
+  const res = await runCode();
+  if (!res) return;
+  const got = (res.output || "").replace(/\s+$/g, "");
+  const want = c.expected.replace(/\s+$/g, "");
+  if (!res.error && got === want) {
+    if (!progress.solved[c.id]) { progress.solved[c.id] = true; progress.streak++; }
+    progress.last = idx; store.setJSON(KEY_PROGRESS, progress);
+    $("output").textContent = (res.output || "") + "\n\n✔ Correct! Output matches the expected result.";
+    $("output").className = "out good";
+  } else {
+    $("output").textContent =
+      (res.error ? res.error + "\n\n" : (res.output || "") + "\n\n") +
+      "✗ Not yet. Expected:\n" + c.expected;
+    $("output").className = "out bad";
+  }
+};
+
+/* ─── AI hint ──────────────────────────────────────────────────── */
+$("hintBtn").onclick = async () => {
+  const endpoint = (store.get(KEY_ENDPOINT, "") || "").trim();
+  $("hintWrap").style.display = "block";
+  if (!endpoint) {
+    $("hint").textContent = "No AI endpoint configured. Go to Stats → AI endpoint, paste your proxy URL, Save, then try again.";
+    $("hint").className = "out hintbox bad";
+    return;
+  }
+  const c = CHALLENGES[idx];
+  $("hint").textContent = "Thinking…";
+  $("hint").className = "out hintbox";
+  const prompt =
+    `I'm solving a Python debugging exercise: "${c.title}".\n` +
+    `The expected program output is:\n${c.expected}\n\n` +
+    `Here is my current code:\n\`\`\`python\n${editor.value}\n\`\`\`\n\n` +
+    `Give me ONE concise hint about the bug. Do not paste the full corrected code.`;
+  try {
+    const r = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system: "You are a patient Python debugging tutor. Reply in 1-3 sentences.", prompt }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    $("hint").textContent = data.text || "(empty response)";
+  } catch (e) {
+    $("hint").textContent = "Hint failed: " + (e.message || e) + "\nCheck Stats → AI endpoint and Test connection.";
+    $("hint").className = "out hintbox bad";
+  }
+};
+
+/* ─── Stats + endpoint config ──────────────────────────────────── */
+function renderStats() {
+  $("statSolved").textContent = Object.keys(progress.solved).filter((k) => progress.solved[k]).length;
+  $("statTotal").textContent = CHALLENGES.length;
+  $("statStreak").textContent = progress.streak;
+  $("statRuns").textContent = progress.runs;
+  $("aiEndpoint").value = store.get(KEY_ENDPOINT, "");
+}
+
+$("saveEndpoint").onclick = () => {
+  const v = $("aiEndpoint").value.trim();
+  store.set(KEY_ENDPOINT, v);
+  const s = $("endpointStatus");
+  s.textContent = v ? "Saved." : "Cleared.";
+  s.className = "good";
+};
+
+$("testEndpoint").onclick = async () => {
+  const v = $("aiEndpoint").value.trim();
+  const s = $("endpointStatus");
+  if (!v) { s.textContent = "Enter a URL first."; s.className = "bad"; return; }
+  store.set(KEY_ENDPOINT, v);
+  s.textContent = "Testing…"; s.className = "muted";
+  try {
+    const r = await fetch(v, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: "Reply with the single word: pong" }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    s.textContent = "✔ Connected. Model replied: " + (data.text || "").slice(0, 40);
+    s.className = "good";
+  } catch (e) {
+    s.textContent = "✗ " + (e.message || e);
+    s.className = "bad";
+  }
+};
+
+$("resetProgress").onclick = () => {
+  if (!confirm("Reset all progress in this browser?")) return;
+  progress = { solved: {}, streak: 0, runs: 0, last: -1 };
+  store.setJSON(KEY_PROGRESS, progress);
+  renderStats();
+  loadChallenge(idx);
+};
+
+/* ─── Boot ─────────────────────────────────────────────────────── */
+loadChallenge(progress.last >= 0 ? progress.last : 0);
+renderStats();
+</script>
+</body>
+</html>

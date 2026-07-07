@@ -1,0 +1,7 @@
+{
+  "name": "pydojo-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI proxy for the Python Debug Dojo — Vercel Edge Function at /api/ai.",
+  "license": "MIT"
+}

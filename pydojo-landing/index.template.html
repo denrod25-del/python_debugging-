@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Python Debug Dojo — learn to debug real Python</title>
+<meta name="description" content="Diagnose and fix real Python bugs in your browser. IndexError, TypeError, mutable defaults, and more — with optional AI hints." />
+<style>
+  :root {
+    --bg:#0b0f16; --panel:#121826; --border:#232c3d; --text:#e6edf3;
+    --muted:#9aa7b6; --accent:#4fd1c5; --accent2:#63b3ed; --code:#0a0e15;
+    --sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:
+      radial-gradient(1200px 600px at 50% -10%, #16324a33, transparent),
+      var(--bg); color:var(--text); font-family:var(--sans); line-height:1.6; }
+  .wrap { max-width:880px; margin:0 auto; padding:1.2rem; }
+  header { display:flex; align-items:center; gap:.6rem; padding-top:.4rem; }
+  header .logo { color:var(--accent); font-size:1.3rem; }
+  header b { font-size:1.05rem; letter-spacing:.3px; }
+  header nav { margin-left:auto; }
+  header nav a { color:var(--muted); text-decoration:none; font-size:.9rem; }
+  header nav a:hover { color:var(--text); }
+  .hero { text-align:center; padding:3.4rem 0 2.4rem; }
+  .hero h1 { font-size:2.4rem; line-height:1.15; margin:.2rem 0 .6rem; }
+  .hero h1 .grad { background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p { color:var(--muted); font-size:1.15rem; max-width:620px; margin:0 auto 1.6rem; }
+  .cta { display:inline-flex; gap:.7rem; flex-wrap:wrap; justify-content:center; }
+  .btn { display:inline-block; padding:.75rem 1.4rem; border-radius:10px; font-weight:700;
+    text-decoration:none; font-size:1rem; }
+  .btn.primary { background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#04231f; }
+  .btn.primary:hover { filter:brightness(1.07); }
+  .btn.ghost { border:1px solid var(--border); color:var(--text); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; margin:2.4rem 0; }
+  .feat { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:1.1rem; }
+  .feat h3 { margin:.1rem 0 .3rem; font-size:1rem; }
+  .feat p { color:var(--muted); margin:0; font-size:.92rem; }
+  .feat .ico { font-size:1.4rem; }
+  .sample { background:var(--code); border:1px solid var(--border); border-radius:12px;
+    padding:1rem 1.1rem; font-family:var(--mono); font-size:.85rem; overflow:auto; margin:2rem 0; }
+  .sample .c { color:#f85149; } .sample .g { color:#56d364; } .sample .m { color:var(--muted); }
+  footer { text-align:center; color:var(--muted); font-size:.85rem; padding:2.4rem 0 1.4rem; border-top:1px solid var(--border); margin-top:2.4rem; }
+  footer a { color:var(--accent2); }
+  @media (max-width:560px){ .hero h1{font-size:1.9rem;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo">◆</span><b>Python Debug Dojo</b>
+    <nav><a href="__APP_URL__">Open the app →</a></nav>
+  </header>
+
+  <section class="hero">
+    <h1>Get good at <span class="grad">debugging Python</span>.</h1>
+    <p>Real bugs, one at a time. Read the broken program, run it in your browser,
+       fix it, and check your work. Stuck? Ask for an AI hint.</p>
+    <div class="cta">
+      <a class="btn primary" href="__APP_URL__">Start debugging</a>
+      <a class="btn ghost" href="#how">How it works</a>
+    </div>
+  </section>
+
+  <div class="sample">
+<span class="m"># The dojo hands you code like this…</span>
+nums = [10, 20, 30]
+for i in range(len(nums) + 1):
+    print(nums[i])        <span class="c"># IndexError: list index out of range</span>
+
+<span class="m"># …you fix it, and Check turns green:</span>
+for i in range(len(nums)):
+    print(nums[i])        <span class="g"># ✓ 10 / 20 / 30</span>
+  </div>
+
+  <section id="how" class="grid">
+    <div class="feat"><div class="ico">🐍</div><h3>Runs in your browser</h3>
+      <p>Python executes locally via Pyodide — nothing to install.</p></div>
+    <div class="feat"><div class="ico">🎯</div><h3>Focused bugs</h3>
+      <p>IndexError, TypeError, mutable defaults, bad base cases, and more.</p></div>
+    <div class="feat"><div class="ico">💡</div><h3>Optional AI hints</h3>
+      <p>Hints route through your own proxy, so your API key stays private.</p></div>
+    <div class="feat"><div class="ico">📈</div><h3>Track progress</h3>
+      <p>Solved count and streaks are saved right in your browser.</p></div>
+  </section>
+
+  <section class="hero" style="padding:1.4rem 0 2.4rem">
+    <a class="btn primary" href="__APP_URL__">Enter the dojo</a>
+  </section>
+
+  <footer>
+    Python Debug Dojo · <a href="__APP_URL__">app</a> ·
+    AI proxy at <code>__PROXY_URL__/api/ai</code><br />
+    Practice debugging, not memorising.
+  </footer>
+</div>
+</body>
+</html>
