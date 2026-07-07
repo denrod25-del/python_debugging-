@@ -1,495 +1,1213 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Python Debug Dojo</title>
+<meta name="description" content="An adaptive Python-debugging trainer: predict output, spot bugs, read tracebacks, explain code. Built by B.Symbolic.">
+<meta name="theme-color" content="#0C0E0D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Playfair+Display:ital,wght@0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0e1117; --panel:#161b22; --panel2:#1c2330; --border:#2b3444;
-    --text:#e6edf3; --muted:#9aa7b6; --accent:#4fd1c5; --accent2:#63b3ed;
-    --good:#56d364; --bad:#f85149; --warn:#e3b341; --code:#0b0f16;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  :root{
+    --oxblood:#8F3437; --cream:#FAF6F4;
+    --green:#69F0A5; --green-deep:#2D8858; --amber:#FFCC66; --red:#ff6b6b;
+    --charcoal:#0C0E0D; --panel:#131817; --panel2:#0f1413; --line:#222b27;
+    --ink:#e8efe9; --muted:#7d8b82; --faint:#4b544f;
+    --display:'Playfair Display', Georgia, serif;
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Inter', -apple-system, system-ui, sans-serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); line-height:1.5; }
-  header { display:flex; align-items:center; gap:1rem; padding:.8rem 1.2rem;
-    border-bottom:1px solid var(--border); background:var(--panel); position:sticky; top:0; z-index:5; flex-wrap:wrap; }
-  header h1 { font-size:1.1rem; margin:0; letter-spacing:.3px; }
-  header .logo { color:var(--accent); }
-  nav { display:flex; gap:.4rem; margin-left:auto; flex-wrap:wrap; }
-  nav button { background:transparent; color:var(--muted); border:1px solid transparent;
-    padding:.4rem .8rem; border-radius:8px; cursor:pointer; font-size:.9rem; }
-  nav button:hover { color:var(--text); }
-  nav button.active { color:var(--text); background:var(--panel2); border-color:var(--border); }
-  main { max-width:960px; margin:0 auto; padding:1.2rem; }
-  .view { display:none; }
-  .view.active { display:block; }
-  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:1rem 1.1rem; margin-bottom:1rem; }
-  .row { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; }
-  .grow { flex:1 1 auto; }
-  h2 { font-size:1.05rem; margin:.2rem 0 .6rem; }
-  h3 { font-size:.95rem; margin:.8rem 0 .4rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-  p.desc { color:var(--muted); margin:.2rem 0 .6rem; }
-  .pill { font-size:.72rem; padding:.15rem .5rem; border-radius:999px; border:1px solid var(--border); color:var(--muted); }
-  .pill.err { color:var(--bad); border-color:#5a2b2b; }
-  button.btn { background:var(--accent); color:#04231f; border:none; padding:.5rem .9rem;
-    border-radius:8px; cursor:pointer; font-weight:600; font-size:.9rem; }
-  button.btn:hover { filter:brightness(1.08); }
-  button.btn.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
-  button.btn.alt { background:var(--accent2); color:#062036; }
-  button.btn:disabled { opacity:.5; cursor:not-allowed; }
-  textarea, input[type=text] { width:100%; background:var(--code); color:var(--text); border:1px solid var(--border);
-    border-radius:8px; padding:.6rem .7rem; font-family:var(--mono); font-size:.86rem; }
-  textarea { min-height:190px; resize:vertical; white-space:pre; tab-size:4; }
-  pre { background:var(--code); border:1px solid var(--border); border-radius:8px; padding:.7rem .8rem;
-    overflow:auto; font-family:var(--mono); font-size:.84rem; margin:0; }
-  .out { min-height:2.2rem; white-space:pre-wrap; }
-  .out.good { border-color:#1f6f34; }
-  .out.bad { border-color:#5a2b2b; }
-  .muted { color:var(--muted); }
-  .good { color:var(--good); } .bad { color:var(--bad); } .warn { color:var(--warn); }
-  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.7rem; }
-  .stat { background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:.7rem .8rem; }
-  .stat .n { font-size:1.5rem; font-weight:700; }
-  .stat .l { font-size:.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-  label.field { display:block; font-size:.85rem; margin:.6rem 0 .25rem; color:var(--muted); }
-  .hintbox { border-left:3px solid var(--accent2); }
-  .challenge-nav { display:flex; align-items:center; gap:.5rem; }
-  a { color:var(--accent2); }
-  footer { text-align:center; color:var(--muted); font-size:.8rem; padding:1.5rem; }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--charcoal); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
+  body{min-height:100vh; background:
+    radial-gradient(800px 400px at 90% -8%, rgba(143,52,55,.10), transparent 60%),
+    radial-gradient(700px 500px at -8% 100%, rgba(105,240,165,.05), transparent 55%),
+    var(--charcoal);}
+  ::selection{background:var(--green); color:var(--charcoal);}
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer; border:0; background:none; color:inherit;}
+  .wrap{max-width:960px; margin:0 auto; padding:16px 18px 60px;}
+
+  /* Header */
+  header{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:8px 0 16px;}
+  .brand{display:inline-flex; align-items:center; gap:10px;}
+  .isym{width:34px; height:34px; border-radius:8px; background:var(--oxblood); color:var(--cream); display:inline-flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; font-size:17px; line-height:1;}
+  .isym .i{font-style:italic; margin-right:-2px;} .isym .s{transform:skewX(-6deg);}
+  .brand b{font-family:var(--serif); font-weight:800; font-size:17px; letter-spacing:-.01em;}
+  .brand b .g{color:var(--green);}
+  .hstats{margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .lvbadge{font-family:var(--serif); font-weight:800; font-size:13px; background:var(--green); color:var(--charcoal); border-radius:7px; padding:4px 8px;}
+  .xpwrap{display:flex; flex-direction:column; gap:3px; min-width:120px;}
+  .xpbar{height:6px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .xpbar i{display:block; height:100%; background:linear-gradient(90deg,var(--amber),var(--green)); width:0%; transition:width .4s;}
+  .xptxt{font-family:var(--mono); font-size:9.5px; color:var(--muted);}
+  .streak{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:12px; background:rgba(255,204,102,.08); border:1px solid var(--line); color:var(--amber); border-radius:99px; padding:5px 10px;}
+
+  /* Nav */
+  nav.tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:12px;}
+  nav.tabs button{font-family:var(--sans); font-weight:600; font-size:13px; color:var(--muted); padding:8px 13px; border-radius:8px; transition:.15s; display:inline-flex; align-items:center; gap:7px;}
+  nav.tabs button:hover{color:var(--ink); background:var(--panel);}
+  nav.tabs button.active{color:var(--charcoal); background:var(--green);}
+  nav.tabs button .badge{font-family:var(--mono); font-size:9px; background:var(--oxblood); color:var(--cream); border-radius:99px; padding:1px 5px;}
+
+  .view{display:none;} .view.active{display:block; animation:fade .25s;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:16px; padding:20px;}
+  .card + .card{margin-top:14px;}
+  h2.vh{font-family:var(--serif); font-weight:800; font-size:22px; letter-spacing:-.01em; margin-bottom:4px;}
+  h2.vh .g{color:var(--green);}
+  .vsub{font-family:var(--serif); color:var(--muted); font-size:14px; margin-bottom:16px; line-height:1.5;}
+
+  .lbl{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;}
+  .lbl .g{color:var(--green);}
+
+  /* Controls */
+  .seg{display:inline-flex; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; flex-wrap:wrap;}
+  .seg button{font-family:var(--sans); font-weight:600; font-size:12.5px; color:var(--muted); padding:7px 12px; border-radius:8px;}
+  .seg button.active{background:var(--panel); color:var(--ink); box-shadow:0 1px 0 rgba(255,255,255,.03);}
+  .seg button.active[data-tone=green]{background:var(--green); color:var(--charcoal);}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .spacer{flex:1;}
+
+  .btn{font-family:var(--sans); font-weight:600; font-size:14px; padding:11px 18px; border-radius:10px; transition:.15s; display:inline-flex; align-items:center; gap:8px;}
+  .btn.primary{background:var(--green); color:var(--charcoal);} .btn.primary:hover{filter:brightness(1.06); transform:translateY(-1px);}
+  .btn.ghost{border:1px solid var(--line); color:var(--ink);} .btn.ghost:hover{border-color:var(--muted);}
+  .btn.ox{background:var(--oxblood); color:var(--cream);} .btn.ox:hover{filter:brightness(1.08);}
+  .btn.sm{font-size:12.5px; padding:8px 13px;}
+  .btn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+
+  /* Code */
+  .code{background:#0a0d0c; border:1px solid var(--line); border-radius:11px; overflow:hidden; margin:14px 0;}
+  .code .bar{display:flex; gap:6px; padding:9px 13px; border-bottom:1px solid var(--line); align-items:center;}
+  .code .bar span.dot{width:9px; height:9px; border-radius:50%;}
+  .code .bar .fn{margin-left:8px; font-family:var(--mono); font-size:11px; color:var(--faint);}
+  .code pre{padding:14px; font-family:var(--mono); font-size:13px; line-height:1.7; color:var(--ink); overflow-x:auto; white-space:pre; tab-size:4;}
+  .code pre .ln{display:block;} .code pre .ln.hl{background:rgba(105,240,165,.10); box-shadow:inset 3px 0 0 var(--green); margin:0 -14px; padding:0 14px;}
+  .kw{color:#d98cff;} .st{color:var(--green);} .nm{color:var(--amber);} .cm{color:#586057; font-style:italic;} .bi{color:#7cc7ff;} .op{color:#c9d3cd;}
+
+  textarea, input[type=text]{width:100%; background:#0a0d0c; color:var(--ink); border:1px solid var(--line); border-radius:10px; padding:12px 13px; font-family:var(--mono); font-size:13px; line-height:1.6;}
+  textarea{resize:vertical; min-height:120px; white-space:pre; tab-size:4;}
+  textarea:focus, input:focus{outline:none; border-color:var(--green);}
+
+  .out{font-family:var(--mono); font-size:13px; white-space:pre-wrap; line-height:1.6; background:#0a0d0c; border:1px solid var(--line); border-radius:10px; padding:12px 13px; min-height:44px; color:var(--ink); overflow-x:auto;}
+  .out.good{border-color:var(--green-deep); background:rgba(105,240,165,.05);}
+  .out.bad{border-color:#5a2b2b; background:rgba(255,107,107,.05);}
+  .verdict{display:inline-flex; align-items:center; gap:8px; font-family:var(--serif); font-weight:700; font-size:16px; margin-bottom:10px;}
+  .verdict.good{color:var(--green);} .verdict.bad{color:var(--red);}
+
+  .choices{display:flex; flex-direction:column; gap:9px; margin:14px 0;}
+  .choice{text-align:left; border:1px solid var(--line); background:var(--panel2); border-radius:10px; padding:12px 14px; font-size:13.5px; transition:.12s; display:flex; gap:11px; align-items:flex-start;}
+  .choice:hover{border-color:var(--muted);}
+  .choice .k{font-family:var(--mono); font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:2px 7px; flex:none;}
+  .choice.correct{border-color:var(--green); background:rgba(105,240,165,.08);}
+  .choice.wrong{border-color:#5a2b2b; background:rgba(255,107,107,.07);}
+  .choice.picked{box-shadow:0 0 0 1px var(--muted);}
+
+  .chips{display:flex; gap:7px; flex-wrap:wrap;}
+  .chip{font-family:var(--mono); font-size:10.5px; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:4px 10px; background:var(--panel2);}
+  .chip.diff-easy{color:var(--green);} .chip.diff-medium{color:var(--amber);} .chip.diff-hard{color:var(--red);}
+  .chip.mode{color:var(--ink); border-color:var(--muted);}
+
+  .hintbox{border-left:2px solid var(--amber); background:rgba(255,204,102,.05); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:#e6dcc4; font-family:var(--serif);}
+  .note{font-size:12px; color:var(--muted); font-family:var(--mono);}
+  .kbd{font-family:var(--mono); font-size:11px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--muted);}
+
+  /* Stats grid */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px;}
+  .stat{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:14px;}
+  .stat .n{font-family:var(--serif); font-weight:800; font-size:26px;} .stat .n .g{color:var(--green);}
+  .stat .l{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px;}
+
+  .conceptbars{display:flex; flex-direction:column; gap:9px; margin-top:6px;}
+  .cbar{display:flex; align-items:center; gap:11px; font-size:12.5px;}
+  .cbar .cn{min-width:170px; font-family:var(--mono); font-size:11px; color:var(--ink);}
+  .cbar .ct{flex:1; height:6px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .cbar .ct i{display:block; height:100%; background:linear-gradient(90deg,var(--red),var(--amber),var(--green));}
+  .cbar .cp{font-family:var(--mono); font-size:10.5px; color:var(--muted); min-width:34px; text-align:right;}
+
+  /* Weeks */
+  .weeks{display:flex; flex-direction:column; gap:11px; margin-top:6px;}
+  .week{border:1px solid var(--line); border-radius:12px; padding:14px; background:var(--panel2);}
+  .week.locked{opacity:.45;} .week.current{border-color:var(--green);}
+  .week .wtop{display:flex; align-items:center; gap:10px; margin-bottom:9px;}
+  .week .wn{font-family:var(--serif); font-weight:700; font-size:15px;}
+  .week .wstate{margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);}
+  .week .wstate.done{color:var(--green);} .week .wstate.cur{color:var(--amber);}
+  .week .wtrack{height:6px; background:var(--line); border-radius:99px; overflow:hidden; margin:8px 0;}
+  .week .wtrack i{display:block; height:100%; background:linear-gradient(90deg,var(--amber),var(--green));}
+
+  /* Boss / Daily */
+  .timerbar{height:8px; background:var(--line); border-radius:99px; overflow:hidden; margin:8px 0 16px;}
+  .timerbar i{display:block; height:100%; background:linear-gradient(90deg,var(--green),var(--amber),var(--red)); transition:width .95s linear;}
+  .big-timer{font-family:var(--serif); font-weight:800; font-size:40px; text-align:center;}
+  .center{text-align:center;}
+  .pill-lg{display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--amber); border:1px solid var(--line); border-radius:99px; padding:6px 12px;}
+
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--green); color:var(--ink); padding:12px 18px; border-radius:12px; font-size:13.5px; box-shadow:0 12px 30px -10px rgba(0,0,0,.6); opacity:0; pointer-events:none; transition:.3s; z-index:50; display:flex; align-items:center; gap:10px;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast .xp{font-family:var(--serif); font-weight:800; color:var(--green);}
+
+  .foot{margin-top:28px; padding-top:16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--faint); font-family:var(--mono); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .foot a:hover{color:var(--muted);}
+  @media(max-width:560px){ .cbar .cn{min-width:110px;} .hstats{width:100%;} }
 </style>
 </head>
 <body>
-<header>
-  <h1><span class="logo">◆</span> Python Debug Dojo</h1>
-  <nav>
-    <button data-view="practice" class="active">Practice</button>
-    <button data-view="stats">Stats</button>
-    <button data-view="about">About</button>
-  </nav>
-</header>
+<div class="wrap">
 
-<main>
-  <!-- ─── Practice ─────────────────────────────────────────────── -->
-  <section id="practice" class="view active">
-    <div class="card">
-      <div class="row">
-        <div class="challenge-nav">
-          <button class="btn ghost" id="prevBtn">‹ Prev</button>
-          <span class="muted" id="progressLabel">1 / 6</span>
-          <button class="btn ghost" id="nextBtn">Next ›</button>
-        </div>
-        <span class="grow"></span>
-        <span class="pill" id="difficultyPill">easy</span>
-        <span class="pill err" id="errPill">IndexError</span>
-      </div>
-      <h2 id="challengeTitle">Challenge</h2>
-      <p class="desc" id="challengeDesc">…</p>
-      <h3>Buggy code</h3>
-      <textarea id="editor" spellcheck="false"></textarea>
-      <div class="row" style="margin-top:.7rem">
-        <button class="btn" id="runBtn">▶ Run</button>
-        <button class="btn alt" id="checkBtn">✔ Check</button>
-        <button class="btn ghost" id="hintBtn">💡 Get AI hint</button>
-        <button class="btn ghost" id="resetBtn">↺ Reset code</button>
-        <button class="btn ghost" id="solutionBtn">Reveal solution</button>
-      </div>
-      <h3>Output</h3>
-      <pre class="out" id="output">Run the code to see its output.</pre>
-      <div id="hintWrap" style="display:none">
-        <h3>AI hint</h3>
-        <pre class="out hintbox" id="hint"></pre>
-      </div>
+  <header>
+    <div class="brand">
+      <span class="isym" aria-hidden="true"><span class="i">i</span><span class="s">S</span></span>
+      <b>Python Debug Dojo<span class="g">.</span></b>
     </div>
-    <p class="muted" style="font-size:.8rem">
-      Goal: fix the bug so <b>Check</b> passes (the program prints the expected output with no error).
-      Python runs in your browser via Pyodide, loaded on first Run.
-    </p>
+    <div class="hstats">
+      <span class="lvbadge" id="lvBadge">LV 1</span>
+      <div class="xpwrap">
+        <div class="xpbar"><i id="xpFill"></i></div>
+        <div class="xptxt" id="xpTxt">0 / 100 XP</div>
+      </div>
+      <span class="streak" id="streakChip">🔥 <b id="streakN">0</b></span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-view="train" class="active">◈ Train</button>
+    <button data-view="curriculum">▤ Curriculum</button>
+    <button data-view="boss">⚡ Boss</button>
+    <button data-view="daily">◷ Daily</button>
+    <button data-view="lab">⌨ Lab</button>
+    <button data-view="stats">▦ Stats</button>
+  </nav>
+
+  <!-- ─── TRAIN ─────────────────────────────────────────────── -->
+  <section id="train" class="view active">
+    <div class="card">
+      <div class="row" style="margin-bottom:14px">
+        <div>
+          <div class="lbl"><span class="g">▸</span> Mode</div>
+          <div class="seg" id="modeSeg">
+            <button data-mode="predict" class="active" data-tone="green">Predict output</button>
+            <button data-mode="bug">Spot the bug</button>
+            <button data-mode="traceback">Read traceback</button>
+            <button data-mode="explain">Explain code</button>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div>
+          <div class="lbl">Difficulty</div>
+          <div class="seg" id="diffSeg">
+            <button data-diff="any" class="active">Adaptive</button>
+            <button data-diff="easy">Easy</button>
+            <button data-diff="medium">Medium</button>
+            <button data-diff="hard">Hard</button>
+          </div>
+        </div>
+      </div>
+      <div id="curBanner" class="note" style="display:none; margin-bottom:12px"></div>
+
+      <div class="chips" id="qChips"></div>
+      <div id="qBody"></div>
+    </div>
   </section>
 
-  <!-- ─── Stats ────────────────────────────────────────────────── -->
+  <!-- ─── CURRICULUM ────────────────────────────────────────── -->
+  <section id="curriculum" class="view">
+    <div class="card">
+      <h2 class="vh">Curriculum <span class="g">builder</span></h2>
+      <p class="vsub">Pick a preset track, or generate a custom multi-week plan from a goal. Weeks unlock as you hit each mastery target while training.</p>
+      <div class="lbl">Presets</div>
+      <div class="seg" id="presetSeg" style="margin-bottom:16px">
+        <button data-preset="fundamentals">Fundamentals</button>
+        <button data-preset="intermediate">Intermediate patterns</button>
+        <button data-preset="interview">Interview gauntlet</button>
+      </div>
+      <div class="lbl">Or generate from a goal <span class="note" style="text-transform:none; letter-spacing:0">(needs AI endpoint)</span></div>
+      <div class="row" style="margin-bottom:8px">
+        <input type="text" id="goalInput" placeholder="e.g. master list mutations & closures in 4 weeks" style="flex:1; min-width:200px">
+        <button class="btn ox sm" id="genCurr">Generate</button>
+      </div>
+      <div class="note" id="genNote"></div>
+    </div>
+    <div class="card" id="currCard" style="display:none">
+      <div class="row" style="margin-bottom:6px">
+        <h2 class="vh" id="currName" style="font-size:18px"></h2>
+        <div class="spacer"></div>
+        <button class="btn ghost sm" id="clearCurr">Clear</button>
+      </div>
+      <div class="weeks" id="weekList"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary" id="trainCurr">Train this week →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── BOSS ──────────────────────────────────────────────── -->
+  <section id="boss" class="view">
+    <div class="card" id="bossIntro">
+      <h2 class="vh">Boss <span class="g">speed round</span></h2>
+      <p class="vsub">Six predict-the-output challenges. 100 seconds on the clock. Every correct answer is +15 XP, and whatever time you have left at the end becomes bonus XP. Miss nothing.</p>
+      <div class="row"><button class="btn ox" id="startBoss">⚡ Start the boss</button></div>
+    </div>
+    <div class="card" id="bossPlay" style="display:none">
+      <div class="row"><span class="pill-lg" id="bossCount">1 / 6</span><div class="spacer"></div><span class="pill-lg" id="bossScore">0 XP</span></div>
+      <div class="big-timer" id="bossTimer" style="margin:10px 0 2px">100</div>
+      <div class="timerbar"><i id="bossTimerbar" style="width:100%"></i></div>
+      <div id="bossBody"></div>
+    </div>
+    <div class="card center" id="bossDone" style="display:none">
+      <h2 class="vh center">Boss <span class="g">cleared</span></h2>
+      <div class="big-timer" id="bossResult" style="margin:10px 0">+0 XP</div>
+      <p class="vsub center" id="bossSummary"></p>
+      <button class="btn primary" id="bossAgain">Run it again</button>
+    </div>
+  </section>
+
+  <!-- ─── DAILY ─────────────────────────────────────────────── -->
+  <section id="daily" class="view">
+    <div class="card">
+      <div class="row"><h2 class="vh">Daily <span class="g">challenge</span></h2><div class="spacer"></div><span class="pill-lg" id="dailyDate"></span></div>
+      <p class="vsub">One deterministic puzzle per day — everyone gets the same one. Double XP. Come back tomorrow for the next.</p>
+      <div id="dailyBody"></div>
+    </div>
+  </section>
+
+  <!-- ─── LAB ───────────────────────────────────────────────── -->
+  <section id="lab" class="view">
+    <div class="card">
+      <h2 class="vh">Lab <span class="g">· bring your own code</span></h2>
+      <p class="vsub">Paste any Python. Run it, step through it line by line, get an AI explanation, or turn it into a bug-hunt for yourself.</p>
+      <textarea id="labCode" spellcheck="false">def fib(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+
+print([fib(i) for i in range(8)])</textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary sm" id="labRun">▶ Run</button>
+        <button class="btn ghost sm" id="labStep">⇥ Step through</button>
+        <button class="btn ghost sm" id="labExplain">✦ AI explain</button>
+        <button class="btn ox sm" id="labBug">🐛 Make a bug-hunt</button>
+      </div>
+      <div id="labStepper" style="display:none; margin-top:14px"></div>
+      <div class="lbl" style="margin-top:16px">Output</div>
+      <div class="out" id="labOut">Run your code to see output here.</div>
+      <div id="labAI"></div>
+    </div>
+  </section>
+
+  <!-- ─── STATS ─────────────────────────────────────────────── -->
   <section id="stats" class="view">
     <div class="card">
-      <h2>Your progress</h2>
-      <div class="stat-grid">
-        <div class="stat"><div class="n" id="statSolved">0</div><div class="l">Solved</div></div>
-        <div class="stat"><div class="n" id="statTotal">6</div><div class="l">Total</div></div>
-        <div class="stat"><div class="n" id="statStreak">0</div><div class="l">Streak</div></div>
-        <div class="stat"><div class="n" id="statRuns">0</div><div class="l">Runs</div></div>
-      </div>
-      <div class="row" style="margin-top:.8rem">
-        <button class="btn ghost" id="resetProgress">Reset progress</button>
+      <h2 class="vh">Your <span class="g">progress</span></h2>
+      <div class="grid" style="margin-top:8px">
+        <div class="stat"><div class="n" id="sLevel"><span class="g">1</span></div><div class="l">Level</div></div>
+        <div class="stat"><div class="n" id="sXP">0</div><div class="l">Total XP</div></div>
+        <div class="stat"><div class="n" id="sStreak">0</div><div class="l">Day streak</div></div>
+        <div class="stat"><div class="n" id="sAnswered">0</div><div class="l">Answered</div></div>
+        <div class="stat"><div class="n" id="sAcc">—</div><div class="l">Accuracy</div></div>
       </div>
     </div>
-
     <div class="card">
-      <h2>AI endpoint</h2>
-      <p class="desc">
-        The dojo asks an AI for hints through your own proxy so your API key stays private.
-        Paste your deployed proxy URL below (it ends in <code>/api/ai</code>), Save, then Test connection.
-        This is stored only in this browser.
-      </p>
-      <label class="field" for="aiEndpoint">AI endpoint URL</label>
-      <input type="text" id="aiEndpoint" placeholder="https://pydojo-proxy.vercel.app/api/ai" autocomplete="off" />
-      <div class="row" style="margin-top:.7rem">
-        <button class="btn" id="saveEndpoint">Save</button>
-        <button class="btn alt" id="testEndpoint">Test connection</button>
-        <span id="endpointStatus" class="muted"></span>
+      <div class="lbl"><span class="g">▸</span> Concept mastery <span class="note" style="text-transform:none; letter-spacing:0">(the engine trains your weakest first)</span></div>
+      <div class="conceptbars" id="conceptBars"></div>
+    </div>
+    <div class="card">
+      <h2 class="vh" style="font-size:17px">AI endpoint</h2>
+      <p class="vsub" style="margin-bottom:12px">Free-text grading (traceback / explain), curriculum generation, and Lab explanations route through your own proxy so your API key stays private. Paste the deployed proxy URL (ends in <code>/api/ai</code>), Save, then Test connection.</p>
+      <input type="text" id="aiEndpoint" placeholder="https://pydojo-proxy.vercel.app/api/ai" autocomplete="off">
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary sm" id="saveEndpoint">Save</button>
+        <button class="btn ghost sm" id="testEndpoint">Test connection</button>
+        <span class="note" id="endpointStatus"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <button class="btn ghost sm" id="exportBtn">⇩ Export progress (JSON)</button>
+        <button class="btn ghost sm" id="importBtn">⇧ Import</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none">
+        <div class="spacer"></div>
+        <button class="btn ghost sm" id="resetBtn" style="color:var(--red)">Reset everything</button>
       </div>
     </div>
   </section>
 
-  <!-- ─── About ────────────────────────────────────────────────── -->
-  <section id="about" class="view">
-    <div class="card">
-      <h2>About the Python Debug Dojo</h2>
-      <p>Small, focused Python bugs to diagnose and fix — <b>IndexError</b>, <b>TypeError</b>,
-        mutable default arguments, off-by-one logic, and more. Read the broken program, run it,
-        fix it, and Check your work. Stuck? Ask for an AI hint.</p>
-      <p class="muted">Static single-file app. Python executes locally in your browser via Pyodide.
-        AI hints are routed through a proxy you configure under <b>Stats → AI endpoint</b>.</p>
-    </div>
-  </section>
-</main>
+  <div class="foot">
+    <span>Python Debug Dojo — a <a href="https://bsymbolic.com" style="color:var(--oxblood)">B.Symbolic</a> app. Real CPython via Pyodide.</span>
+    <span id="pyStatus">Python: idle</span>
+  </div>
+</div>
 
-<footer>Python Debug Dojo — practice debugging, not memorising.</footer>
+<div class="toast" id="toast"></div>
 
 <script>
-/* ─── Challenge data ───────────────────────────────────────────── */
-const CHALLENGES = [
-  {
-    id: "indexerror-loop",
-    title: "Off-by-one IndexError",
-    difficulty: "easy",
-    err: "IndexError",
-    desc: "This loop should print every item, but it crashes on the last iteration.",
-    buggy:
-`nums = [10, 20, 30]
-for i in range(len(nums) + 1):
-    print(nums[i])`,
-    solution:
-`nums = [10, 20, 30]
-for i in range(len(nums)):
-    print(nums[i])`,
-    expected: "10\n20\n30",
-  },
-  {
-    id: "typeerror-concat",
-    title: "TypeError: str + int",
-    difficulty: "easy",
-    err: "TypeError",
-    desc: "Build a label from a name and an age. It should print 'Ada is 36'.",
-    buggy:
-`name = "Ada"
-age = 36
-print(name + " is " + age)`,
-    solution:
-`name = "Ada"
-age = 36
-print(name + " is " + str(age))`,
-    expected: "Ada is 36",
-  },
-  {
-    id: "keyerror-get",
-    title: "KeyError on missing key",
-    difficulty: "easy",
-    err: "KeyError",
-    desc: "Look up a score; default to 0 when the player is unknown. Should print 0.",
-    buggy:
-`scores = {"ada": 10, "grace": 7}
-print(scores["linus"])`,
-    solution:
-`scores = {"ada": 10, "grace": 7}
-print(scores.get("linus", 0))`,
-    expected: "0",
-  },
-  {
-    id: "zerodivision",
-    title: "ZeroDivisionError",
-    difficulty: "medium",
-    err: "ZeroDivisionError",
-    desc: "Compute the average of a list. For an empty list it should print 0 instead of crashing.",
-    buggy:
-`def average(xs):
-    return sum(xs) / len(xs)
-
-print(average([]))`,
-    solution:
-`def average(xs):
-    if not xs:
-        return 0
-    return sum(xs) / len(xs)
-
-print(average([]))`,
-    expected: "0",
-  },
-  {
-    id: "factorial-base",
-    title: "Wrong recursion base case",
-    difficulty: "medium",
-    err: "RecursionError",
-    desc: "Recursive factorial. factorial(5) should be 120, but the base case is wrong.",
-    buggy:
-`def factorial(n):
-    if n == 100:
-        return 1
-    return n * factorial(n - 1)
-
-print(factorial(5))`,
-    solution:
-`def factorial(n):
-    if n <= 1:
-        return 1
-    return n * factorial(n - 1)
-
-print(factorial(5))`,
-    expected: "120",
-  },
-  {
-    id: "mutable-default",
-    title: "Mutable default argument",
-    difficulty: "hard",
-    err: "Logic bug",
-    desc: "add_item should start a fresh cart each call. Two separate carts must not share items. Expected: ['a'] then ['b'].",
-    buggy:
-`def add_item(item, cart=[]):
-    cart.append(item)
-    return cart
-
-print(add_item("a"))
-print(add_item("b"))`,
-    solution:
-`def add_item(item, cart=None):
-    if cart is None:
-        cart = []
-    cart.append(item)
-    return cart
-
-print(add_item("a"))
-print(add_item("b"))`,
-    expected: "['a']\n['b']",
-  },
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════
+   CONTENT BANK  — outputs verified against CPython 3.11
+   ═══════════════════════════════════════════════════════════════════════ */
+const PREDICT = [
+  {id:"p_mutdef", diff:"hard", concepts:["mutable-default"],
+   code:`def add(item, bag=[]):\n    bag.append(item)\n    return bag\n\nprint(add("a"))\nprint(add("b"))`,
+   out:`['a']\n['a', 'b']`,
+   hints:["Default arguments are evaluated once, at definition time.","The same list object is reused across calls."]},
+  {id:"p_latebind", diff:"hard", concepts:["late-binding-closure"],
+   code:`fns = [lambda: i for i in range(3)]\nprint([f() for f in fns])`,
+   out:`[2, 2, 2]`,
+   hints:["The lambdas close over the variable i, not its value.","By the time they're called, the loop has finished."]},
+  {id:"p_alias", diff:"easy", concepts:["list-aliasing"],
+   code:`a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)`,
+   out:`[1, 2, 3, 4]`,
+   hints:["b = a does not copy the list.","Both names point at the same object."]},
+  {id:"p_tupmut", diff:"medium", concepts:["tuple-immutability","list-aliasing"],
+   code:`t = ([1], 2)\nt[0].append(9)\nprint(t)`,
+   out:`([1, 9], 2)`,
+   hints:["The tuple is immutable, but its first element is a list.","You're mutating the list, not the tuple."]},
+  {id:"p_cache", diff:"hard", concepts:["mutable-default"],
+   code:`def f(x, cache={}):\n    cache[x] = cache.get(x, 0) + 1\n    return cache[x]\n\nprint(f("a"))\nprint(f("a"))\nprint(f("b"))`,
+   out:`1\n2\n1`,
+   hints:["cache persists between calls.","Same default-dict object every time."]},
+  {id:"p_strimm", diff:"easy", concepts:["string-immutability"],
+   code:`s = "hello"\ns.upper()\nprint(s)`,
+   out:`hello`,
+   hints:["Strings are immutable.","upper() returns a new string; it doesn't change s."]},
+  {id:"p_slice", diff:"easy", concepts:["slicing"],
+   code:`xs = [0, 1, 2, 3, 4]\nprint(xs[1:4])\nprint(xs[::-1])\nprint(xs[-2:])`,
+   out:`[1, 2, 3]\n[4, 3, 2, 1, 0]\n[3, 4]`,
+   hints:["Stop index is exclusive.","[::-1] reverses; negative start counts from the end."]},
+  {id:"p_setdef", diff:"medium", concepts:["dict-methods"],
+   code:`d = {}\nd.setdefault("k", []).append(1)\nd.setdefault("k", []).append(2)\nprint(d)`,
+   out:`{'k': [1, 2]}`,
+   hints:["setdefault only inserts if the key is missing.","The second call returns the existing list."]},
+  {id:"p_truth", diff:"medium", concepts:["truthiness"],
+   code:`vals = [0, "", [], "0", " ", None, [0]]\nprint([bool(v) for v in vals])`,
+   out:`[False, False, False, True, True, False, True]`,
+   hints:["Empty containers and 0 are falsy.","\"0\" and \" \" are non-empty strings → truthy."]},
+  {id:"p_iseq", diff:"medium", concepts:["is-vs-eq"],
+   code:`a = [1, 2]\nb = [1, 2]\nprint(a == b, a is b)`,
+   out:`True False`,
+   hints:["== compares values.","is compares identity — two different list objects."]},
+  {id:"p_genlazy", diff:"hard", concepts:["generator-laziness"],
+   code:`g = (x * x for x in range(3))\nprint(list(g))\nprint(list(g))`,
+   out:`[0, 1, 4]\n[]`,
+   hints:["A generator is single-use.","After the first list(g) it's exhausted."]},
+  {id:"p_mutiter", diff:"medium", concepts:["mutate-while-iterating","slicing"],
+   code:`xs = [1, 2, 3, 4]\nfor x in xs[:]:\n    if x % 2 == 0:\n        xs.remove(x)\nprint(xs)`,
+   out:`[1, 3]`,
+   hints:["xs[:] iterates over a copy — safe.","Only the evens get removed."]},
+  {id:"p_floordiv", diff:"medium", concepts:["arithmetic"],
+   code:`print(7 // 2, -7 // 2, 7 % 3, -7 % 3)`,
+   out:`3 -4 1 2`,
+   hints:["// floors toward negative infinity.","In Python, the % result takes the sign of the divisor."]},
+  {id:"p_chain", diff:"medium", concepts:["chained-comparison"],
+   code:`print(1 < 2 < 3)\nprint(3 > 2 == 2)\nprint(1 == 1 < 2)`,
+   out:`True\nTrue\nTrue`,
+   hints:["a < b < c means (a<b) and (b<c).","Each comparison is evaluated pairwise."]},
+  {id:"p_listrep", diff:"easy", concepts:["list-repetition"],
+   code:`x = [1, 2, 3]\ny = x * 2\nprint(y)\nprint(len(y))`,
+   out:`[1, 2, 3, 1, 2, 3]\n6`,
+   hints:["* repeats the elements.","Length doubles."]},
+  {id:"p_nestmul", diff:"hard", concepts:["list-aliasing","nested-mutation"],
+   code:`grid = [[0] * 2] * 2\ngrid[0][0] = 1\nprint(grid)`,
+   out:`[[1, 0], [1, 0]]`,
+   hints:["The outer * copies references, not inner lists.","Both rows are the same object."]},
+  {id:"p_fstr", diff:"easy", concepts:["formatting"],
+   code:`x = 3.14159\nprint(f"{x:.2f}")\nprint(f"{42:05d}")\nprint(f"{255:#x}")`,
+   out:`3.14\n00042\n0xff`,
+   hints:[".2f → 2 decimals; 05d → zero-pad to width 5.","#x → hex with a 0x prefix."]},
+  {id:"p_sortkey", diff:"medium", concepts:["sorting"],
+   code:`pairs = [(1, "b"), (2, "a")]\nprint(sorted(pairs, key=lambda p: p[1]))`,
+   out:`[(2, 'a'), (1, 'b')]`,
+   hints:["The key is the second element of each tuple.","'a' sorts before 'b'."]},
 ];
 
-/* ─── Storage (browser-local) ──────────────────────────────────── */
-const KEY_ENDPOINT = "pydojo.aiEndpoint";
-const KEY_PROGRESS = "pydojo.progress";
-const store = {
-  get(k, def) { try { const v = localStorage.getItem(k); return v === null ? def : v; } catch { return def; } },
-  set(k, v)   { try { localStorage.setItem(k, v); } catch {} },
-  getJSON(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
-  setJSON(k, v)   { this.set(k, JSON.stringify(v)); },
+const BUG = [
+  {id:"b_mutiter", diff:"medium", concepts:["mutate-while-iterating"],
+   code:`xs = [2, 4, 6]\nfor x in xs:\n    if x % 2 == 0:\n        xs.remove(x)\nprint(xs)  # wanted []`,
+   choices:["range() would be off by one","Mutating the list while iterating over it","remove() isn't a real method","% is the wrong operator for even-check"],
+   answer:1,
+   explain:"Removing items from a list while iterating over it makes the loop skip elements. It leaves [4]. Iterate over a copy (xs[:]) or build a new list.",
+   hints:["Watch what the loop index does when the list shrinks.","One element gets skipped entirely."]},
+  {id:"b_latebind", diff:"hard", concepts:["late-binding-closure"],
+   code:`callbacks = []\nfor i in range(3):\n    callbacks.append(lambda: i)\nprint([c() for c in callbacks])  # wanted [0, 1, 2]`,
+   choices:["append() needs parentheses","Each lambda captures i by reference, not value","range(3) should be range(1,3)","Lambdas can't be stored in a list"],
+   answer:1,
+   explain:"All three lambdas close over the same variable i. After the loop i is 2, so every call returns 2 → [2, 2, 2]. Bind per-iteration with a default arg: lambda i=i: i.",
+   hints:["What is i after the loop ends?","The value isn't captured until the lambda runs."]},
+  {id:"b_mutdef", diff:"hard", concepts:["mutable-default"],
+   code:`def append_to(el, target=[]):\n    target.append(el)\n    return target\n\nprint(append_to(1))\nprint(append_to(2))  # wanted [2]`,
+   choices:["A mutable default argument shared across calls","el and target are swapped","append_to needs a return type","print can't take a function call"],
+   answer:0,
+   explain:"The default list is created once at definition and reused, so the second call returns [1, 2]. Use target=None and create a fresh list inside.",
+   hints:["When is the default [] created?","It's the same object on every call."]},
+  {id:"b_offby1", diff:"easy", concepts:["off-by-one","slicing"],
+   code:`def last_n(lst, n):\n    return lst[len(lst) - n - 1:]\n\nprint(last_n([1,2,3,4,5], 2))  # wanted [4, 5]`,
+   choices:["n should be a keyword argument","Off-by-one: the -1 makes the slice start too early","len() doesn't work on lists","Slices can't use computed indices"],
+   answer:1,
+   explain:"The extra -1 starts the slice one element too early, returning [3, 4, 5]. It should be lst[len(lst) - n:] (or simply lst[-n:]).",
+   hints:["Count the indices for a length-5 list and n=2.","Drop the -1."]},
+  {id:"b_intdiv", diff:"easy", concepts:["arithmetic"],
+   code:`def average(nums):\n    return sum(nums) // len(nums)\n\nprint(average([1, 2, 4]))  # wanted 2.33...`,
+   choices:["sum() should be total()","// does integer division, truncating the average","len() is off by one","nums must be a tuple"],
+   answer:1,
+   explain:"// is floor division, so the average of [1,2,4] comes out as 2, not 2.33. Use a single / for true division.",
+   hints:["What's the difference between / and //?","The fractional part is being thrown away."]},
+  {id:"b_keyinit", diff:"medium", concepts:["dict-methods"],
+   code:`counts = {}\nfor ch in "hello":\n    counts[ch] += 1\nprint(counts)`,
+   choices:["Strings aren't iterable","counts[ch] is read before it's ever set → KeyError","+= only works on numbers","The loop variable should be index"],
+   answer:1,
+   explain:"On the first sight of a character, counts[ch] doesn't exist yet, so += raises KeyError. Use counts.get(ch, 0) + 1, or collections.defaultdict(int).",
+   hints:["What is counts['h'] the very first time?","+= needs the key to already exist."]},
+  {id:"b_floateq", diff:"medium", concepts:["floating-point"],
+   code:`if 0.1 + 0.2 == 0.3:\n    print("equal")\nelse:\n    print("not equal")`,
+   choices:["== should be is","Floating-point rounding makes 0.1+0.2 != 0.3 exactly","The if needs parentheses","0.3 must be written 0.30"],
+   answer:1,
+   explain:"0.1 + 0.2 is 0.30000000000000004 in binary floating point, so the exact == fails and it prints 'not equal'. Compare with math.isclose() instead.",
+   hints:["Print 0.1 + 0.2 with lots of decimals.","Binary can't represent these exactly."]},
+  {id:"b_shadow", diff:"medium", concepts:["shadowing"],
+   code:`list = [3, 1, 2]\nprint(list(sorted(list)))`,
+   choices:["sorted() returns None","The name list shadows the built-in, so list(...) fails","You can't sort a list of ints","print takes only one argument"],
+   answer:1,
+   explain:"Assigning to list rebinds the built-in, so calling list(...) raises TypeError: 'list' object is not callable. Don't name variables after built-ins.",
+   hints:["What does the name `list` refer to after line 1?","You're trying to call a list."]},
+];
+
+const TRACEBACK = [
+  {id:"t_index", diff:"easy", concepts:["indexerror"],
+   code:`def third(items):\n    return items[3]\n\nprint(third([10, 20]))`,
+   tb:`Traceback (most recent call last):\n  File "main.py", line 4, in <module>\n    print(third([10, 20]))\n  File "main.py", line 2, in third\n    return items[3]\nIndexError: list index out of range`,
+   reference:"The list has only two elements (indices 0 and 1), but the code asks for index 3, which doesn't exist.",
+   keywords:["index","3","two","length","range","out of"],
+   hints:["How many elements does [10, 20] have?","Valid indices are 0 and 1."]},
+  {id:"t_key", diff:"easy", concepts:["keyerror"],
+   code:`config = {"host": "localhost"}\nprint(config["port"])`,
+   tb:`Traceback (most recent call last):\n  File "main.py", line 2, in <module>\n    print(config["port"])\nKeyError: 'port'`,
+   reference:"The dictionary has no 'port' key, so subscripting with it raises KeyError. Use .get('port', default) to avoid it.",
+   keywords:["key","port","missing","not","dict","get"],
+   hints:["Which keys does config actually have?","'port' was never added."]},
+  {id:"t_type", diff:"easy", concepts:["typeerror"],
+   code:`age = 30\nprint("Age: " + age)`,
+   tb:`Traceback (most recent call last):\n  File "main.py", line 2, in <module>\n    print("Age: " + age)\nTypeError: can only concatenate str (not "int") to str`,
+   reference:"You can't add an int to a str. Convert with str(age), or use an f-string.",
+   keywords:["str","int","concatenate","convert","f-string"],
+   hints:["What are the types on each side of +?","Turn the number into a string first."]},
+  {id:"t_attr", diff:"medium", concepts:["attributeerror","none-return"],
+   code:`def build():\n    items = []\n    items.append(1)\n    # forgot to return items\n\ndata = build()\ndata.append(2)`,
+   tb:`Traceback (most recent call last):\n  File "main.py", line 7, in <module>\n    data.append(2)\nAttributeError: 'NoneType' object has no attribute 'append'`,
+   reference:"build() has no return, so it returns None. data is None, and None has no append method.",
+   keywords:["none","nonetype","return","append","function"],
+   hints:["What does a function with no return statement give back?","data isn't a list."]},
+  {id:"t_recur", diff:"medium", concepts:["recursion"],
+   code:`def countdown(n):\n    print(n)\n    return countdown(n - 1)\n\ncountdown(3)`,
+   tb:`... (many frames) ...\n  File "main.py", line 3, in countdown\n    return countdown(n - 1)\nRecursionError: maximum recursion depth exceeded`,
+   reference:"There's no base case, so countdown calls itself forever until Python's recursion limit is hit. Add a stop condition like if n <= 0: return.",
+   keywords:["base case","recursion","stop","forever","termination","depth"],
+   hints:["When does countdown ever stop calling itself?","It needs a base case."]},
+  {id:"t_zero", diff:"easy", concepts:["zerodivision"],
+   code:`def rate(hits, total):\n    return hits / total\n\nprint(rate(3, 0))`,
+   tb:`Traceback (most recent call last):\n  File "main.py", line 4, in <module>\n    print(rate(3, 0))\n  File "main.py", line 2, in rate\n    return hits / total\nZeroDivisionError: division by zero`,
+   reference:"total is 0, and dividing by zero is undefined. Guard against total == 0 before dividing.",
+   keywords:["zero","divide","division","total","denominator","guard"],
+   hints:["What is total when the error fires?","Check the denominator first."]},
+];
+
+const EXPLAIN = [
+  {id:"e_dedupe", diff:"medium", concepts:["sets","order"],
+   code:`def dedupe(seq):\n    seen = set()\n    out = []\n    for x in seq:\n        if x not in seen:\n            seen.add(x)\n            out.append(x)\n    return out`,
+   reference:"Removes duplicate elements from seq while preserving the order in which each value first appears, using a set to track what's been seen.",
+   keywords:["duplicate","order","preserve","unique","seen","first"],
+   hints:["What does the `seen` set prevent?","Note that order is kept."]},
+  {id:"e_mult3", diff:"easy", concepts:["comprehension"],
+   code:`result = [x for x in range(20) if x % 3 == 0]`,
+   reference:"Builds a list of the numbers from 0 to 19 that are divisible by 3 — i.e. the multiples of 3 below 20.",
+   keywords:["multiples","3","divisible","list","below 20","zero"],
+   hints:["What does x % 3 == 0 select?","Range stops before 20."]},
+  {id:"e_compose", diff:"hard", concepts:["higher-order","closures"],
+   code:`def compose(f, g):\n    return lambda x: f(g(x))`,
+   reference:"Returns a new function that applies g to its input first, then applies f to that result — classic function composition (f after g).",
+   keywords:["compose","function","g then f","returns","higher-order","after"],
+   hints:["What is returned — a value or a function?","Which of f/g runs first?"]},
+  {id:"e_evensum", diff:"medium", concepts:["enumerate"],
+   code:`total = 0\nfor i, v in enumerate(values):\n    if i % 2 == 0:\n        total += v\nprint(total)`,
+   reference:"Sums the values that sit at even indices (positions 0, 2, 4, ...) of the list, using enumerate to get both index and value.",
+   keywords:["even","index","sum","enumerate","position","0 2 4"],
+   hints:["i is the index, not the value.","Only even i contributes."]},
+  {id:"e_group", diff:"medium", concepts:["defaultdict","grouping"],
+   code:`from collections import defaultdict\ngroups = defaultdict(list)\nfor word in words:\n    groups[len(word)].append(word)`,
+   reference:"Groups the words by their length: each key is a word-length and its value is the list of words that have that length.",
+   keywords:["group","length","by length","defaultdict","key","words"],
+   hints:["What's used as the dict key?","defaultdict(list) auto-creates empty lists."]},
+];
+
+const BANK = {predict:PREDICT, bug:BUG, traceback:TRACEBACK, explain:EXPLAIN};
+const ALL_ITEMS = [...PREDICT,...BUG,...TRACEBACK,...EXPLAIN];
+const ALL_CONCEPTS = [...new Set(ALL_ITEMS.flatMap(i=>i.concepts))].sort();
+const CONCEPT_LABEL = c => c.replace(/-/g," ").replace(/\b\w/g,m=>m.toUpperCase());
+
+/* Curriculum presets */
+const PRESETS = {
+  fundamentals: {name:"Fundamentals", weeks:[
+    {name:"Reading values", concepts:["slicing","list-repetition","truthiness"], target:3},
+    {name:"Identity & mutation", concepts:["list-aliasing","is-vs-eq","string-immutability"], target:3},
+    {name:"Errors 101", concepts:["indexerror","keyerror","typeerror"], target:3},
+  ]},
+  intermediate: {name:"Intermediate patterns", weeks:[
+    {name:"The mutable-default trap", concepts:["mutable-default","dict-methods"], target:3},
+    {name:"Closures & laziness", concepts:["late-binding-closure","generator-laziness"], target:3},
+    {name:"Aliasing gotchas", concepts:["nested-mutation","tuple-immutability","mutate-while-iterating"], target:3},
+  ]},
+  interview: {name:"Interview gauntlet", weeks:[
+    {name:"Predict under pressure", concepts:["chained-comparison","arithmetic","formatting","sorting"], target:4},
+    {name:"Classic bugs", concepts:["off-by-one","shadowing","floating-point"], target:3},
+    {name:"Explain like a senior", concepts:["higher-order","closures","defaultdict","enumerate"], target:3},
+  ]},
 };
 
-let progress = store.getJSON(KEY_PROGRESS, { solved: {}, streak: 0, runs: 0, last: -1 });
-let idx = 0;
-let pyodide = null, pyodideLoading = null;
-
-/* ─── DOM helpers ──────────────────────────────────────────────── */
-const $ = (id) => document.getElementById(id);
-const editor = $("editor");
-
-/* ─── View switching ───────────────────────────────────────────── */
-document.querySelectorAll("nav button").forEach((b) => {
-  b.addEventListener("click", () => {
-    document.querySelectorAll("nav button").forEach((x) => x.classList.remove("active"));
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    b.classList.add("active");
-    $(b.dataset.view).classList.add("active");
-    if (b.dataset.view === "stats") renderStats();
-  });
+/* ═══════════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════════ */
+const LS = "pydojo.v1";
+const EP = "pydojo.aiEndpoint";
+const defaultState = () => ({
+  xp:0, answered:0, correct:0, streak:0, lastDay:null,
+  concept:{},            // concept -> {strength, seen, correct, due}
+  tick:0,
+  curriculum:null,       // {name, weeks:[{name,concepts,target,progress}], week}
+  daily:{day:null, done:false},
 });
+let S = load();
+function load(){
+  try{ const raw = localStorage.getItem(LS); if(raw){ return Object.assign(defaultState(), JSON.parse(raw)); } }catch(e){}
+  return defaultState();
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
+function conceptOf(c){ if(!S.concept[c]) S.concept[c] = {strength:0.5, seen:0, correct:0, due:0}; return S.concept[c]; }
 
-/* ─── Challenge rendering ──────────────────────────────────────── */
-function loadChallenge(i, keepCode) {
-  idx = (i + CHALLENGES.length) % CHALLENGES.length;
-  const c = CHALLENGES[idx];
-  $("challengeTitle").textContent = c.title;
-  $("challengeDesc").textContent = c.desc;
-  $("difficultyPill").textContent = c.difficulty;
-  $("errPill").textContent = c.err;
-  $("progressLabel").textContent = `${idx + 1} / ${CHALLENGES.length}`;
-  if (!keepCode) editor.value = c.buggy;
-  const solved = !!progress.solved[c.id];
-  $("output").textContent = solved ? "✔ Solved earlier. Feel free to re-run." : "Run the code to see its output.";
-  $("output").className = "out" + (solved ? " good" : "");
-  $("hintWrap").style.display = "none";
-  $("hint").textContent = "";
+/* ── DOM helpers ── */
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
+const esc = s => String(s).replace(/[&<>]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+
+/* ── Python syntax highlight (lightweight) ── */
+const PY_KW = new Set("def return for while if elif else in not and or is lambda from import as with class try except finally raise yield None True False".split(" "));
+const PY_BI = new Set("print len range set list dict tuple sorted sum enumerate append add get setdefault bool str int float map filter".split(" "));
+function hl(code){
+  return code.split("\n").map(line=>{
+    let out="", i=0;
+    while(i<line.length){
+      const rest=line.slice(i);
+      let m;
+      if((m=rest.match(/^#.*/))){ out+=`<span class="cm">${esc(m[0])}</span>`; i+=m[0].length; continue; }
+      if((m=rest.match(/^(f?"(?:[^"\\]|\\.)*"|f?'(?:[^'\\]|\\.)*')/))){ out+=`<span class="st">${esc(m[0])}</span>`; i+=m[0].length; continue; }
+      if((m=rest.match(/^\d+\.?\d*/))){ out+=`<span class="nm">${esc(m[0])}</span>`; i+=m[0].length; continue; }
+      if((m=rest.match(/^[A-Za-z_]\w*/))){ const w=m[0]; const cls=PY_KW.has(w)?"kw":PY_BI.has(w)?"bi":null; out+= cls?`<span class="${cls}">${w}</span>`:esc(w); i+=w.length; continue; }
+      out+=esc(line[i]); i++;
+    }
+    return `<span class="ln">${out||" "}</span>`;
+  }).join("");
+}
+function codeBlock(code, fn){
+  return `<div class="code"><div class="bar"><span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span>${fn?`<span class="fn">${esc(fn)}</span>`:""}</div><pre>${hl(code)}</pre></div>`;
 }
 
-$("prevBtn").onclick = () => loadChallenge(idx - 1);
-$("nextBtn").onclick = () => loadChallenge(idx + 1);
-$("resetBtn").onclick = () => { editor.value = CHALLENGES[idx].buggy; $("output").textContent = "Code reset."; $("output").className = "out"; };
-$("solutionBtn").onclick = () => { editor.value = CHALLENGES[idx].solution; $("output").textContent = "Solution revealed — try to understand why it works, then Check."; $("output").className = "out"; };
-
-/* ─── Pyodide (lazy) ───────────────────────────────────────────── */
-async function ensurePyodide() {
-  if (pyodide) return pyodide;
-  if (pyodideLoading) return pyodideLoading;
-  $("output").textContent = "Loading Python runtime (first run only)…";
-  pyodideLoading = (async () => {
-    if (!window.loadPyodide) {
-      await new Promise((res, rej) => {
-        const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js";
-        s.onload = res; s.onerror = () => rej(new Error("Could not load Pyodide from CDN"));
-        document.head.appendChild(s);
-      });
-    }
-    pyodide = await window.loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/" });
-    return pyodide;
-  })();
-  return pyodideLoading;
+/* ═══════════════════════════════════════════════════════════════════════
+   XP / LEVEL / STREAK
+   ═══════════════════════════════════════════════════════════════════════ */
+function levelInfo(xp){ let lvl=1, need=100, acc=0; while(xp>=acc+need){ acc+=need; lvl++; need=lvl*100; } return {level:lvl, into:xp-acc, need}; }
+function renderHeader(){
+  const li = levelInfo(S.xp);
+  $("lvBadge").textContent = "LV "+li.level;
+  $("xpFill").style.width = Math.min(100, (li.into/li.need)*100)+"%";
+  $("xpTxt").textContent = `${li.into} / ${li.need} XP`;
+  $("streakN").textContent = S.streak;
 }
-
-async function runCode() {
-  const c = CHALLENGES[idx];
-  let py;
-  try {
-    py = await ensurePyodide();
-  } catch (e) {
-    $("output").textContent = "⚠ " + e.message + "\n(Pyodide needs internet access. You can still Reveal solution.)";
-    $("output").className = "out bad";
-    return null;
-  }
-  progress.runs++; store.setJSON(KEY_PROGRESS, progress);
-  const src = editor.value;
-  try {
-    py.runPython(`
-import sys, io
-_buf = io.StringIO()
-_old = sys.stdout
-sys.stdout = _buf
-`);
-    let runErr = null;
-    try {
-      py.runPython(src);
-    } catch (e) {
-      runErr = e;
-    }
-    const out = py.runPython("sys.stdout = _old\n_buf.getvalue()");
-    if (runErr) {
-      const msg = String(runErr.message || runErr).trim();
-      const lastLines = msg.split("\n").slice(-4).join("\n");
-      $("output").textContent = (out ? out + "\n" : "") + lastLines;
-      $("output").className = "out bad";
-      return { output: out, error: lastLines };
-    }
-    $("output").textContent = out.length ? out : "(no output)";
-    $("output").className = "out";
-    return { output: out, error: null };
-  } catch (e) {
-    $("output").textContent = "Runner error: " + (e.message || e);
-    $("output").className = "out bad";
-    return null;
+function todayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function dayDiff(a,b){ if(!a||!b) return 99; return Math.round((new Date(b)-new Date(a))/86400000); }
+function markActive(){
+  const t=todayKey();
+  if(S.lastDay!==t){
+    const gap=dayDiff(S.lastDay,t);
+    S.streak = (gap===1)?S.streak+1 : 1;
+    S.lastDay=t;
   }
 }
+let lastLevel = levelInfo(S.xp).level;
+function awardXP(n, label){
+  if(n<=0){ return; }
+  const before=levelInfo(S.xp).level;
+  S.xp+=n; markActive();
+  const after=levelInfo(S.xp).level;
+  save(); renderHeader();
+  toast(`+${n} XP`, label + (after>before?`  ·  Level up! LV ${after} 🎉`:""));
+}
+let toastT=null;
+function toast(xp, msg){
+  const t=$("toast"); t.innerHTML=`<span class="xp">${esc(xp)}</span> ${esc(msg||"")}`;
+  t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"), 2600);
+}
 
-$("runBtn").onclick = runCode;
+/* ═══════════════════════════════════════════════════════════════════════
+   ADAPTIVE ENGINE
+   ═══════════════════════════════════════════════════════════════════════ */
+function recordAnswer(item, correct){
+  S.tick++; S.answered++; if(correct)S.correct++;
+  for(const c of item.concepts){
+    const cc=conceptOf(c); cc.seen++;
+    if(correct){ cc.correct++; cc.strength = cc.strength + (1-cc.strength)*0.4; cc.due = S.tick + Math.max(2, Math.round(cc.strength*8)); }
+    else { cc.strength = cc.strength*0.5; cc.due = S.tick + 1; }
+  }
+  // curriculum progress
+  if(S.curriculum && correct){
+    const wk=S.curriculum.weeks[S.curriculum.week];
+    if(wk && item.concepts.some(c=>wk.concepts.includes(c))){
+      wk.progress=(wk.progress||0)+1;
+      if(wk.progress>=wk.target && S.curriculum.week < S.curriculum.weeks.length-1){
+        S.curriculum.week++; toast("Week cleared!", "Next week unlocked.");
+      }
+    }
+  }
+  save();
+}
+function itemScore(item){
+  let s=0;
+  for(const c of item.concepts){
+    const cc=conceptOf(c);
+    s += (1-cc.strength);                       // weakness weight
+    if(S.tick>=cc.due) s += 0.6;                // overdue bonus
+    if(cc.seen===0) s += 0.4;                   // unseen bonus
+  }
+  return s/item.concepts.length;
+}
+let lastItemId=null;
+function pickItem(mode, diff, conceptFilter){
+  let pool = BANK[mode].slice();
+  if(diff && diff!=="any") pool = pool.filter(i=>i.diff===diff);
+  if(conceptFilter && conceptFilter.length) {
+    const f = pool.filter(i=>i.concepts.some(c=>conceptFilter.includes(c)));
+    if(f.length) pool=f;
+  }
+  if(!pool.length) pool = BANK[mode].slice();
+  if(pool.length>1) pool = pool.filter(i=>i.id!==lastItemId);
+  // weighted pick from top-scoring (adaptive) with jitter
+  const scored = pool.map(i=>({i, s:itemScore(i) + Math.random()*0.35}));
+  scored.sort((a,b)=>b.s-a.s);
+  const top = scored.slice(0, Math.min(3, scored.length));
+  const chosen = top[Math.floor(Math.random()*top.length)].i;
+  lastItemId=chosen.id;
+  return chosen;
+}
 
-$("checkBtn").onclick = async () => {
-  const c = CHALLENGES[idx];
-  const res = await runCode();
-  if (!res) return;
-  const got = (res.output || "").replace(/\s+$/g, "");
-  const want = c.expected.replace(/\s+$/g, "");
-  if (!res.error && got === want) {
-    if (!progress.solved[c.id]) { progress.solved[c.id] = true; progress.streak++; }
-    progress.last = idx; store.setJSON(KEY_PROGRESS, progress);
-    $("output").textContent = (res.output || "") + "\n\n✔ Correct! Output matches the expected result.";
-    $("output").className = "out good";
+/* ═══════════════════════════════════════════════════════════════════════
+   AI (via configurable proxy)
+   ═══════════════════════════════════════════════════════════════════════ */
+function endpoint(){ try{ return (localStorage.getItem(EP)||"").trim(); }catch(e){ return ""; } }
+async function aiCall(system, prompt, maxTokens){
+  const url=endpoint();
+  if(!url) throw new Error("no-endpoint");
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({system, prompt, max_tokens:maxTokens||512})});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||("HTTP "+r.status));
+  return data.text||"";
+}
+function extractJSON(text){
+  let t=text.trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+  const a=t.indexOf("{"), b=t.lastIndexOf("}");
+  const a2=t.indexOf("["), b2=t.lastIndexOf("]");
+  let slice = (a2>=0 && (a<0 || a2<a)) ? t.slice(a2,b2+1) : t.slice(a,b+1);
+  return JSON.parse(slice);
+}
+// Grade free text: returns {score 0-100, feedback, ai:bool}
+async function gradeFreeText(kind, item, answer){
+  const ref = item.reference;
+  if(endpoint()){
+    try{
+      const sys="You are a strict but fair Python tutor grading a student's short answer. Respond with ONLY compact JSON: {\"score\": <0-100>, \"feedback\": \"<one or two sentences>\"}. Score by whether they captured the key idea, not exact wording.";
+      const p=`Task type: ${kind}.\nCode:\n${item.code}\n\nReference answer (the key idea): ${ref}\n\nStudent answer: ${answer}\n\nGrade it.`;
+      const txt=await aiCall(sys,p,300);
+      const j=extractJSON(txt);
+      const score=Math.max(0,Math.min(100, Number(j.score)||0));
+      return {score, feedback:String(j.feedback||"").slice(0,400), ai:true};
+    }catch(e){ /* fall through to keyword */ }
+  }
+  // keyword fallback
+  const low=answer.toLowerCase();
+  const hits=item.keywords.filter(k=>low.includes(k.toLowerCase())).length;
+  const score=Math.round(Math.min(100, (hits/Math.max(2,item.keywords.length))*140));
+  return {score, feedback:`Matched ${hits} key idea${hits===1?"":"s"}. (Set an AI endpoint in Stats for real grading.) Reference: ${ref}`, ai:false};
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TRAIN VIEW
+   ═══════════════════════════════════════════════════════════════════════ */
+let curMode="predict", curDiff="any", curItem=null, curTrainConcepts=null, hintsShown=0;
+
+function chipRow(item, mode){
+  const modeLabel={predict:"Predict output",bug:"Spot the bug",traceback:"Read traceback",explain:"Explain code"}[mode];
+  return `<span class="chip mode">${modeLabel}</span>`+
+    `<span class="chip diff-${item.diff}">${item.diff}</span>`+
+    item.concepts.map(c=>`<span class="chip">${esc(CONCEPT_LABEL(c))}</span>`).join("");
+}
+
+function renderTrain(){
+  const cur=S.curriculum;
+  if(cur){
+    const wk=cur.weeks[cur.week];
+    $("curBanner").style.display="block";
+    $("curBanner").innerHTML=`Curriculum: <b style="color:var(--green)">${esc(cur.name)}</b> · Week ${cur.week+1} — ${esc(wk.name)} (${wk.progress||0}/${wk.target}). <a href="#" id="dropCurr" style="color:var(--muted)">free practice</a>`;
+    curTrainConcepts = wk.concepts;
+    $("dropCurr").onclick=(e)=>{e.preventDefault(); curTrainConcepts=null; S.curriculum=null; save(); renderTrain();};
   } else {
-    $("output").textContent =
-      (res.error ? res.error + "\n\n" : (res.output || "") + "\n\n") +
-      "✗ Not yet. Expected:\n" + c.expected;
-    $("output").className = "out bad";
+    $("curBanner").style.display="none"; curTrainConcepts=null;
   }
-};
+  nextQuestion();
+}
+function nextQuestion(){
+  hintsShown=0;
+  curItem=pickItem(curMode, curDiff, curTrainConcepts);
+  $("qChips").innerHTML=chipRow(curItem, curMode);
+  const body=$("qBody"); body.innerHTML="";
+  if(curMode==="predict") renderPredict(body, curItem);
+  else if(curMode==="bug") renderBug(body, curItem);
+  else if(curMode==="traceback") renderFreeText(body, curItem, "traceback", "Read the traceback. In your own words, what is the root cause?");
+  else renderFreeText(body, curItem, "explain", "In one or two sentences, what does this code do?");
+}
 
-/* ─── AI hint ──────────────────────────────────────────────────── */
-$("hintBtn").onclick = async () => {
-  const endpoint = (store.get(KEY_ENDPOINT, "") || "").trim();
-  $("hintWrap").style.display = "block";
-  if (!endpoint) {
-    $("hint").textContent = "No AI endpoint configured. Go to Stats → AI endpoint, paste your proxy URL, Save, then try again.";
-    $("hint").className = "out hintbox bad";
+function hintUI(item){
+  if(!item.hints || !item.hints.length) return "";
+  return `<div class="row" style="margin-top:12px"><button class="btn ghost sm" id="hintBtn">💡 Hint (−5 XP)</button><span class="note" id="hintNote"></span></div><div id="hintList"></div>`;
+}
+function wireHints(item){
+  const b=$("hintBtn"); if(!b) return;
+  b.onclick=()=>{
+    if(hintsShown>=item.hints.length){ return; }
+    if(S.xp>=5){ S.xp-=5; save(); renderHeader(); }
+    const h=item.hints[hintsShown++];
+    $("hintList").appendChild(el("div","hintbox","💡 "+esc(h)));
+    $("hintNote").textContent = `${hintsShown}/${item.hints.length} shown`;
+    if(hintsShown>=item.hints.length) b.disabled=true;
+  };
+}
+function penalty(){ return hintsShown*5; }
+
+function renderPredict(body, item){
+  body.innerHTML = codeBlock(item.code, "predict.py") +
+    `<div class="lbl">Type the exact stdout</div>`+
+    `<textarea id="ansOut" placeholder="what does it print?" style="min-height:90px"></textarea>`+
+    hintUI(item)+
+    `<div class="row" style="margin-top:12px"><button class="btn primary" id="submitBtn">Check answer</button><button class="btn ghost" id="skipBtn">Skip →</button></div>`+
+    `<div id="result"></div>`;
+  wireHints(item);
+  $("skipBtn").onclick=nextQuestion;
+  const ta=$("ansOut"); ta.focus();
+  ta.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){ $("submitBtn").click(); }});
+  $("submitBtn").onclick=()=>{
+    const got=ta.value.replace(/\s+$/g,"").replace(/\r/g,"");
+    const want=item.out.replace(/\s+$/g,"");
+    const ok = got===want;
+    recordAnswer(item, ok);
+    const r=$("result");
+    if(ok){
+      const base=20, xp=Math.max(5, base-penalty());
+      r.innerHTML=`<div class="verdict good">✓ Correct.</div><div class="out good">${esc(item.out)}</div>`;
+      awardXP(xp, "Predict");
+    } else {
+      r.innerHTML=`<div class="verdict bad">✗ Not quite.</div><div class="lbl" style="margin-top:8px">Actual output</div><div class="out good">${esc(item.out)}</div>`;
+      awardXP(2, "Keep going");
+    }
+    r.innerHTML+=`<div class="row" style="margin-top:12px"><button class="btn primary" id="nextBtn">Next question →</button><button class="btn ghost sm" id="runReal">▶ Run it in real Python</button></div><div id="runOut"></div>`;
+    $("submitBtn").disabled=true; ta.disabled=true; if($("hintBtn"))$("hintBtn").disabled=true;
+    $("nextBtn").onclick=nextQuestion;
+    $("runReal").onclick=async()=>{ $("runOut").innerHTML=`<div class="lbl" style="margin-top:10px">Real CPython (Pyodide)</div><div class="out" id="ro">Running…</div>`; const res=await pyRun(item.code); $("ro").textContent=res.out+(res.err?("\n"+res.err):""); $("ro").className="out "+(res.err?"bad":"good"); };
+  };
+}
+
+function renderBug(body, item){
+  body.innerHTML = codeBlock(item.code, "buggy.py")+
+    `<div class="lbl">What's the bug?</div>`+
+    `<div class="choices" id="choices">${item.choices.map((c,idx)=>`<button class="choice" data-i="${idx}"><span class="k">${String.fromCharCode(65+idx)}</span><span>${esc(c)}</span></button>`).join("")}</div>`+
+    hintUI(item)+
+    `<div id="result"></div>`;
+  wireHints(item);
+  let done=false;
+  body.querySelectorAll(".choice").forEach(btn=>{
+    btn.onclick=()=>{
+      if(done)return; done=true;
+      const pick=Number(btn.dataset.i); const ok=pick===item.answer;
+      body.querySelectorAll(".choice").forEach(b=>{ const i=Number(b.dataset.i); b.disabled=true; if(i===item.answer)b.classList.add("correct"); if(i===pick&&!ok)b.classList.add("wrong"); });
+      recordAnswer(item, ok);
+      const r=$("result");
+      r.innerHTML=`<div class="verdict ${ok?"good":"bad"}">${ok?"✓ Nailed it.":"✗ That's not it."}</div><div class="hintbox" style="border-color:var(--green)">${esc(item.explain)}</div><div class="row" style="margin-top:12px"><button class="btn primary" id="nextBtn">Next question →</button></div>`;
+      if(item.hints&&$("hintBtn"))$("hintBtn").disabled=true;
+      awardXP(ok?Math.max(5,15-penalty()):2, ok?"Spot the bug":"Keep going");
+      $("nextBtn").onclick=nextQuestion;
+    };
+  });
+}
+
+function renderFreeText(body, item, kind, prompt){
+  const tb = kind==="traceback" ? `<div class="lbl" style="margin-top:12px">Traceback</div><div class="out bad" style="margin-bottom:2px">${esc(item.tb)}</div>` : "";
+  body.innerHTML = codeBlock(item.code, kind+".py")+ tb +
+    `<div class="lbl" style="margin-top:12px">${esc(prompt)}</div>`+
+    `<textarea id="ansText" placeholder="explain in plain English…"></textarea>`+
+    hintUI(item)+
+    `<div class="row" style="margin-top:12px"><button class="btn primary" id="submitBtn">Submit for grading</button><button class="btn ghost" id="skipBtn">Skip →</button></div>`+
+    `<div id="result"></div>`;
+  wireHints(item);
+  $("skipBtn").onclick=nextQuestion;
+  $("ansText").focus();
+  $("submitBtn").onclick=async()=>{
+    const ans=$("ansText").value.trim();
+    if(ans.length<3){ $("result").innerHTML=`<div class="note" style="margin-top:8px">Write a little more first.</div>`; return; }
+    $("submitBtn").disabled=true; $("submitBtn").textContent="Grading…";
+    const g=await gradeFreeText(kind, item, ans);
+    const ok=g.score>=60;
+    recordAnswer(item, ok);
+    const xp = ok ? Math.max(6, (kind==="traceback"?25:22) - penalty()) : (g.score>=35?6:2);
+    const r=$("result");
+    r.innerHTML=`<div class="verdict ${ok?"good":"bad"}">${ok?"✓":"✗"} Score: ${g.score}/100 ${g.ai?"":'<span class="note">(keyword grade)</span>'}</div>`+
+      `<div class="hintbox" style="border-color:${ok?"var(--green)":"var(--amber)"}">${esc(g.feedback)}</div>`+
+      `<div class="lbl" style="margin-top:10px">Reference</div><div class="out">${esc(item.reference)}</div>`+
+      `<div class="row" style="margin-top:12px"><button class="btn primary" id="nextBtn">Next question →</button></div>`;
+    if($("hintBtn"))$("hintBtn").disabled=true;
+    awardXP(xp, kind==="traceback"?"Traceback":"Explain");
+    $("nextBtn").onclick=nextQuestion;
+  };
+}
+
+/* mode / diff segmented controls */
+function wireSeg(segId, attr, cb){
+  $(segId).querySelectorAll("button").forEach(b=>{
+    b.onclick=()=>{ $(segId).querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); cb(b.dataset[attr]); };
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CURRICULUM VIEW
+   ═══════════════════════════════════════════════════════════════════════ */
+function setCurriculum(cur){
+  S.curriculum = {name:cur.name, week:0, weeks:cur.weeks.map(w=>({name:w.name, concepts:w.concepts, target:w.target, progress:0}))};
+  save(); renderCurriculum();
+}
+function renderCurriculum(){
+  const cur=S.curriculum;
+  if(!cur){ $("currCard").style.display="none"; return; }
+  $("currCard").style.display="block";
+  $("currName").innerHTML=`${esc(cur.name)} <span class="note" style="text-transform:none; letter-spacing:0">· ${cur.weeks.length} weeks</span>`;
+  const list=$("weekList"); list.innerHTML="";
+  cur.weeks.forEach((w,i)=>{
+    const state = i<cur.week?"done" : i===cur.week?"cur" : "locked";
+    const box=el("div","week "+(i>cur.week?"locked":i===cur.week?"current":""));
+    const pct=Math.min(100, ((w.progress||0)/w.target)*100);
+    box.innerHTML=`<div class="wtop"><span class="wn">Week ${i+1} — ${esc(w.name)}</span><span class="wstate ${state==="done"?"done":state==="cur"?"cur":""}">${state==="done"?"mastered":state==="cur"?"in progress":"locked"}</span></div>`+
+      `<div class="wtrack"><i style="width:${pct}%"></i></div>`+
+      `<div class="chips">${w.concepts.map(c=>`<span class="chip">${esc(CONCEPT_LABEL(c))}</span>`).join("")}</div>`+
+      `<div class="note" style="margin-top:8px">${w.progress||0} / ${w.target} mastered</div>`;
+    list.appendChild(box);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BOSS ROUND
+   ═══════════════════════════════════════════════════════════════════════ */
+let boss=null;
+function startBoss(){
+  const pool=PREDICT.slice();
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  boss={items:pool.slice(0,6), idx:0, xp:0, correct:0, time:100, timer:null};
+  $("bossIntro").style.display="none"; $("bossDone").style.display="none"; $("bossPlay").style.display="block";
+  boss.timer=setInterval(()=>{
+    boss.time--; updateBossTimer();
+    if(boss.time<=0) endBoss();
+  },1000);
+  updateBossTimer(); bossQuestion();
+}
+function updateBossTimer(){
+  $("bossTimer").textContent=Math.max(0,boss.time);
+  $("bossTimerbar").style.width=Math.max(0,(boss.time/100)*100)+"%";
+  $("bossScore").textContent=boss.xp+" XP";
+  $("bossCount").textContent=`${Math.min(boss.idx+1,6)} / 6`;
+}
+function bossQuestion(){
+  if(boss.idx>=boss.items.length){ endBoss(); return; }
+  const item=boss.items[boss.idx];
+  $("bossBody").innerHTML = codeBlock(item.code,"boss.py")+
+    `<textarea id="bossAns" placeholder="exact stdout…" style="min-height:80px"></textarea>`+
+    `<div class="row" style="margin-top:10px"><button class="btn ox" id="bossSubmit">Submit</button><span class="note">Enter ↵ to submit · Ctrl+Enter too</span></div>`;
+  const ta=$("bossAns"); ta.focus();
+  ta.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); $("bossSubmit").click(); }});
+  $("bossSubmit").onclick=()=>{
+    const ok=ta.value.replace(/\s+$/g,"")===item.out.replace(/\s+$/g,"");
+    if(ok){ boss.xp+=15; boss.correct++; }
+    recordAnswer(item, ok);
+    boss.idx++; updateBossTimer(); bossQuestion();
+  };
+}
+function endBoss(){
+  if(!boss) return; clearInterval(boss.timer);
+  const bonus=Math.max(0, boss.time);
+  const total=boss.xp+bonus;
+  S.xp+=total; markActive(); save(); renderHeader();
+  $("bossPlay").style.display="none"; $("bossDone").style.display="block";
+  $("bossResult").textContent=`+${total} XP`;
+  $("bossSummary").textContent=`${boss.correct}/6 correct · ${boss.xp} base + ${bonus} speed bonus.`;
+  boss=null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DAILY
+   ═══════════════════════════════════════════════════════════════════════ */
+function seededIndex(str, n){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return Math.abs(h)%n; }
+function renderDaily(){
+  const day=todayKey();
+  $("dailyDate").textContent="◷ "+day;
+  if(S.daily.day!==day){ S.daily={day, done:false}; save(); }
+  const item=PREDICT[seededIndex(day, PREDICT.length)];
+  const body=$("dailyBody");
+  if(S.daily.done){
+    body.innerHTML=`<div class="verdict good">✓ Today's challenge is complete.</div><div class="note">Come back tomorrow for a fresh one. Streak: 🔥 ${S.streak}</div>`;
     return;
   }
-  const c = CHALLENGES[idx];
-  $("hint").textContent = "Thinking…";
-  $("hint").className = "out hintbox";
-  const prompt =
-    `I'm solving a Python debugging exercise: "${c.title}".\n` +
-    `The expected program output is:\n${c.expected}\n\n` +
-    `Here is my current code:\n\`\`\`python\n${editor.value}\n\`\`\`\n\n` +
-    `Give me ONE concise hint about the bug. Do not paste the full corrected code.`;
-  try {
-    const r = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ system: "You are a patient Python debugging tutor. Reply in 1-3 sentences.", prompt }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-    $("hint").textContent = data.text || "(empty response)";
-  } catch (e) {
-    $("hint").textContent = "Hint failed: " + (e.message || e) + "\nCheck Stats → AI endpoint and Test connection.";
-    $("hint").className = "out hintbox bad";
-  }
-};
-
-/* ─── Stats + endpoint config ──────────────────────────────────── */
-function renderStats() {
-  $("statSolved").textContent = Object.keys(progress.solved).filter((k) => progress.solved[k]).length;
-  $("statTotal").textContent = CHALLENGES.length;
-  $("statStreak").textContent = progress.streak;
-  $("statRuns").textContent = progress.runs;
-  $("aiEndpoint").value = store.get(KEY_ENDPOINT, "");
+  body.innerHTML=`<div class="chips" style="margin-bottom:4px"><span class="chip mode">Predict output</span><span class="chip diff-${item.diff}">${item.diff}</span><span class="chip" style="color:var(--amber)">Double XP</span></div>`+
+    codeBlock(item.code,"daily.py")+
+    `<textarea id="dailyAns" placeholder="exact stdout…" style="min-height:90px"></textarea>`+
+    `<div class="row" style="margin-top:10px"><button class="btn ox" id="dailySubmit">Submit</button></div><div id="dailyResult"></div>`;
+  $("dailySubmit").onclick=()=>{
+    const ok=$("dailyAns").value.replace(/\s+$/g,"")===item.out.replace(/\s+$/g,"");
+    recordAnswer(item, ok);
+    S.daily.done=true; save();
+    const r=$("dailyResult");
+    if(ok){ r.innerHTML=`<div class="verdict good" style="margin-top:10px">✓ Correct!</div>`; awardXP(40,"Daily · double XP"); }
+    else { r.innerHTML=`<div class="verdict bad" style="margin-top:10px">✗ Not quite.</div><div class="lbl">Actual</div><div class="out good">${esc(item.out)}</div>`; awardXP(4,"Daily"); }
+    $("dailySubmit").disabled=true; $("dailyAns").disabled=true;
+  };
 }
 
-$("saveEndpoint").onclick = () => {
-  const v = $("aiEndpoint").value.trim();
-  store.set(KEY_ENDPOINT, v);
-  const s = $("endpointStatus");
-  s.textContent = v ? "Saved." : "Cleared.";
-  s.className = "good";
-};
+/* ═══════════════════════════════════════════════════════════════════════
+   PYODIDE (Lab + real-run)
+   ═══════════════════════════════════════════════════════════════════════ */
+let pyodide=null, pyLoading=null;
+async function ensurePy(){
+  if(pyodide) return pyodide;
+  if(pyLoading) return pyLoading;
+  $("pyStatus").textContent="Python: loading…";
+  pyLoading=(async()=>{
+    if(!window.loadPyodide){
+      await new Promise((res,rej)=>{ const s=document.createElement("script"); s.src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"; s.onload=res; s.onerror=()=>rej(new Error("Could not load Pyodide (needs internet).")); document.head.appendChild(s); });
+    }
+    pyodide=await window.loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.26.2/full/"});
+    $("pyStatus").textContent="Python: ready";
+    return pyodide;
+  })();
+  return pyLoading;
+}
+async function pyRun(src){
+  let py; try{ py=await ensurePy(); }catch(e){ return {out:"", err:String(e.message||e)}; }
+  try{
+    py.globals.set("_src", src);
+    const res=py.runPython(`
+import io, sys, traceback
+_buf=io.StringIO(); _old=sys.stdout; sys.stdout=_buf; _err=""
+try:
+    exec(compile(_src, "<lab>", "exec"), {})
+except Exception:
+    _err=traceback.format_exc()
+finally:
+    sys.stdout=_old
+(_buf.getvalue(), _err)
+`);
+    const out=res.get(0), err=res.get(1); res.destroy();
+    return {out, err};
+  }catch(e){ return {out:"", err:String(e.message||e)}; }
+}
+// Step-through: record (lineno, locals) via settrace
+async function pyTrace(src){
+  let py; try{ py=await ensurePy(); }catch(e){ return {error:String(e.message||e)}; }
+  py.globals.set("_src", src);
+  const res=py.runPython(`
+import sys, io, json
+_steps=[]; _lines=_src.split("\\n")
+def _tr(frame, event, arg):
+    if event=='line' and frame.f_code.co_filename=='<step>':
+        ln=frame.f_lineno
+        loc={}
+        for k,v in list(frame.f_locals.items()):
+            if k.startswith('__'): continue
+            try:
+                r=repr(v)
+                loc[k]= r if len(r)<=60 else r[:57]+'...'
+            except Exception:
+                loc[k]='<unrepr>'
+        _steps.append({'line':ln, 'locals':loc})
+        if len(_steps)>400:
+            raise KeyboardInterrupt
+    return _tr
+_buf=io.StringIO(); _old=sys.stdout; sys.stdout=_buf; _err=""
+sys.settrace(_tr)
+try:
+    exec(compile(_src, "<step>", "exec"), {})
+except KeyboardInterrupt:
+    _err="(stopped after 400 steps)"
+except Exception as e:
+    import traceback; _err=traceback.format_exc()
+finally:
+    sys.settrace(None); sys.stdout=_old
+json.dumps({'steps':_steps, 'out':_buf.getvalue(), 'err':_err})
+`);
+  try{ return JSON.parse(res); }catch(e){ return {error:"trace failed"}; }
+}
 
-$("testEndpoint").onclick = async () => {
-  const v = $("aiEndpoint").value.trim();
-  const s = $("endpointStatus");
-  if (!v) { s.textContent = "Enter a URL first."; s.className = "bad"; return; }
-  store.set(KEY_ENDPOINT, v);
-  s.textContent = "Testing…"; s.className = "muted";
-  try {
-    const r = await fetch(v, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: "Reply with the single word: pong" }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-    s.textContent = "✔ Connected. Model replied: " + (data.text || "").slice(0, 40);
-    s.className = "good";
-  } catch (e) {
-    s.textContent = "✗ " + (e.message || e);
-    s.className = "bad";
+/* ═══════════════════════════════════════════════════════════════════════
+   LAB
+   ═══════════════════════════════════════════════════════════════════════ */
+let stepData=null, stepIdx=0;
+function wireLab(){
+  $("labRun").onclick=async()=>{
+    $("labStepper").style.display="none";
+    $("labOut").textContent="Running…"; $("labOut").className="out"; $("labAI").innerHTML="";
+    const res=await pyRun($("labCode").value);
+    $("labOut").textContent=(res.out||"")+(res.err?("\n"+res.err):"")|| "(no output)";
+    $("labOut").className="out "+(res.err?"bad":"good");
+  };
+  $("labStep").onclick=async()=>{
+    $("labOut").textContent="Tracing…"; $("labOut").className="out"; $("labAI").innerHTML="";
+    const data=await pyTrace($("labCode").value);
+    if(data.error){ $("labOut").textContent=data.error; $("labOut").className="out bad"; return; }
+    stepData=data; stepIdx=0;
+    $("labOut").textContent=data.out||"(no output yet)"; $("labOut").className="out";
+    renderStepper();
+  };
+  $("labExplain").onclick=async()=>{
+    $("labAI").innerHTML=`<div class="lbl" style="margin-top:14px">AI explanation</div><div class="out" id="aiExp">Thinking…</div>`;
+    try{
+      const txt=await aiCall("You are a concise Python mentor. Explain what the given code does, then note any subtle behaviour or bug. Use 3-5 short sentences.", $("labCode").value, 500);
+      $("aiExp").textContent=txt;
+    }catch(e){ $("aiExp").className="out bad"; $("aiExp").textContent = e.message==="no-endpoint" ? "Set an AI endpoint in Stats first." : ("Failed: "+e.message); }
+  };
+  $("labBug").onclick=async()=>{
+    $("labAI").innerHTML=`<div class="lbl" style="margin-top:14px">Bug-hunt</div><div class="out" id="aiBug">Planting a bug…</div>`;
+    try{
+      const txt=await aiCall(
+        "You take working Python and introduce ONE subtle, realistic bug (e.g. off-by-one, wrong operator, mutation gotcha). Respond ONLY as JSON: {\"buggy\":\"<the code with one bug>\", \"hint\":\"<a nudge, not the answer>\"}.",
+        $("labCode").value, 700);
+      const j=extractJSON(txt);
+      $("labAI").innerHTML=`<div class="lbl" style="margin-top:14px">🐛 Find the planted bug</div>`+codeBlock(j.buggy||"","bug-hunt.py")+`<div class="hintbox">💡 ${esc(j.hint||"Compare carefully with your original.")}</div><div class="note" style="margin-top:8px">Paste it above and Run/Step to hunt it down.</div>`;
+    }catch(e){ $("labAI").innerHTML=`<div class="out bad">${e.message==="no-endpoint"?"Set an AI endpoint in Stats first.":("Failed: "+esc(e.message))}</div>`; }
+  };
+}
+function renderStepper(){
+  const d=stepData; if(!d||!d.steps.length){ $("labStepper").style.display="none"; return; }
+  $("labStepper").style.display="block";
+  const st=d.steps[stepIdx];
+  const codeLines=$("labCode").value.split("\n");
+  const pre = codeLines.map((l,i)=>`<span class="ln ${i+1===st.line?"hl":""}">${hl(l).replace(/^<span class="ln">|<\/span>$/g,"")||" "}</span>`).join("");
+  const locals=Object.keys(st.locals).length? Object.entries(st.locals).map(([k,v])=>`${k} = ${esc(v)}`).join("\n") : "(no locals yet)";
+  $("labStepper").innerHTML=`<div class="lbl"><span class="g">▸</span> Step ${stepIdx+1} / ${d.steps.length} · line ${st.line}</div>`+
+    `<div class="code"><div class="bar"><span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span><span class="fn">step.py</span></div><pre>${pre}</pre></div>`+
+    `<div class="lbl">Locals</div><div class="out">${esc(locals)}</div>`+
+    `<div class="row" style="margin-top:10px"><button class="btn ghost sm" id="stepPrev" ${stepIdx===0?"disabled":""}>‹ Back</button><button class="btn primary sm" id="stepNext" ${stepIdx>=d.steps.length-1?"disabled":""}>Step ›</button><span class="note">line ${st.line}</span></div>`;
+  $("stepPrev").onclick=()=>{ if(stepIdx>0){stepIdx--; renderStepper();} };
+  $("stepNext").onclick=()=>{ if(stepIdx<d.steps.length-1){stepIdx++; renderStepper();} };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   STATS
+   ═══════════════════════════════════════════════════════════════════════ */
+function renderStats(){
+  const li=levelInfo(S.xp);
+  $("sLevel").innerHTML=`<span class="g">${li.level}</span>`;
+  $("sXP").textContent=S.xp;
+  $("sStreak").textContent=S.streak;
+  $("sAnswered").textContent=S.answered;
+  $("sAcc").textContent = S.answered? Math.round((S.correct/S.answered)*100)+"%" : "—";
+  const bars=$("conceptBars"); bars.innerHTML="";
+  const rows=ALL_CONCEPTS.map(c=>({c, cc:S.concept[c]})).sort((a,b)=>{
+    const sa=a.cc?a.cc.strength:0.5, sb=b.cc?b.cc.strength:0.5; return sa-sb;
+  });
+  for(const {c,cc} of rows){
+    const strength=cc?cc.strength:0.5; const seen=cc?cc.seen:0;
+    const row=el("div","cbar");
+    row.innerHTML=`<span class="cn">${esc(CONCEPT_LABEL(c))}</span><span class="ct"><i style="width:${Math.round(strength*100)}%"></i></span><span class="cp">${seen?Math.round(strength*100)+"%":"—"}</span>`;
+    bars.appendChild(row);
   }
+  $("aiEndpoint").value = endpoint();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   NAV + WIRING
+   ═══════════════════════════════════════════════════════════════════════ */
+function show(view){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active", v.id===view));
+  if(view==="train") renderTrain();
+  if(view==="curriculum") renderCurriculum();
+  if(view==="daily") renderDaily();
+  if(view==="stats") renderStats();
+  if(view==="boss"){ /* intro shown by default */ }
+}
+$("tabs").querySelectorAll("button").forEach(b=> b.onclick=()=>show(b.dataset.view));
+
+wireSeg("modeSeg","mode", m=>{ curMode=m; $("modeSeg").querySelectorAll("button").forEach(x=>x.removeAttribute("data-tone")); const act=$("modeSeg").querySelector(".active"); act.setAttribute("data-tone","green"); nextQuestion(); });
+wireSeg("diffSeg","diff", d=>{ curDiff=d; nextQuestion(); });
+
+// Curriculum controls
+$("presetSeg").querySelectorAll("button").forEach(b=> b.onclick=()=>{ $("presetSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); setCurriculum(PRESETS[b.dataset.preset]); });
+$("clearCurr").onclick=()=>{ S.curriculum=null; save(); renderCurriculum(); $("presetSeg").querySelectorAll("button").forEach(x=>x.classList.remove("active")); };
+$("trainCurr").onclick=()=>{ show("train"); };
+$("genCurr").onclick=async()=>{
+  const goal=$("goalInput").value.trim();
+  if(!goal){ $("genNote").textContent="Describe a goal first."; return; }
+  if(!endpoint()){ $("genNote").innerHTML='Set an AI endpoint in <b>Stats</b> first.'; return; }
+  $("genNote").textContent="Generating plan…";
+  try{
+    const sys=`You design Python-debugging study plans. Choose ONLY from these concept tags: ${ALL_CONCEPTS.join(", ")}. Respond ONLY as JSON: {"name":"<plan name>","weeks":[{"name":"<week name>","concepts":["tag","tag"],"target":3}]}. 2-4 weeks, 2-4 concepts each.`;
+    const txt=await aiCall(sys, "Goal: "+goal, 700);
+    const j=extractJSON(txt);
+    // sanitise concepts to known tags
+    j.weeks=(j.weeks||[]).map(w=>({name:String(w.name||"Week"), target:Math.max(2,Math.min(6,Number(w.target)||3)), concepts:(w.concepts||[]).filter(c=>ALL_CONCEPTS.includes(c))})).filter(w=>w.concepts.length);
+    if(!j.weeks.length) throw new Error("no usable concepts returned");
+    setCurriculum({name:String(j.name||"Custom plan"), weeks:j.weeks});
+    $("genNote").textContent="Plan ready ↓";
+  }catch(e){ $("genNote").textContent="Generation failed: "+(e.message||e); }
 };
 
-$("resetProgress").onclick = () => {
-  if (!confirm("Reset all progress in this browser?")) return;
-  progress = { solved: {}, streak: 0, runs: 0, last: -1 };
-  store.setJSON(KEY_PROGRESS, progress);
-  renderStats();
-  loadChallenge(idx);
+// Boss
+$("startBoss").onclick=startBoss;
+$("bossAgain").onclick=startBoss;
+
+// AI endpoint
+$("saveEndpoint").onclick=()=>{ const v=$("aiEndpoint").value.trim(); try{localStorage.setItem(EP,v);}catch(e){} const s=$("endpointStatus"); s.textContent=v?"Saved.":"Cleared."; s.style.color="var(--green)"; };
+$("testEndpoint").onclick=async()=>{
+  const v=$("aiEndpoint").value.trim(); const s=$("endpointStatus");
+  if(!v){ s.textContent="Enter a URL first."; s.style.color="var(--red)"; return; }
+  try{localStorage.setItem(EP,v);}catch(e){}
+  s.textContent="Testing…"; s.style.color="var(--muted)";
+  try{ const txt=await aiCall("Reply with one word.", "Reply with the single word: pong", 20); s.textContent="✓ Connected — "+txt.slice(0,30); s.style.color="var(--green)"; }
+  catch(e){ s.textContent="✗ "+(e.message==="no-endpoint"?"no URL":e.message); s.style.color="var(--red)"; }
 };
 
-/* ─── Boot ─────────────────────────────────────────────────────── */
-loadChallenge(progress.last >= 0 ? progress.last : 0);
-renderStats();
+// Export / import / reset
+$("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a=el("a"); a.href=URL.createObjectURL(blob); a.download="pydojo-progress.json"; a.click(); URL.revokeObjectURL(a.href);
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{ try{ S=Object.assign(defaultState(), JSON.parse(r.result)); save(); renderHeader(); renderStats(); toast("Imported","progress restored"); }catch(err){ alert("Invalid progress file."); } };
+  r.readAsText(f);
+};
+$("resetBtn").onclick=()=>{ if(confirm("Erase all progress in this browser?")){ S=defaultState(); save(); renderHeader(); renderStats(); toast("Reset","fresh start"); } };
+
+wireLab();
+
+/* ── boot ── */
+renderHeader();
+renderTrain();
 </script>
 </body>
 </html>
