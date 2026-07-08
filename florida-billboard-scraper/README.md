@@ -68,6 +68,27 @@ python scraper.py --oda-file ODAData.xlsx --out florida.xlsx
 | `--oda-file` | *(none)* | Parse a hand-downloaded FDOT ODA Excel |
 | `--csv` | *(off)* | Also write CSV; bare flag = alongside the `.xlsx`, or give a path |
 
+## National dataset — top-10 US cities
+
+Beyond Florida, the tool ships a national dataset of billboard companies across
+the **top-10 US cities by population** (New York, Los Angeles, Chicago, Houston,
+Phoenix, Philadelphia, San Antonio, San Diego, Dallas, Jacksonville):
+
+```bash
+python scraper.py --dataset national --csv
+# → data/us_top_cities_billboard_companies.xlsx (+ .csv)
+```
+
+17 companies: the big three (Lamar, Clear Channel, OUTFRONT — highlighted and
+listed first) plus multi-market networks (New Tradition, Capitol Outdoor,
+Brooklyn Outdoor, Digital Outdoor Advertising) and market-specific operators
+(SignAd/Texas, Becker Boards/Phoenix, American Outdoor/San Diego, etc.). Each row
+lists which of the top-10 cities the company serves. Source: `fbscraper/national.py`.
+
+> Note: unlike Florida (FDOT licensee database), there is **no single national
+> permit registry**, so local operators are gathered market by market — the list
+> is representative, not exhaustive.
+
 ## Getting the authoritative FDOT list
 
 FDOT licenses every legal billboard in Florida. If the live scraper can't reach
@@ -103,7 +124,8 @@ florida-billboard-scraper/
   requirements.txt
   fbscraper/
     models.py                Company dataclass, columns, dedupe
-    seed.py                  verified starter dataset (Palm Beach first)
+    seed.py                  verified FL starter dataset (Palm Beach first)
+    national.py              top-10 US cities dataset (--dataset national)
     fdot.py                  FDOT ODA licensees + monthly Excel scraper/parser
     foaa.py                  FOAA member-directory scraper
     pricing.py               market-average reference rates + disclaimer

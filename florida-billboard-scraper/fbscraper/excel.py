@@ -39,25 +39,29 @@ def _style_header(ws, ncols, row=1):
         cell.border = _BORDER
 
 
-def _companies_sheet(ws, companies: List[Company], title: str):
+def _companies_sheet(ws, companies: List[Company], title: str, subtitle: str | None = None,
+                     headers: dict | None = None, highlight_key: str = "serves_palm_beach",
+                     highlight_match: str = "yes"):
+    headers = headers or HEADERS
     ncols = len(COLUMNS)
     # Title band
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=ncols)
     ws.cell(row=1, column=1, value=title).font = _TITLE_FONT
     ws.cell(row=1, column=1).alignment = Alignment(vertical="center")
     ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=ncols)
-    ws.cell(row=2, column=1,
-            value=f"{len(companies)} companies · Palm Beach County first · "
-                  "prices are quote-only (see Pricing Reference tab)").font = _SUB_FONT
+    if subtitle is None:
+        subtitle = (f"{len(companies)} companies · Palm Beach County first · "
+                    "prices are quote-only (see Pricing Reference tab)")
+    ws.cell(row=2, column=1, value=subtitle).font = _SUB_FONT
 
     header_row = 4
     for i, key in enumerate(COLUMNS, start=1):
-        ws.cell(row=header_row, column=i, value=HEADERS[key])
+        ws.cell(row=header_row, column=i, value=headers[key])
     _style_header(ws, ncols, row=header_row)
 
     for r, comp in enumerate(companies, start=header_row + 1):
         row = comp.as_row()
-        is_pb = (comp.serves_palm_beach or "").strip().lower() == "yes"
+        is_pb = (getattr(comp, highlight_key, "") or "").strip().lower() == highlight_match
         for i, val in enumerate(row, start=1):
             cell = ws.cell(row=r, column=i, value=val)
             cell.alignment = Alignment(vertical="top", wrap_text=True)
@@ -104,38 +108,56 @@ def _about_sheet(ws, notes: List[str]):
         cell.font = Font(size=11)
 
 
-def sort_companies(companies: List[Company]) -> List[Company]:
-    """Palm Beach first, then by confidence, then name."""
+def sort_companies(companies: List[Company], highlight_key: str = "serves_palm_beach",
+                   highlight_match: str = "yes") -> List[Company]:
+    """Highlighted rows first, then by confidence, then name."""
     conf_rank = {"High": 0, "Medium": 1, "Low": 2}
     return sorted(
         companies,
         key=lambda c: (
-            0 if (c.serves_palm_beach or "").lower() == "yes" else 1,
+            0 if (getattr(c, highlight_key, "") or "").lower() == highlight_match else 1,
             conf_rank.get(c.confidence, 3),
             c.company_name.lower(),
         ),
     )
 
 
-def write_csv(companies: List[Company], path: str) -> str:
+def _resolve_headers(header_overrides: dict | None) -> dict:
+    hdrs = dict(HEADERS)
+    if header_overrides:
+        hdrs.update(header_overrides)
+    return hdrs
+
+
+def write_csv(companies: List[Company], path: str, header_overrides: dict | None = None,
+              highlight_key: str = "serves_palm_beach", highlight_match: str = "yes") -> str:
     """Write companies to a UTF-8 CSV (same column order as the workbook)."""
-    companies = sort_companies(companies)
+    companies = sort_companies(companies, highlight_key, highlight_match)
+    hdrs = _resolve_headers(header_overrides)
     with open(path, "w", newline="", encoding="utf-8-sig") as fh:
         writer = csv.writer(fh)
-        writer.writerow([HEADERS[c] for c in COLUMNS])
+        writer.writerow([hdrs[c] for c in COLUMNS])
         for comp in companies:
             writer.writerow(comp.as_row())
     return path
 
 
-def write_workbook(companies: List[Company], path: str, about: List[str] | None = None):
+def write_workbook(companies: List[Company], path: str, about: List[str] | None = None,
+                   title: str = "Florida Billboard / Outdoor Advertising Companies",
+                   subtitle: str | None = None,
+                   sheet_name: str = "FL Billboard Companies",
+                   header_overrides: dict | None = None,
+                   highlight_key: str = "serves_palm_beach",
+                   highlight_match: str = "yes"):
     """Write companies + pricing + about sheets to `path`."""
-    companies = sort_companies(companies)
+    companies = sort_companies(companies, highlight_key, highlight_match)
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "FL Billboard Companies"
-    _companies_sheet(ws, companies, "Florida Billboard / Outdoor Advertising Companies")
+    ws.title = sheet_name
+    _companies_sheet(ws, companies, title, subtitle=subtitle,
+                     headers=_resolve_headers(header_overrides),
+                     highlight_key=highlight_key, highlight_match=highlight_match)
 
     _pricing_sheet(wb.create_sheet("Pricing Reference"))
 
