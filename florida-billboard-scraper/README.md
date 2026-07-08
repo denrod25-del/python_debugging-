@@ -20,13 +20,19 @@ the top. There are three tabs: **companies**, **Pricing Reference**, **About**.
 
 A ready-made workbook is already checked in at
 [`data/florida_billboard_companies.xlsx`](data/florida_billboard_companies.xlsx)
-(28 companies, 15 serving Palm Beach).
+(35 companies, 17 serving Palm Beach), with a matching
+[`.csv`](data/florida_billboard_companies.csv).
+
+```bash
+# Also emit a CSV (alongside the .xlsx, or pass an explicit path):
+python scraper.py --out data/florida_billboard_companies.xlsx --csv
+```
 
 ## Data sources
 
 | Source | What it gives you | Notes |
 |--------|-------------------|-------|
-| **Built-in seed set** (`fbscraper/seed.py`) | 28 verified companies from public listings / company sites / FOAA / cost guides | Always works, no network needed. Palm Beach-first. |
+| **Built-in seed set** (`fbscraper/seed.py`) | 35 verified companies from public listings / company sites / FOAA / cost guides | Always works, no network needed. Palm Beach-first. |
 | **FDOT ODA database** (`fbscraper/fdot.py`) | The **authoritative** list of every state-licensed permit holder, with counties | Definitive, but `*.fdot.gov` is often blocked on corporate/cloud networks and sits behind a WAF — run from a normal network. |
 | **FOAA member directory** (`fbscraper/foaa.py`) | Active operators grouped by region | Wix-hosted; may 403 non-browser clients on some networks. |
 
@@ -60,6 +66,7 @@ python scraper.py --oda-file ODAData.xlsx --out florida.xlsx
 | `--county` | *(none)* | Filter to a county, e.g. `"Palm Beach"` |
 | `--sources` | `seed,fdot,foaa` | Any comma combo of `seed`, `fdot`, `foaa` |
 | `--oda-file` | *(none)* | Parse a hand-downloaded FDOT ODA Excel |
+| `--csv` | *(off)* | Also write CSV; bare flag = alongside the `.xlsx`, or give a path |
 
 ## Getting the authoritative FDOT list
 
@@ -103,6 +110,7 @@ florida-billboard-scraper/
     excel.py                 formatted multi-sheet workbook writer
   data/
     florida_billboard_companies.xlsx   generated output (checked in)
+    florida_billboard_companies.csv    same data as CSV (checked in)
 ```
 
 ## Disclaimer

@@ -1,6 +1,7 @@
 """Write the collected companies to a formatted, multi-sheet Excel workbook."""
 from __future__ import annotations
 
+import csv
 from typing import List
 
 from openpyxl import Workbook
@@ -103,11 +104,10 @@ def _about_sheet(ws, notes: List[str]):
         cell.font = Font(size=11)
 
 
-def write_workbook(companies: List[Company], path: str, about: List[str] | None = None):
-    """Write companies + pricing + about sheets to `path`."""
-    # Palm Beach companies first, then by confidence, then name.
+def sort_companies(companies: List[Company]) -> List[Company]:
+    """Palm Beach first, then by confidence, then name."""
     conf_rank = {"High": 0, "Medium": 1, "Low": 2}
-    companies = sorted(
+    return sorted(
         companies,
         key=lambda c: (
             0 if (c.serves_palm_beach or "").lower() == "yes" else 1,
@@ -115,6 +115,22 @@ def write_workbook(companies: List[Company], path: str, about: List[str] | None 
             c.company_name.lower(),
         ),
     )
+
+
+def write_csv(companies: List[Company], path: str) -> str:
+    """Write companies to a UTF-8 CSV (same column order as the workbook)."""
+    companies = sort_companies(companies)
+    with open(path, "w", newline="", encoding="utf-8-sig") as fh:
+        writer = csv.writer(fh)
+        writer.writerow([HEADERS[c] for c in COLUMNS])
+        for comp in companies:
+            writer.writerow(comp.as_row())
+    return path
+
+
+def write_workbook(companies: List[Company], path: str, about: List[str] | None = None):
+    """Write companies + pricing + about sheets to `path`."""
+    companies = sort_companies(companies)
 
     wb = Workbook()
     ws = wb.active

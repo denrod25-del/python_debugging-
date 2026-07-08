@@ -127,6 +127,9 @@ def main() -> int:
                    help="Comma list of: seed, fdot, foaa (default: all)")
     p.add_argument("--oda-file", default=None,
                    help="Path to a hand-downloaded FDOT ODA monthly Excel to parse")
+    p.add_argument("--csv", nargs="?", const="__auto__", default=None,
+                   help="Also write a CSV. Give a path, or pass --csv alone to "
+                        "write alongside the .xlsx with a .csv extension.")
     args = p.parse_args()
 
     sources = [s.strip().lower() for s in args.sources.split(",") if s.strip()]
@@ -140,6 +143,13 @@ def main() -> int:
     path = excel_mod.write_workbook(companies, args.out, about=about)
     pb = sum(1 for c in companies if (c.serves_palm_beach or "").lower() == "yes")
     print(f"\n✓ Wrote {len(companies)} companies ({pb} serving Palm Beach) → {path}")
+
+    if args.csv is not None:
+        csv_path = args.csv
+        if csv_path == "__auto__":
+            csv_path = args.out.rsplit(".", 1)[0] + ".csv"
+        excel_mod.write_csv(companies, csv_path)
+        print(f"✓ Wrote CSV → {csv_path}")
     return 0
 
 
