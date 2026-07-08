@@ -291,7 +291,256 @@ NATIONAL_SEED: List[Company] = [
         source="medialeaseooh.com; WebSearch 2026-07-08",
         confidence="Medium",
     ),
+
+    # ================================================================== #
+    # NEW YORK CITY — deep-dive roster (highly fragmented market)
+    # ================================================================== #
+    Company(
+        company_name="JCDecaux",
+        company_type=TYPE_NATIONAL,
+        primary_market="Transit & street furniture: NYC bus shelters, JFK & LGA airports",
+        counties_served="New York; Los Angeles; Chicago",
+        serves_palm_beach="Yes",
+        city="New York",
+        state="NY",
+        website="https://www.jcdecaux.com/",
+        pricing_reference="Street furniture / airport / transit — quote only",
+        notes="Exclusive NYC bus-shelter network + JFK/LGA airport advertising; global OOH leader.",
+        source="WebSearch 2026-07-08",
+        confidence="High",
+    ),
+    Company(
+        company_name="Branded Cities Network",
+        company_type=TYPE_NATIONAL,
+        primary_market="Times Square spectaculars + major-market landmarks",
+        counties_served="New York; Los Angeles; Chicago",
+        serves_palm_beach="Yes",
+        website="https://www.brandedcities.com/",
+        pricing_reference="Spectacular / landmark placements — quote only, high-end",
+        notes="Operates marquee Times Square spectaculars and other landmark displays.",
+        source="WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Intersection",
+        company_type=TYPE_NATIONAL,
+        primary_market="Transit & smart-city media (LinkNYC kiosks)",
+        counties_served="New York; Chicago; Philadelphia",
+        serves_palm_beach="Yes",
+        city="New York",
+        state="NY",
+        website="https://www.intersection.com/",
+        pricing_reference="Digital kiosk / transit — quote only",
+        notes="Runs LinkNYC kiosk network; transit & place-based media in multiple metros.",
+        source="WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="TSX Broadway (TSX Entertainment)",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Times Square (single landmark asset)",
+        counties_served="New York",
+        serves_palm_beach="No",
+        city="New York",
+        state="NY",
+        pricing_reference="Premium spectacular — quote only, very high-end",
+        notes="Flagship 18k-sq-ft curved LED at 47th & Broadway, Times Square.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Neutron Media",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="New York (digital billboards)",
+        counties_served="New York",
+        serves_palm_beach="No",
+        city="New York",
+        state="NY",
+        pricing_reference=_REF,
+        notes="Digital billboards in NYC's busiest corridors.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Heritage Outdoor Media",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="New York (Times Square digital)",
+        counties_served="New York",
+        serves_palm_beach="No",
+        city="New York",
+        state="NY",
+        pricing_reference="Times Square digital — quote only",
+        notes="Times Square LED billboard technology.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Pearl Media",
+        company_type=TYPE_REGIONAL,
+        primary_market="New York / Times Square + experiential",
+        counties_served="New York",
+        serves_palm_beach="No",
+        city="New York",
+        state="NY",
+        website="https://pearlmedia.com/",
+        pricing_reference="Times Square / experiential — quote only",
+        notes="Times Square billboards and experiential activations.",
+        source="pearlmedia.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Adams Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="New York DMA + mid-size US markets",
+        counties_served="New York",
+        serves_palm_beach="No",
+        pricing_reference=_REF,
+        notes="Traditional + digital billboards in high-visibility locations.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Rolling Adz Mobile Billboards",
+        company_type=TYPE_MOBILE,
+        primary_market="New York City (mobile)",
+        counties_served="New York",
+        serves_palm_beach="No",
+        city="New York",
+        state="NY",
+        website="https://rollingadz.com/",
+        pricing_reference="Mobile billboard — day/route rate, quote only",
+        notes="Mobile billboard fleet across NYC.",
+        source="rollingadz.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # HOUSTON — deep-dive roster
+    # ================================================================== #
+    Company(
+        company_name="Gilbreath Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Greater Houston + Texas Hill Country",
+        counties_served="Houston; San Antonio",
+        serves_palm_beach="No",
+        city="Houston",
+        state="TX",
+        website="https://www.gilbreathoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Houston-area operator with a Texas Hill Country satellite office.",
+        source="gilbreathoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="MH Outdoor Media",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Houston metro",
+        counties_served="Houston",
+        serves_palm_beach="No",
+        city="Houston",
+        state="TX",
+        pricing_reference=_REF,
+        notes="Local Houston billboard operator.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # NATIONAL BROKERS / MARKETPLACES (book inventory across all 10 cities)
+    # ================================================================== #
+    Company(
+        company_name="AdQuick",
+        company_type=TYPE_BROKER,
+        primary_market="Nationwide OOH marketplace",
+        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        serves_palm_beach="Yes",
+        website="https://www.adquick.com/",
+        pricing_reference="Marketplace booking; publishes 2026 cost/CPM guides",
+        notes="Aggregates operator inventory nationwide; good for live availability & pricing benchmarks.",
+        source="adquick.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Blue Line Media",
+        company_type=TYPE_BROKER,
+        primary_market="Nationwide brokerage",
+        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        serves_palm_beach="Yes",
+        phone="(800) 807-0360",
+        email="Advertise@BlueLineMedia.com",
+        website="https://www.bluelinemedia.com/",
+        pricing_reference="Brokerage; publishes market rate guides",
+        notes="Books static & digital billboards across operators in every major market.",
+        source="bluelinemedia.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="BillboardsIn",
+        company_type=TYPE_BROKER,
+        primary_market="Nationwide OOH marketplace",
+        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        serves_palm_beach="Yes",
+        website="https://www.billboardsin.com/",
+        pricing_reference="Marketplace booking — dynamic",
+        notes="Searchable inventory marketplace across US markets.",
+        source="billboardsin.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
 ]
+
+
+# ---------------------------------------------------------------------- #
+# City market ranking — by billboard market size & typical ad rates.
+# Ranking is a synthesis of metro/DMA size, OOH inventory density, and the
+# published rate ranges below (compiled 2026-07-08). Rates are typical monthly
+# ranges for standard billboards; premium/landmark placements run far higher.
+# Columns: (rank, city, state, tier, typical monthly rate, premium note)
+# ---------------------------------------------------------------------- #
+CITY_MARKET = [
+    (1, "New York", "NY", "Tier 1 — largest US OOH market",
+     "$3,000–$50,000/mo",
+     "Times Square spectaculars $10,000 to $1,000,000+/mo; Manhattan digital $15k–$50k; outer-borough static $3k–$8k."),
+    (2, "Los Angeles", "CA", "Tier 1",
+     "$2,500–$40,000/mo",
+     "Iconic Sunset Strip bulletins command a large multiple of comparable units 30 mi east."),
+    (3, "Chicago", "IL", "Tier 1",
+     "$2,000–$25,000/mo",
+     "Premium expressway (Kennedy/Dan Ryan) and Loop digital displays at the high end."),
+    (4, "Dallas", "TX", "Tier 2 — large metro (DFW)",
+     "$1,500–$18,000/mo",
+     "High-traffic corridors (I-35, LBJ, Central Expwy) priced highest."),
+    (5, "Houston", "TX", "Tier 2 — large metro",
+     "$1,500–$15,000/mo",
+     "Clear Channel alone runs 2,000+ boards across 13 counties (99% of DMA adults)."),
+    (6, "Philadelphia", "PA", "Tier 2",
+     "$1,500–$12,000/mo",
+     "I-95 / Schuylkill Expwy and Center City digital at the top of range."),
+    (7, "Phoenix", "AZ", "Tier 2/3",
+     "$1,200–$10,000/mo",
+     "Freeway digital (Loop 101/202, I-10); sports-venue-adjacent units premium."),
+    (8, "San Diego", "CA", "Tier 3",
+     "$1,500–$10,000/mo",
+     "I-5 / I-805 / I-15 / Hwy-78 corridors; limited inventory keeps rates firm."),
+    (9, "San Antonio", "TX", "Tier 3",
+     "$1,000–$8,000/mo",
+     "I-10 / Loop 410 / US-281 the strongest placements."),
+    (10, "Jacksonville", "FL", "Tier 3",
+     "$800–$6,000/mo",
+     "Largest US city by land area; I-95 / I-295 corridors carry the value."),
+]
+
+CITY_RANK_DISCLAIMER = (
+    "Ranking synthesizes metro/DMA size, billboard inventory density and published "
+    "2026 rate guides (AdQuick, DASH TWO, CostCheck, etc.). Rates are typical MONTHLY "
+    "ranges for standard billboards; premium/landmark and digital placements run far "
+    "higher. Treat as directional benchmarks, not quotes."
+)
+
+
+def cities_for(company: Company) -> List[str]:
+    """Which of the top-10 cities a company serves (from its coverage field)."""
+    coverage = (company.counties_served or "")
+    return [c for c in TOP_CITIES if c in coverage]
 
 
 def load_national() -> List[Company]:

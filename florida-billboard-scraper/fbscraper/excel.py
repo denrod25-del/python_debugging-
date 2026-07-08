@@ -99,6 +99,34 @@ def _pricing_sheet(ws):
         ws.column_dimensions[get_column_letter(i)].width = w
 
 
+def _ranking_sheet(ws, city_rows, disclaimer: str):
+    ws.cell(row=1, column=1, value="US Cities Ranked by Billboard Market Size & Ad Rates").font = _TITLE_FONT
+    ws.merge_cells("A1:F1")
+    ws.cell(row=2, column=1, value=disclaimer).font = _SUB_FONT
+    ws.merge_cells("A2:F2")
+    ws.cell(row=2, column=1).alignment = Alignment(wrap_text=True, vertical="top")
+    ws.row_dimensions[2].height = 46
+
+    headers = ["Rank", "City", "State", "Market Tier", "Typical Monthly Rate", "Premium / Notes"]
+    for i, h in enumerate(headers, start=1):
+        ws.cell(row=4, column=i, value=h)
+    _style_header(ws, len(headers), row=4)
+
+    for r, (rank, city, state, tier, rate, note) in enumerate(city_rows, start=5):
+        for i, val in enumerate([rank, city, state, tier, rate, note], start=1):
+            cell = ws.cell(row=r, column=i, value=val)
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+            cell.border = _BORDER
+        # shade the top-3 (Tier 1) rows
+        if rank <= 3:
+            for i in range(1, len(headers) + 1):
+                ws.cell(row=r, column=i).fill = _PB_FILL
+
+    for i, w in enumerate([7, 16, 7, 30, 24, 62], start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A5"
+
+
 def _about_sheet(ws, notes: List[str]):
     ws.cell(row=1, column=1, value="About this workbook").font = _TITLE_FONT
     ws.column_dimensions["A"].width = 110
@@ -161,6 +189,56 @@ def write_workbook(companies: List[Company], path: str, about: List[str] | None 
 
     _pricing_sheet(wb.create_sheet("Pricing Reference"))
 
+    if about:
+        _about_sheet(wb.create_sheet("About"), about)
+
+    wb.save(path)
+    return path
+
+
+def _safe_sheet_name(name: str) -> str:
+    """Excel sheet names: <=31 chars, none of []:*?/\\ ."""
+    for ch in "[]:*?/\\":
+        name = name.replace(ch, " ")
+    return name[:31].strip()
+
+
+def write_national_workbook(companies, path, cities, city_ranking, ranking_disclaimer,
+                            cities_for, about=None,
+                            title="US Top-10 Cities — Billboard / Outdoor Advertising Companies",
+                            header_overrides=None,
+                            highlight_key="serves_palm_beach", highlight_match="yes"):
+    """Workbook with: all-companies sheet, market-ranking sheet, one tab per city,
+    plus pricing + about. `cities_for(company)` returns the cities a company serves.
+    """
+    hdrs = _resolve_headers(header_overrides)
+    all_sorted = sort_companies(companies, highlight_key, highlight_match)
+
+    wb = Workbook()
+
+    # 1) All companies
+    ws = wb.active
+    ws.title = "All Companies"
+    _companies_sheet(ws, all_sorted,
+                     title,
+                     subtitle=(f"{len(all_sorted)} companies · national operators first · "
+                               "cities: " + ", ".join(cities)),
+                     headers=hdrs, highlight_key=highlight_key, highlight_match=highlight_match)
+
+    # 2) City market ranking
+    _ranking_sheet(wb.create_sheet("City Market Ranking"), city_ranking, ranking_disclaimer)
+
+    # 3) One tab per city
+    for city in cities:
+        subset = [c for c in all_sorted if city in cities_for(c)]
+        ws_city = wb.create_sheet(_safe_sheet_name(city))
+        _companies_sheet(ws_city, subset,
+                         f"{city} — Billboard / Outdoor Advertising Companies",
+                         subtitle=f"{len(subset)} companies serving {city} · prices quote-only",
+                         headers=hdrs, highlight_key=highlight_key, highlight_match=highlight_match)
+
+    # 4) Pricing + About
+    _pricing_sheet(wb.create_sheet("Pricing Reference"))
     if about:
         _about_sheet(wb.create_sheet("About"), about)
 

@@ -196,17 +196,23 @@ def run_national(args) -> int:
         "placements (e.g. Times Square spectaculars) run far above the ranges shown.",
     ]
 
-    path = excel_mod.write_workbook(
-        companies, out, about=about,
-        title="US Top-10 Cities — Billboard / Outdoor Advertising Companies",
-        subtitle=(f"{len(companies)} companies · national operators first · "
-                  "cities: " + ", ".join(national.TOP_CITIES)),
-        sheet_name="US Billboard Companies",
+    path = excel_mod.write_national_workbook(
+        companies, out,
+        cities=national.TOP_CITIES,
+        city_ranking=national.CITY_MARKET,
+        ranking_disclaimer=national.CITY_RANK_DISCLAIMER,
+        cities_for=national.cities_for,
+        about=about,
         header_overrides=national.HEADER_OVERRIDES,
         highlight_key="serves_palm_beach", highlight_match="yes",
     )
     nat = sum(1 for c in companies if (c.serves_palm_beach or "").lower() == "yes")
     print(f"\n✓ Wrote {len(companies)} companies ({nat} national/multi-market) → {path}")
+    print("  Tabs: All Companies · City Market Ranking · "
+          + " · ".join(national.TOP_CITIES) + " · Pricing · About")
+    for city in national.TOP_CITIES:
+        n = sum(1 for c in companies if city in national.cities_for(c))
+        print(f"    {city:15} {n} companies")
 
     if args.csv is not None:
         csv_path = args.csv

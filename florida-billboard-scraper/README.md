@@ -79,11 +79,25 @@ python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-17 companies: the big three (Lamar, Clear Channel, OUTFRONT — highlighted and
-listed first) plus multi-market networks (New Tradition, Capitol Outdoor,
-Brooklyn Outdoor, Digital Outdoor Advertising) and market-specific operators
-(SignAd/Texas, Becker Boards/Phoenix, American Outdoor/San Diego, etc.). Each row
-lists which of the top-10 cities the company serves. Source: `fbscraper/national.py`.
+**31 companies.** The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
+listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
+New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital Outdoor Advertising),
+national brokers (AdQuick, Blue Line Media, BillboardsIn) and market-specific
+operators (SignAd/Texas, Gilbreath/Houston, Becker Boards/Phoenix, American
+Outdoor/San Diego, plus a deep NYC roster: Neutron, Heritage, Pearl, TSX Broadway,
+Rolling Adz, Adams). Source: `fbscraper/national.py`.
+
+The national workbook has **14 tabs**:
+
+- **All Companies** — every company, national operators first, with a "Top-10
+  Cities Served" column.
+- **City Market Ranking** — the 10 cities ranked by billboard market size and
+  typical ad rates (NYC #1 → Jacksonville #10), with per-city rate bands and
+  premium notes (e.g. Times Square $10k–$1M+/mo).
+- **One tab per city** (New York, Los Angeles, … Jacksonville) — just the
+  companies serving that market. NYC has the deepest roster (18), then Chicago/
+  Houston (13 each).
+- **Pricing Reference** and **About**.
 
 > Note: unlike Florida (FDOT licensee database), there is **no single national
 > permit registry**, so local operators are gathered market by market — the list
