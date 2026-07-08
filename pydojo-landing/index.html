@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python Debug Dojo — B.Symbolic</title>
+<meta name="description" content="An adaptive Python-debugging trainer. Predict output, spot bugs, read tracebacks, and explain code. Built by B.Symbolic.">
+<meta property="og:title" content="Python Debug Dojo">
+<meta property="og:description" content="Read Python. Debug Python. Get faster. An adaptive trainer for reading tracebacks, spotting bugs, and predicting output.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#8F3437">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Playfair+Display:ital,wght@0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --oxblood:#8F3437; --oxblood-dark:#6D2528;
+    --cream:#FAF6F4; --cream-warm:#F0E9E3;
+    --ink:#1A1614; --ink-soft:#3A322D; --muted:#7B6E67; --faint:#B7ABA3; --line:#E7DFD9;
+    --green:#69F0A5; --green-deep:#2D8858;
+    --amber:#FFCC66;
+    --charcoal:#0C0E0D; --panel:#131817; --line-dark:#222b27; --code-ink:#e8efe9;
+    --display:'Playfair Display', Georgia, serif;
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Inter', -apple-system, system-ui, sans-serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--cream); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
+  body{
+    background:
+      radial-gradient(900px 500px at 92% -6%, rgba(143,52,55,.06), transparent 60%),
+      radial-gradient(700px 500px at -6% 4%, rgba(255,204,102,.08), transparent 55%),
+      var(--cream);
+    min-height:100vh;
+  }
+  ::selection{background:var(--oxblood); color:var(--cream);}
+  a{color:inherit; text-decoration:none;}
+  img{display:block; max-width:100%;}
+
+  .wrap{max-width:1080px; margin:0 auto; padding:22px 20px;}
+  .wrap-narrow{max-width:820px; margin:0 auto; padding:0 20px;}
+
+  /* Header / nav */
+  header.nav{display:flex; align-items:center; justify-content:space-between; gap:14px;}
+  .brand-mark{display:inline-flex; align-items:center; gap:11px; text-decoration:none;}
+  .isym{width:38px; height:38px; border-radius:9px; background:var(--oxblood); color:var(--cream); display:inline-flex; align-items:center; justify-content:center; font-family:var(--display); font-weight:700; font-size:19px; letter-spacing:.01em; line-height:1;}
+  .isym .i{font-style:italic; margin-right:-2px;}
+  .isym .s{transform:skewX(-6deg);}
+  .brand-name{font-family:var(--display); font-weight:700; font-size:16px; letter-spacing:.01em;}
+  .brand-name em{font-style:italic; color:var(--oxblood);}
+  .nav-cta{display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--cream); font-family:var(--sans); font-weight:600; font-size:13px; padding:9px 15px; border-radius:99px; transition:.2s;}
+  .nav-cta:hover{background:var(--oxblood); transform:translateY(-1px);}
+  .nav-cta svg{width:13px; height:13px;}
+
+  /* Hero */
+  .hero{padding:60px 0 40px; text-align:left;}
+  .kicker{display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:var(--oxblood); margin-bottom:22px;}
+  .kicker::before{content:""; width:24px; height:1px; background:var(--oxblood);}
+  h1.hero-h{font-family:var(--display); font-weight:800; font-size:clamp(42px, 8vw, 84px); line-height:.98; letter-spacing:-.025em; color:var(--ink); margin-bottom:22px;}
+  h1.hero-h em{font-style:italic; color:var(--oxblood); font-weight:700;}
+  h1.hero-h .dot{color:var(--oxblood);}
+  .hero-sub{font-family:var(--serif); font-weight:400; font-size:clamp(17px, 2vw, 21px); line-height:1.55; color:var(--ink-soft); max-width:600px; margin-bottom:32px;}
+  .hero-sub b{font-weight:600; color:var(--ink);}
+  .cta-row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;}
+  .cta{display:inline-flex; align-items:center; gap:9px; font-family:var(--sans); font-weight:600; font-size:15px; padding:15px 24px; border-radius:99px; transition:.2s; cursor:pointer; border:0;}
+  .cta-primary{background:var(--ink); color:var(--green); box-shadow:0 10px 30px -12px rgba(26,22,20,.5);}
+  .cta-primary:hover{transform:translateY(-2px); box-shadow:0 14px 32px -10px rgba(26,22,20,.55);}
+  .cta-primary svg{width:15px; height:15px;}
+  .cta-primary .green-pill{background:var(--green); color:var(--charcoal); border-radius:99px; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center;}
+  .cta-secondary{background:transparent; color:var(--ink); border:1px solid var(--line); padding:14px 22px;}
+  .cta-secondary:hover{border-color:var(--ink);}
+  .cta-note{font-size:12.5px; color:var(--muted); font-family:var(--mono);}
+  .cta-note b{color:var(--oxblood); font-weight:500;}
+
+  /* Preview: styled after the dojo's own aesthetic */
+  .preview{margin:20px 0 60px;}
+  .preview-frame{background:var(--charcoal); border-radius:22px; padding:28px; box-shadow:0 32px 60px -30px rgba(26,22,20,.4), 0 12px 30px -12px rgba(143,52,55,.15); position:relative; overflow:hidden;}
+  .preview-frame::before{content:""; position:absolute; inset:0; pointer-events:none; opacity:.4;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");}
+  .preview-hud{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:20px; position:relative;}
+  .prev-title{font-family:var(--serif); font-weight:800; color:var(--code-ink); font-size:22px; letter-spacing:-.02em;}
+  .prev-title .g{color:var(--green);}
+  .prev-chip{display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.03); border:1px solid var(--line-dark); border-radius:99px; padding:5px 11px; color:var(--code-ink); font-family:var(--mono); font-size:11px;}
+  .prev-chip.amber{color:var(--amber);}
+  .prev-chip .dot{width:6px; height:6px; border-radius:50%; background:var(--green);}
+  .prev-cards{display:grid; grid-template-columns:1fr; gap:14px; position:relative;}
+  @media(min-width:760px){ .prev-cards{grid-template-columns:1.15fr .85fr;} }
+  .prev-card{background:linear-gradient(180deg,#131817,#0f1413); border:1px solid var(--line-dark); border-radius:14px; padding:18px;}
+  .prev-lbl{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#7d8b82; margin-bottom:12px;}
+  .prev-lbl .g{color:var(--green);}
+  .prev-code{background:#0a0d0c; border:1px solid var(--line-dark); border-radius:10px; overflow:hidden;}
+  .prev-code .bar{display:flex; gap:6px; padding:8px 12px; border-bottom:1px solid var(--line-dark);}
+  .prev-code .bar span{width:9px; height:9px; border-radius:50%;}
+  .prev-code pre{padding:12px; font-family:var(--mono); font-size:12.5px; line-height:1.65; color:var(--code-ink); overflow-x:auto;}
+  .kw{color:#d98cff;} .st{color:var(--green);} .nm{color:var(--amber);} .cm{color:#586057; font-style:italic;} .bi{color:#7cc7ff;}
+  .prev-answer{margin-top:12px; background:#0a0d0c; border:1px solid var(--line-dark); border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:12.5px; color:var(--code-ink);}
+  .prev-answer .caret{display:inline-block; width:8px; height:16px; background:var(--green); vertical-align:middle; animation:blink 1.1s infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .prev-side{display:flex; flex-direction:column; gap:12px;}
+  .prev-stat{background:linear-gradient(180deg,#131817,#0f1413); border:1px solid var(--line-dark); border-radius:12px; padding:14px;}
+  .prev-stat .h{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#7d8b82; margin-bottom:9px;}
+  .lv-row{display:flex; align-items:center; gap:10px;}
+  .lv-badge{font-family:var(--serif); font-weight:800; font-size:15px; background:var(--green); color:var(--charcoal); border-radius:8px; padding:5px 9px;}
+  .lv-bar{flex:1; height:6px; background:var(--line-dark); border-radius:99px; overflow:hidden;}
+  .lv-bar i{display:block; height:100%; width:64%; background:linear-gradient(90deg,var(--amber),var(--green));}
+  .lv-txt{font-family:var(--mono); font-size:10.5px; color:#7d8b82;}
+  .weekbar{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:12px; color:var(--code-ink);}
+  .weekbar .name{font-family:var(--serif); font-size:13px; font-weight:600;}
+  .weekbar .track{flex:1; height:5px; background:var(--line-dark); border-radius:99px; overflow:hidden;}
+  .weekbar .track i{display:block; height:100%; background:linear-gradient(90deg,var(--amber),var(--green));}
+  .weekbar .pc{font-size:10.5px; color:#7d8b82;}
+  .week-list{display:flex; flex-direction:column; gap:8px;}
+
+  /* Features */
+  section.section{padding:64px 0;}
+  .section-kicker{font-family:var(--mono); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--oxblood); margin-bottom:16px;}
+  .section-h{font-family:var(--display); font-weight:800; font-size:clamp(28px, 5vw, 42px); line-height:1.05; letter-spacing:-.02em; margin-bottom:16px; max-width:640px;}
+  .section-h em{font-style:italic; color:var(--oxblood);}
+  .section-sub{font-family:var(--serif); font-size:17px; line-height:1.6; color:var(--ink-soft); max-width:560px; margin-bottom:36px;}
+  .feat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px;}
+  .feat{background:#fff; border:1px solid var(--line); border-radius:16px; padding:22px; transition:.22s;}
+  .feat:hover{transform:translateY(-3px); box-shadow:0 20px 40px -20px rgba(26,22,20,.15); border-color:var(--oxblood);}
+  .feat .ic{width:34px; height:34px; border-radius:9px; background:var(--cream-warm); color:var(--oxblood); display:inline-flex; align-items:center; justify-content:center; margin-bottom:14px;}
+  .feat .ic svg{width:18px; height:18px;}
+  .feat h3{font-family:var(--serif); font-weight:700; font-size:18px; margin-bottom:8px;}
+  .feat p{font-size:13.5px; color:var(--muted); line-height:1.6;}
+  .feat .new{display:inline-block; font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--oxblood); background:var(--cream-warm); border-radius:99px; padding:3px 8px; margin-left:8px; vertical-align:middle;}
+
+  /* How-it-works */
+  .steps{display:grid; grid-template-columns:1fr; gap:18px;}
+  @media(min-width:720px){ .steps{grid-template-columns:repeat(3, 1fr);} }
+  .step{background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px;}
+  .step-num{font-family:var(--display); font-style:italic; font-weight:700; font-size:44px; color:var(--oxblood); line-height:1; margin-bottom:10px;}
+  .step h3{font-family:var(--serif); font-weight:700; font-size:18px; margin-bottom:8px;}
+  .step p{font-size:14px; color:var(--muted); line-height:1.6;}
+
+  /* Bottom CTA */
+  .final{background:var(--ink); color:var(--cream); border-radius:22px; padding:48px 32px; text-align:center; margin:0 0 48px;}
+  .final h2{font-family:var(--display); font-weight:800; font-size:clamp(30px, 5vw, 46px); letter-spacing:-.02em; line-height:1.04; margin-bottom:14px;}
+  .final h2 em{font-style:italic; color:var(--green);}
+  .final p{font-family:var(--serif); font-size:16px; color:rgba(250,246,244,.75); max-width:520px; margin:0 auto 24px; line-height:1.55;}
+  .final .cta-primary{background:var(--green); color:var(--charcoal); box-shadow:0 12px 34px -12px rgba(105,240,165,.5);}
+  .final .cta-primary:hover{background:#7cf7b0;}
+  .final .cta-primary .green-pill{background:var(--charcoal); color:var(--green);}
+
+  /* Footer */
+  footer{border-top:1px solid var(--line); padding:26px 0 40px; margin-top:20px; color:var(--muted); font-size:12.5px;}
+  .foot-row{display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;}
+  .foot-links{display:inline-flex; gap:16px;}
+  .foot-links a:hover{color:var(--oxblood);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="nav">
+    <a class="brand-mark" href="/">
+      <span class="isym" aria-hidden="true"><span class="i">i</span><span class="s">S</span></span>
+      <span class="brand-name">B<em>.</em>Symbolic</span>
+    </a>
+    <a class="nav-cta" href="#" id="navLaunch">
+      Launch Dojo
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </header>
+
+  <section class="hero">
+    <div class="kicker">A B.Symbolic app · v1</div>
+    <h1 class="hero-h">Read Python<em>.</em><br>Debug Python<em>.</em><br>Get faster<span class="dot">.</span></h1>
+    <p class="hero-sub">An interactive trainer for the two skills that separate juniors from seniors: <b>reading code accurately</b> and <b>debugging with intent</b>. Predict output, spot bugs, read tracebacks, and explain what code does — adapted to your weak spots.</p>
+    <div class="cta-row">
+      <a class="cta cta-primary" href="#" id="heroLaunch">
+        <span class="green-pill">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><polygon points="6 4 20 12 6 20"/></svg>
+        </span>
+        Enter the Dojo
+      </a>
+      <a class="cta cta-secondary" href="#features">See what's inside</a>
+    </div>
+    <div class="cta-note">No signup · Runs entirely in your browser · <b>Free forever</b></div>
+  </section>
+
+  <div class="preview">
+    <div class="preview-frame">
+      <div class="preview-hud">
+        <div class="prev-title">Python Debug Dojo<span class="g">.</span></div>
+        <div style="display:inline-flex; gap:8px; flex-wrap:wrap">
+          <span class="prev-chip"><span class="dot"></span>Live Python ready</span>
+          <span class="prev-chip amber">🔥 12 streak</span>
+        </div>
+      </div>
+      <div class="prev-cards">
+        <div class="prev-card">
+          <div class="prev-lbl"><span class="g">▸</span> Predict the output</div>
+          <div class="prev-code">
+            <div class="bar"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+<pre><span class="kw">def</span> add(item, bag=[]):
+    bag.append(item)
+    <span class="kw">return</span> bag
+
+<span class="bi">print</span>(add(<span class="st">"a"</span>))
+<span class="bi">print</span>(add(<span class="st">"b"</span>))</pre>
+          </div>
+          <div class="prev-answer">['a']<br>['a', 'b']<span class="caret"></span></div>
+        </div>
+        <div class="prev-side">
+          <div class="prev-stat">
+            <div class="h">Level</div>
+            <div class="lv-row">
+              <div class="lv-badge">LV 6</div>
+              <div class="lv-bar"><i></i></div>
+            </div>
+            <div class="lv-txt" style="margin-top:6px">640 / 100 XP to next</div>
+          </div>
+          <div class="prev-stat">
+            <div class="h">Curriculum · <span style="color:var(--green)">Intermediate patterns</span></div>
+            <div class="week-list">
+              <div class="weekbar">
+                <span class="name" style="min-width:80px">Week 1</span>
+                <span class="track"><i style="width:100%"></i></span>
+                <span class="pc">4/4</span>
+              </div>
+              <div class="weekbar">
+                <span class="name" style="min-width:80px; color:var(--green)">Week 2</span>
+                <span class="track"><i style="width:50%"></i></span>
+                <span class="pc">2/4</span>
+              </div>
+              <div class="weekbar" style="opacity:.5">
+                <span class="name" style="min-width:80px">Week 3</span>
+                <span class="track"><i style="width:0%"></i></span>
+                <span class="pc">0/4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="section" id="features">
+    <div class="section-kicker">What's inside</div>
+    <h2 class="section-h">Four ways to train,<br><em>one adaptive engine.</em></h2>
+    <p class="section-sub">The dojo doesn't just quiz you — it watches which concepts you miss, weights them heavier, and reintroduces them on a spaced-repetition schedule until they stick.</p>
+
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></div>
+        <h3>Predict the output</h3>
+        <p>Read a snippet, type exactly what it prints. Trains you to simulate the interpreter in your head — the single most-underrated skill for debugging.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M19 7l-3 2M5 7l3 2M19 13h-3M8 13H5M19 19l-3-2M5 19l3-2M12 2v4"/></svg></div>
+        <h3>Spot the bug</h3>
+        <p>One realistic bug hides in every snippet. Mutating-while-iterating, closure late binding, mutable defaults — the classics that keep re-appearing in real code.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12" y2="16.5"/></svg></div>
+        <h3>Read the traceback</h3>
+        <p>Given the error and stack, explain the root cause. Because reading a Python traceback well is 80% of the debugging job.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><polyline points="13 3 13 8 18 8"/><line x1="8" y1="13" x2="14" y2="13"/><line x1="8" y1="16" x2="12" y2="16"/></svg></div>
+        <h3>Explain the code</h3>
+        <p>Describe what a snippet does in plain English. Graded by AI on whether you captured the key concept — not on wording.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <h3>Curriculum builder <span class="new">New</span></h3>
+        <p>Three presets, or generate a custom multi-week plan from a goal ("master list mutations in 4 weeks"). Weeks unlock as you hit mastery targets.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <h3>Boss speed rounds</h3>
+        <p>Six timed predict-output challenges in 100 seconds. Speed earns bonus XP. Great for warm-ups or ending a session.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div>
+        <h3>Daily challenge</h3>
+        <p>One deterministic puzzle per day, double XP. Same puzzle for everyone that day, then the streak resets.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+        <h3>Lab (BYOC)</h3>
+        <p>Paste your own Python — run it, step through it line by line, get an AI explanation, or turn it into a bug-hunt exercise.</p>
+      </div>
+      <div class="feat">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg></div>
+        <h3>Real execution</h3>
+        <p>Every "Run" and "Step" uses Pyodide — a real CPython in your browser. No mocked outputs, no server, no signup.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-kicker">How it works</div>
+    <h2 class="section-h">Practice · <em>track</em> · adapt.</h2>
+    <p class="section-sub">The dojo turns the abstract goal of "get better at Python" into a specific, measurable feedback loop.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Answer a snippet</h3>
+        <p>Pick a mode (predict, bug, traceback, explain) and difficulty, or let a curriculum pick for you. Each snippet is small enough to reason about, hard enough to teach something.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Get graded honestly</h3>
+        <p>Exact string match for output, AI grading for free-text answers, real Python execution for your Lab code. Progressive hints available (with a small XP cost).</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Watch the engine adapt</h3>
+        <p>Missed the mutable-default gotcha? It resurfaces sooner and heavier. Nailed closures three times? They fade to the back of the queue. The path is yours.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="final">
+    <h2>Get sharper <em>this week.</em></h2>
+    <p>The dojo runs entirely in your browser. Your progress saves locally, no account required, and you can export it as JSON any time.</p>
+    <a class="cta cta-primary" href="#" id="finalLaunch">
+      <span class="green-pill">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><polygon points="6 4 20 12 6 20"/></svg>
+      </span>
+      Enter the Dojo
+    </a>
+  </div>
+
+  <footer>
+    <div class="foot-row">
+      <div>Built by <a href="https://bsymbolic.com" style="color:var(--oxblood); font-weight:600">B.Symbolic</a> · Palm Beach County, FL</div>
+      <div class="foot-links">
+        <a href="#features">Features</a>
+        <a href="#" id="footLaunch">Launch</a>
+        <a href="https://github.com/denrod25-del">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // Point every "launch" link at the deployed dojo URL. On deploy,
+  // scripts/50-wire.sh renders this file from index.template.html (replacing the
+  // launch-URL placeholder with the real app URL) and overwrites index.html
+  // entirely. Override at runtime by setting window.PYDOJO_URL before this script.
+  (function(){
+    const url = (window.PYDOJO_URL || '#');
+    const ids = ['navLaunch','heroLaunch','finalLaunch','footLaunch'];
+    for(const id of ids){
+      const el = document.getElementById(id);
+      if(el) el.setAttribute('href', url);
+    }
+  })();
+</script>
+</body>
+</html>

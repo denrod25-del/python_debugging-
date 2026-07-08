@@ -1,0 +1,19 @@
+# Local config — never commit secrets
+.env
+
+# Auto-populated deploy state (URLs, project ids)
+.deploy-state
+
+# Deploy logs
+*.deploy.log
+scripts/*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Node (proxy has no deps by default, but keep this safe)
+node_modules/
+
+# NOTE: .vercel/ folders inside pydojo-* are intentionally NOT ignored here.
+# They hold the project link that ties a folder to its Vercel project.

@@ -1,0 +1,5 @@
+# Vercel: keep the project link (.vercel/project.json), ignore local pull artifacts
+.vercel/.env*.local
+.vercel/README.txt
+node_modules/
+.DS_Store
