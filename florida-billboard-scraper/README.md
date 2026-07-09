@@ -68,22 +68,23 @@ python scraper.py --oda-file ODAData.xlsx --out florida.xlsx
 | `--oda-file` | *(none)* | Parse a hand-downloaded FDOT ODA Excel |
 | `--csv` | *(off)* | Also write CSV; bare flag = alongside the `.xlsx`, or give a path |
 
-## National dataset — 34 major US metros
+## National dataset — 42 major US metros
 
 Beyond Florida, the tool ships a national dataset of billboard companies across
-**34 major US OOH markets** (in market-size rank order): New York, Los Angeles,
+**42 major US OOH markets** (in market-size rank order): New York, Los Angeles,
 Chicago, San Francisco, Atlanta, Washington DC, Boston, Dallas, Houston, Miami,
-Philadelphia, Detroit, Seattle, Minneapolis, Phoenix, Tampa, Denver, Sacramento,
-Orlando, St. Louis, Pittsburgh, San Diego, Baltimore, Charlotte, Indianapolis,
-Las Vegas, San Antonio, Portland, Columbus, Kansas City, Nashville, Salt Lake City,
-Austin, Jacksonville.
+Philadelphia, Detroit, Seattle, Minneapolis, Phoenix, Tampa, Denver, Cleveland,
+Sacramento, Orlando, St. Louis, Pittsburgh, San Diego, Baltimore, Charlotte,
+Raleigh, Indianapolis, Cincinnati, Las Vegas, San Antonio, Portland, Milwaukee,
+Columbus, Kansas City, Nashville, Salt Lake City, New Orleans, Oklahoma City,
+Memphis, Richmond, Austin, Jacksonville.
 
 ```bash
 python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**107 companies across all 34 metros** (every market has local operators, not just
+**110 companies across all 42 metros** (every market has local operators, not just
 the nationals). The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
 Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
@@ -91,11 +92,11 @@ Outdoor Advertising) and nationwide brokers/agencies (AdQuick, Blue Line Media,
 BillboardsIn, Billups, MediaLease OOH, Fliphound, Billboard Connection) appear in
 every metro tab; each metro also lists its own local operators, e.g.:
 
-- **New York (35)** — SILVERCAST, Branded Cities, TSX Broadway, Colossal Media
+- **New York (36)** — SILVERCAST, Branded Cities, TSX Broadway, Colossal Media
   (hand-painted walls), Intersection/PMD/InSite (top-5 by spot count), GSB Digital.
-- **Chicago (26)** — Image Media Outdoor, Outdoor Impact, VC Outdoor, GreenSigns,
+- **Chicago (27)** — Image Media Outdoor, Outdoor Impact, VC Outdoor, GreenSigns,
   J&B Signs, Red Star Outdoor.
-- **Los Angeles (22)** — Regency Outdoor (Sunset Strip + LAX, 300+ boards),
+- **Los Angeles (23)** — Regency Outdoor (Sunset Strip + LAX, 300+ boards),
   Bulletin Displays, Bray Outdoor, O Media Group.
 - **Texas** — Houston (20): SignAd, Gilbreath, Avail, Inspiria; Dallas (19):
   Arrington, Ralston, Albert; San Antonio (17); Austin (15): Reagan Outdoor,
@@ -113,19 +114,23 @@ every metro tab; each metro also lists its own local operators, e.g.:
   Baltimore (Vision Outdoor), Kansas City (Ad-Trend, Midwest Billboards),
   Indianapolis (Keyes, Reagan), Columbus (American Outdoor OH, Key-Ads, Kenjoh),
   Salt Lake City (Reagan HQ ~4,000 faces, YESCO).
+- **Ohio Valley / Southeast / South Central** — Cincinnati + Cleveland (Key-Ads,
+  American Outdoor OH, Outdoor Advertising Center), Milwaukee (Outdoor Advertising
+  Center), Raleigh (Adams, Allison, Trailhead), New Orleans (Lindmark),
+  Oklahoma City (Lindmark, Headrick), Memphis (Allison), Richmond (nationals).
 
 Source: `fbscraper/national.py`.
 
-The national workbook has **38 tabs**:
+The national workbook has **46 tabs**:
 
 - **All Companies** — every company, national operators first, with a "Metros
   Served" column.
-- **City Market Ranking** — the 34 metros ranked by billboard market size and
-  typical ad rates (NYC #1 → Jacksonville #34), with numeric low/high rate columns,
+- **City Market Ranking** — the 42 metros ranked by billboard market size and
+  typical ad rates (NYC #1 → Jacksonville #42), with numeric low/high rate columns,
   premium notes (e.g. Times Square $10k–$1M+/mo, Vegas Strip up to $25k+), and an
   **embedded bar chart** of the monthly rate band per metro.
-- **One tab per metro** (34 of them) — just the companies serving that market.
-  Every metro has ≥11 companies (NYC 35 → the smallest at 11).
+- **One tab per metro** (42 of them) — just the companies serving that market.
+  Every metro has ≥11 companies (NYC 36 → Richmond at 11).
 - **Pricing Reference** and **About**.
 
 > For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
@@ -174,7 +179,7 @@ florida-billboard-scraper/
   fbscraper/
     models.py                Company dataclass, columns, dedupe
     seed.py                  verified FL starter dataset (Palm Beach first)
-    national.py              34 major US metros dataset (--dataset national)
+    national.py              42 major US metros dataset (--dataset national)
     fdot.py                  FDOT ODA licensees + monthly Excel scraper/parser
     foaa.py                  FOAA member-directory scraper
     pricing.py               market-average reference rates + disclaimer

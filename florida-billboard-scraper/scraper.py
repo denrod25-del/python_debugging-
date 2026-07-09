@@ -176,13 +176,14 @@ def run_national(args) -> int:
         f"{len(national.TOP_CITIES)} metros: {', '.join(national.TOP_CITIES)}.",
         "",
         "SCOPE",
-        "• 34 major US OOH markets in market-size rank order (see City Market "
+        "• 42 major US OOH markets in market-size rank order (see City Market "
         "Ranking tab): NYC, LA, Chicago, San Francisco, Atlanta, Washington DC, "
         "Boston, Dallas, Houston, Miami, Philadelphia, Detroit, Seattle, "
-        "Minneapolis, Phoenix, Tampa, Denver, Sacramento, Orlando, St. Louis, "
-        "Pittsburgh, San Diego, Baltimore, Charlotte, Indianapolis, Las Vegas, "
-        "San Antonio, Portland, Columbus, Kansas City, Nashville, Salt Lake City, "
-        "Austin, Jacksonville.",
+        "Minneapolis, Phoenix, Tampa, Denver, Cleveland, Sacramento, Orlando, "
+        "St. Louis, Pittsburgh, San Diego, Baltimore, Charlotte, Raleigh, "
+        "Indianapolis, Cincinnati, Las Vegas, San Antonio, Portland, Milwaukee, "
+        "Columbus, Kansas City, Nashville, Salt Lake City, New Orleans, Oklahoma "
+        "City, Memphis, Richmond, Austin, Jacksonville.",
         "• 'National / multi-market' companies (the big three plus multi-city "
         "networks) are highlighted and listed first; then market-specific operators.",
         "",
