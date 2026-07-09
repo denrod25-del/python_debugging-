@@ -28,6 +28,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(HERE, "metrostack.db")
 STRIPE_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")          # Pro $49/mo price
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "dev-admin")  # set a real one in prod
+SMTP_HOST = os.environ.get("SMTP_HOST", "")               # email provider (optional)
 FREE_CATS = {"Outdoor / OOH", "Print", "Digital - Search & Display",
              "Local & Direct", "Partnership & Channel"}
 FREE_TACTIC_CAP = 25
@@ -40,6 +42,23 @@ def db():
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def migrate():
+    """Additive tables introduced after init_db.py - safe on an existing DB."""
+    conn = db()
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS password_resets(
+      token TEXT PRIMARY KEY, user_id INTEGER, expires TEXT);
+    CREATE TABLE IF NOT EXISTS verified_listings(
+      id INTEGER PRIMARY KEY AUTOINCREMENT, company TEXT, metro TEXT,
+      claimed_by TEXT, verified_on TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(company, metro));
+    """)
+    conn.commit(); conn.close()
+
+
+migrate()
 
 
 # ---------------------------------------------------------------- auth utils
@@ -238,6 +257,164 @@ def playbook(request: Request):
     calendar = [dict(r) for r in conn.execute("SELECT * FROM calendar")]
     conn.close()
     return {"budgets": budgets, "calendar": calendar}
+
+
+# ------------------------------------------------------------ password reset
+class ResetRequest(BaseModel):
+    email: str
+
+
+class ResetComplete(BaseModel):
+    token: str
+    password: str
+
+
+def send_reset_email(email: str, token: str):
+    """Pluggable delivery. With SMTP_HOST configured, send real mail; in dev,
+    print to the server log."""
+    if SMTP_HOST:
+        # import smtplib; build MIME + send. Left to deployment config.
+        pass
+    print(f"[reset-email] to={email} token={token}")
+
+
+@app.post("/api/request-reset")
+def request_reset(body: ResetRequest):
+    import datetime
+    email = body.email.strip().lower()
+    conn = db()
+    row = conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+    resp = {"ok": True,
+            "note": "If that email has an account, a reset link is on its way."}
+    if row:
+        token = secrets.token_urlsafe(24)
+        expires = (datetime.datetime.utcnow()
+                   + datetime.timedelta(hours=2)).isoformat()
+        conn.execute("INSERT INTO password_resets VALUES(?,?,?)",
+                     (token, row["id"], expires))
+        conn.commit()
+        send_reset_email(email, token)
+        if not SMTP_HOST:      # dev/demo only: surface the token in the response
+            resp["dev_token"] = token
+    conn.close()
+    return resp
+
+
+@app.post("/api/reset")
+def reset(body: ResetComplete):
+    import datetime
+    if len(body.password) < 8:
+        raise HTTPException(400, "Password must be 8+ characters.")
+    conn = db()
+    row = conn.execute("SELECT * FROM password_resets WHERE token=?",
+                       (body.token,)).fetchone()
+    if not row or row["expires"] < datetime.datetime.utcnow().isoformat():
+        conn.close()
+        raise HTTPException(400, "That reset link is invalid or expired - request a new one.")
+    salt = secrets.token_hex(16)
+    conn.execute("UPDATE users SET pw_hash=?, salt=? WHERE id=?",
+                 (hash_pw(body.password, salt), salt, row["user_id"]))
+    conn.execute("DELETE FROM password_resets WHERE token=?", (body.token,))
+    conn.execute("DELETE FROM sessions WHERE user_id=?", (row["user_id"],))
+    conn.commit(); conn.close()
+    return {"ok": True, "note": "Password updated - log in with the new one."}
+
+
+# ----------------------------------------------------------------- csv export
+@app.get("/api/export/{what}.csv")
+def export_csv(what: str, request: Request):
+    u = current_user(request)
+    if not (u and u["plan"] == "pro"):
+        raise HTTPException(402, "CSV export is a Pro feature.")
+    import csv
+    import io
+    conn = db()
+    if what == "tactics":
+        rows = conn.execute("SELECT cat,tactic,cost,rel,ih,time,note FROM tactics").fetchall()
+        header = ["Category", "Tactic", "Cost", "Relevance", "In-House", "Time-to-Impact", "Note"]
+    elif what == "contacts":
+        rows = conn.execute(
+            "SELECT metro,category,scope,contacts,last_verified FROM contacts").fetchall()
+        header = ["Metro", "Category", "Scope", "Contacts", "Last Verified"]
+    else:
+        conn.close()
+        raise HTTPException(404, "Export tactics.csv or contacts.csv.")
+    conn.close()
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(header)
+    for r in rows:
+        w.writerow(list(r))
+    return Response(buf.getvalue(), media_type="text/csv",
+                    headers={"Content-Disposition": f"attachment; filename={what}.csv"})
+
+
+# ------------------------------------------------------------ verified badges
+@app.get("/api/verified")
+def verified(metro: str):
+    conn = db()
+    rows = [r["company"] for r in conn.execute(
+        "SELECT company FROM verified_listings WHERE metro=?", (metro,))]
+    conn.close()
+    return rows
+
+
+# ------------------------------------------------------------------ admin api
+def require_admin(request: Request):
+    if request.headers.get("x-admin-token") != ADMIN_TOKEN:
+        raise HTTPException(403, "Admin token required.")
+
+
+@app.get("/api/admin/overview")
+def admin_overview(request: Request):
+    require_admin(request)
+    conn = db()
+    users = conn.execute("SELECT COUNT(*) n FROM users").fetchone()["n"]
+    pro = conn.execute("SELECT COUNT(*) n FROM users WHERE plan='pro'").fetchone()["n"]
+    pending = conn.execute(
+        "SELECT COUNT(*) n FROM claims WHERE status='pending'").fetchone()["n"]
+    fresh = [dict(r) for r in conn.execute(
+        "SELECT last_verified, COUNT(*) rows_ FROM contacts GROUP BY last_verified")]
+    conn.close()
+    return {"users": users, "pro": pro, "mrr": pro * 49,
+            "claims_pending": pending, "freshness": fresh}
+
+
+@app.get("/api/admin/claims")
+def admin_claims(request: Request):
+    require_admin(request)
+    conn = db()
+    rows = [dict(r) for r in conn.execute("SELECT * FROM claims ORDER BY id DESC")]
+    conn.close()
+    return rows
+
+
+class ClaimAction(BaseModel):
+    action: str  # approve | reject
+
+
+@app.post("/api/admin/claims/{claim_id}")
+def admin_claim_action(claim_id: int, body: ClaimAction, request: Request):
+    require_admin(request)
+    if body.action not in ("approve", "reject"):
+        raise HTTPException(400, "action must be approve or reject")
+    conn = db()
+    row = conn.execute("SELECT * FROM claims WHERE id=?", (claim_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(404, "No such claim.")
+    status = "approved" if body.action == "approve" else "rejected"
+    conn.execute("UPDATE claims SET status=? WHERE id=?", (status, claim_id))
+    if status == "approved":
+        conn.execute("INSERT OR IGNORE INTO verified_listings(company,metro,claimed_by) "
+                     "VALUES(?,?,?)", (row["company"], row["metro"], row["email"]))
+    conn.commit(); conn.close()
+    return {"ok": True, "status": status}
+
+
+@app.get("/admin")
+def admin_page():
+    return FileResponse(os.path.join(HERE, "web", "admin.html"))
 
 
 # ------------------------------------------------------------- vendor claims

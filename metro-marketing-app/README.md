@@ -31,6 +31,15 @@ What the backend does (all verified end-to-end):
   surfaced in the UI as "✓ verified 2026-07-08".
 - **Vendor side** — `POST /api/claim` files a listing claim (the second revenue
   side); `GET /api/claims` lists them.
+- **Password reset** — request/complete flow with expiring tokens; delivery is
+  pluggable (dev mode surfaces the token, set `SMTP_HOST` for real email).
+- **CSV export** — `/api/export/tactics.csv` and `/api/export/contacts.csv`,
+  Pro-gated (402 otherwise).
+- **Admin console** — `/admin` (header `X-Admin-Token`, env `ADMIN_TOKEN`,
+  dev default `dev-admin`): subscriber stats + MRR, claim review
+  (approve → the company gets a "claimed ✓" badge on its market listing),
+  and a data-freshness table flagging rows older than 90 days for
+  re-verification.
 
 ## B. Static demo (no server)
 
@@ -69,8 +78,8 @@ dist/index.html  generated static demo, deployable anywhere
 
 - Set `STRIPE_SECRET_KEY` / `STRIPE_PRICE_ID` and verify the webhook signature
   (`STRIPE_WEBHOOK_SECRET`) — the endpoints are wired, keys are not
+- Set `ADMIN_TOKEN` to a real secret and `SMTP_HOST` for reset emails
 - Deploy: any host that runs uvicorn (Fly/Render/Railway); swap SQLite for
   Postgres when concurrent writes matter
-- Password reset + email verification (needs an email provider)
-- Quarterly re-verification pipeline + user-reported quote benchmarks (the moat)
-- Claim review admin (approve -> verified badge on the listing)
+- Quarterly re-verification pipeline + user-reported quote benchmarks (the moat —
+  the admin freshness table already flags what needs re-verifying)

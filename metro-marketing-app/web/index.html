@@ -191,6 +191,7 @@ footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-ali
     <select id="t-cost" aria-label="Cost"><option value="">Any cost</option><option>$</option><option>$$</option><option>$$$</option></select>
     <select id="t-rel" aria-label="Relevance"><option value="">Any relevance</option><option>High</option><option>Med</option><option>Low</option></select>
     <select id="t-time" aria-label="Speed"><option value="">Any speed</option><option>Fast</option><option>Medium</option><option>Slow</option><option>Enabler</option></select>
+    <button class="linkbtn" onclick="exportCsv('tactics')">Export CSV</button>
   </div>
   <div class="tablewrap"><table>
     <thead><tr><th>Tactic</th><th>Category</th><th>Cost</th><th>Relevance</th><th>Speed</th><th>DIY</th><th>Note</th></tr></thead>
@@ -273,7 +274,31 @@ contacts are reference-level, confirm before buying</footer>
     <p style="font-size:.83rem;margin:.8rem 0 0">
       <span id="a-alt-text">New here?</span>
       <button type="button" class="linkbtn" id="a-alt">Create an account</button>
+      · <button type="button" class="linkbtn" id="a-forgot">Forgot password?</button>
     </p>
+  </form>
+</dialog>
+
+<!-- password reset modal -->
+<dialog id="reset-modal">
+  <h3>Reset password</h3>
+  <form id="reset-form">
+    <div id="r-step1">
+      <label for="r-email">Account email</label>
+      <input id="r-email" type="email" required>
+    </div>
+    <div id="r-step2" hidden>
+      <p class="okmsg" id="r-sent"></p>
+      <label for="r-token">Reset token</label>
+      <input id="r-token" required disabled>
+      <label for="r-pass">New password (8+ characters)</label>
+      <input id="r-pass" type="password" minlength="8" required disabled>
+    </div>
+    <p class="err" id="r-err"></p>
+    <div class="row">
+      <button type="submit" class="cta-brand" id="r-submit">Send reset link</button>
+      <button type="button" class="cta-ghost" onclick="resetModal.close()">Close</button>
+    </div>
   </form>
 </dialog>
 
@@ -346,6 +371,38 @@ function openAuth(mode){
   authModal.showModal();
 }
 $('#a-alt').addEventListener('click',()=>openAuth(authMode==='login'?'signup':'login'));
+
+/* ---------- password reset ---------- */
+const resetModal = $('#reset-modal');
+let resetStep = 1;
+$('#a-forgot').addEventListener('click',()=>{
+  authModal.close(); resetStep = 1;
+  $('#r-step1').hidden = false; $('#r-step2').hidden = true;
+  $('#r-email').disabled = false;
+  $('#r-token').disabled = true; $('#r-pass').disabled = true;
+  $('#r-err').textContent=''; $('#r-submit').textContent='Send reset link';
+  resetModal.showModal();
+});
+$('#reset-form').addEventListener('submit', async e=>{
+  e.preventDefault(); $('#r-err').textContent='';
+  try{
+    if(resetStep===1){
+      const r = await api('/api/request-reset',{method:'POST',
+        body: JSON.stringify({email: $('#r-email').value})});
+      $('#r-sent').textContent = r.note + (r.dev_token ? ' (demo mode: token pre-filled below)' : '');
+      $('#r-step1').hidden = true; $('#r-step2').hidden = false;
+      $('#r-email').disabled = true;
+      $('#r-token').disabled = false; $('#r-pass').disabled = false;
+      if(r.dev_token) $('#r-token').value = r.dev_token;
+      $('#r-submit').textContent = 'Set new password';
+      resetStep = 2;
+    } else {
+      await api('/api/reset',{method:'POST', body: JSON.stringify({
+        token: $('#r-token').value, password: $('#r-pass').value})});
+      resetModal.close(); openAuth('login');
+    }
+  }catch(err){ $('#r-err').textContent = err.message; }
+});
 $('#auth-form').addEventListener('submit', async e=>{
   e.preventDefault();
   try{
@@ -364,6 +421,19 @@ async function upgrade(){
     await refreshMe(); renderMarket(); renderTactics(); renderWins(); renderPlaybook();
     show('market');
   }catch(err){ alert(err.message); }
+}
+
+/* ---------- csv export ---------- */
+async function exportCsv(what){
+  const res = await fetch('/api/export/'+what+'.csv');
+  if(res.status===402){ if(confirm('CSV export is a Pro feature. Upgrade now?')) upgrade(); return; }
+  if(!res.ok){ alert('Export failed.'); return; }
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = what+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /* ---------- claim ---------- */
@@ -414,15 +484,22 @@ async function renderMarket(){
     <div class="fact"><b>${esc(m.dma)}</b><span>Nielsen DMA (approx)</span></div>
     <div class="fact"><b>${esc(m.ooh_rate)}</b><span>OOH rate band /mo</span></div>
     <div class="fact"><b>${m.ooh_ops}</b><span>OOH operators</span></div>`;
-  const data = await api('/api/contacts?metro='+encodeURIComponent(name));
-  $('#market-cards').innerHTML = data.categories.map(c=>`
+  const [data, claimed] = await Promise.all([
+    api('/api/contacts?metro='+encodeURIComponent(name)),
+    api('/api/verified?metro='+encodeURIComponent(name)),
+  ]);
+  $('#market-cards').innerHTML = data.categories.map(c=>{
+    const badges = c.contacts ? claimed.filter(co=>c.contacts.includes(co)) : [];
+    return `
     <div class="ccard${c.locked?' locked':''}">
       <span class="scope ${c.scope}">${c.scope}</span>
       <h4>${esc(c.category)}</h4>
       <p>${c.locked ? 'Locked — the who-to-call detail for this category is a Pro feature.' : esc(c.contacts)}</p>
       ${c.locked ? '<div class="locktag"><button onclick="upgrade()">Unlock with Pro</button></div>'
-                 : `<span class="verified">✓ verified ${esc(c.last_verified)}</span>`}
-    </div>`).join('');
+                 : `<span class="verified">✓ verified ${esc(c.last_verified)}${
+                    badges.length ? ' · <b>'+badges.map(esc).join(', ')+' — claimed ✓</b>' : ''}</span>`}
+    </div>`;
+  }).join('');
 }
 
 const tIds = ['t-search','t-cat','t-cost','t-rel','t-time'];
