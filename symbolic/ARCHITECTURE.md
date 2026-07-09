@@ -207,8 +207,9 @@ Workspace + projects, Overview, AI Product Manager (interview → brief), Archit
 A streaming Edge Function at `/api/ai` forwards to the Anthropic Messages API (key stays server-side). The client streams tokens live: the Product Manager runs a **real, adaptive interview** with Claude (questions typed token-by-token), and the PM / UX / Architect / Engineering specialists stream **structured JSON** that's parsed into the existing rich views. Every AI call falls back to local synthesis on any error, so the app never breaks. Default model `claude-opus-4-8` (override with `SYMBOLIC_MODEL` or in Settings).
 *Still ahead:* move storage from localStorage to Supabase/Postgres with auth; multi-user workspaces; surfaced confidence + reasoning.
 
-**Milestone 3 — Product Factory & handoff.**
-Stage gates with review/approve, artifact diffing, export to real scaffolding (Next.js repo, schema migrations, API stubs). Engineering plan → GitHub issues.
+**Milestone 3 — Product Factory & handoff.** ✅ (shipping in the Factory + Handoff tabs)
+The pipeline is now **gated**: each stage has exit criteria derived from the artifacts (interview depth, brief, UX, architecture + plan, audit ≥ 70, exported kit), and you *approve* a gate to advance. The **Handoff** tab packages the accumulated work into a downloadable, dependency-free **`.zip`** — a Next.js scaffold (README, `package.json`, `.env.example`, `db/schema.sql`, domain-aware API + page stubs, feature list), plus **GitHub-ready `issues.json` + `ISSUES.md`** generated from the epics/stories/milestones, and the project JSON. Exporting satisfies the launch gate.
+*Still ahead:* one-click GitHub issue/repo sync, artifact diffing, richer AI-generated starter code.
 
 **Milestone 4 — Academy.**
 Lessons, interactive walkthroughs, challenges, XP, achievements, learning paths — every action teaches *why*.

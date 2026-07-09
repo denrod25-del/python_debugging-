@@ -422,6 +422,7 @@ const ICON={
   graph:'<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8 7l8 8M8.4 7.4l7-.4M16 9l-3 5.5"/>',
   memory:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
   roadmap:'<path d="M4 20V8l8-4 8 4v12"/><path d="M4 12h16M12 4v16"/>',
+  box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
   send:'<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
@@ -527,6 +528,20 @@ function nameFromIdea(idea){
    PROJECT FACTORY
    ============================================================ */
 const STAGES=['idea','research','validation','requirements','design','engineering','testing','launch','iteration'];
+// Each stage's exit criteria — the gate that must be met before advancing past it.
+const STAGE_GATE={
+  idea:{items:['Idea captured'], ok:()=>true},
+  research:{items:['Users & competitors defined'], ok:p=>!!(p.overview.users||'').trim()},
+  validation:{items:['Founder interview · ≥3 answers'], ok:p=>p.pm.interview.filter(q=>q.a).length>=3},
+  requirements:{items:['Product brief generated'], ok:p=>!!p.pm.brief},
+  design:{items:['UX journeys & states'], ok:p=>!!p.ux},
+  engineering:{items:['Architecture + engineering plan'], ok:p=>!!p.arch&&!!p.eng},
+  testing:{items:['Quality audit · overall ≥ 70'], ok:p=>!!(p.audit.scores&&overall(p.audit.scores)>=70)},
+  launch:{items:['Handoff kit exported'], ok:p=>!!p.exported},
+  iteration:{items:['Live — gathering feedback'], ok:()=>true},
+};
+// Where to go to satisfy a stage's gate.
+const STAGE_TAB={validation:'pm',requirements:'pm',design:'ux',engineering:'eng',testing:'audit',launch:'handoff'};
 function newProject(idea){
   const d=domainOf(idea);
   const pr={ id:uid(), name:nameFromIdea(idea), idea:idea.trim(), createdAt:now(), stage:'idea',
@@ -932,7 +947,8 @@ const PROJ_TABS=[
   {id:'audit',label:'Quality Auditor',icon:ICON.audit},
   {id:'graph',label:'Knowledge Graph',icon:ICON.graph},
   {id:'memory',label:'Product Memory',icon:ICON.memory},
-  {id:'roadmap',label:'Roadmap',icon:ICON.roadmap},
+  {id:'roadmap',label:'Factory',icon:ICON.roadmap},
+  {id:'handoff',label:'Handoff',icon:ICON.box},
 ];
 function buildSidebar(){
   const nav=$('#mainNav'); nav.innerHTML='';
@@ -1028,9 +1044,9 @@ function viewProject(v,p,tab){
   });
   v.append(sn);
   const body=el('div',{}); v.append(body);
-  ({overview:tabOverview,pm:tabPM,ux:tabUX,arch:tabArch,eng:tabEng,audit:tabAudit,graph:tabGraph,memory:tabMemory,roadmap:tabRoadmap}[tab]||tabOverview)(body,p);
+  ({overview:tabOverview,pm:tabPM,ux:tabUX,arch:tabArch,eng:tabEng,audit:tabAudit,graph:tabGraph,memory:tabMemory,roadmap:tabRoadmap,handoff:tabHandoff}[tab]||tabOverview)(body,p);
 }
-function isTabDone(p,id){return ({overview:true,pm:!!p.pm.brief,ux:!!p.ux,arch:!!p.arch,eng:!!p.eng,audit:!!p.audit.scores,graph:!!p.graph,memory:p.memory.length>1,roadmap:true})[id];}
+function isTabDone(p,id){return ({overview:true,pm:!!p.pm.brief,ux:!!p.ux,arch:!!p.arch,eng:!!p.eng,audit:!!p.audit.scores,graph:!!p.graph,memory:p.memory.length>1,roadmap:true,handoff:!!p.exported})[id];}
 
 /* ---- header helper for a tab ---- */
 function tabHead(title,sub,actions){
@@ -1342,23 +1358,98 @@ function addDecision(p){
   }, ()=>{ const t=$('#decT').value.trim(); if(!t){toast('Add a title',false);return false;} logDecision(p,t,esc($('#decW').value.trim()||'—'),$('#decWho').value.trim()||'Founder'); save(); render(); toast('Decision logged'); });
 }
 
-/* ---- ROADMAP ---- */
+/* ---- PRODUCT FACTORY (gated pipeline) ---- */
 function tabRoadmap(v,p){
-  v.append(tabHead('Roadmap','The Product Factory pipeline. Each stage is reviewable — advance when it\'s ready.',null));
-  const card=el('div',{class:'card'});
+  v.append(tabHead('Product Factory','Idea → launch, one reviewable stage at a time. Each gate unlocks only when the work behind it lands.',null));
   const cur=STAGES.indexOf(p.stage);
+  const card=el('div',{class:'card'});
+  card.append(el('div',{class:'between',style:'margin-bottom:16px'}, el('div',{class:'eyebrow'},'Pipeline · '+projectProgress(p)+'% complete'),
+    el('div',{class:'prog',style:'flex:1;max-width:220px'},el('i',{style:`width:${projectProgress(p)}%`}))));
   const list=el('div',{class:'stack'});
-  STAGES.forEach((s,i)=>{const done=i<cur, on=i===cur;
-    const row=el('div',{class:'catrow',style:'cursor:pointer', onclick:()=>{p.stage=s; save(); logDecision(p,'Stage set to '+s,'Founder moved the project to the <b>'+s+'</b> stage of the Product Factory.','CEO AI'); render();}});
-    row.innerHTML=`<span class="rc ${done?'lo':on?'md':''}" style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:${done?'color-mix(in srgb,var(--accent) 18%,transparent)':on?'color-mix(in srgb,var(--amber) 20%,transparent)':'var(--surface2)'};color:${done?'var(--accent-deep)':on?'var(--amber)':'var(--muted)'};font-family:var(--mono);font-size:11px">${done?'✓':i+1}</span>
-      <span class="cn" style="width:auto;flex:1;font-weight:${on?'700':'500'};text-transform:capitalize">${s}</span>
-      ${on?'<span class="badge warn">current</span>':done?'<span class="badge ok">done</span>':'<span class="badge">upcoming</span>'}`;
+  STAGES.forEach((s,i)=>{
+    const g=STAGE_GATE[s], met=g.ok(p), done=i<cur, on=i===cur;
+    const row=el('div',{class:'card flat',style:`padding:14px 16px;${on?'border-color:color-mix(in srgb,var(--amber) 45%,var(--line))':''}`});
+    const bg=done?'color-mix(in srgb,var(--accent) 18%,transparent)':on?'color-mix(in srgb,var(--amber) 20%,transparent)':'var(--surface2)';
+    const fg=done?'var(--accent-deep)':on?'var(--amber)':'var(--muted)';
+    const badge=on?'<span class="badge warn">current</span>':done?'<span class="badge ok">done</span>':met?'<span class="badge ok">ready</span>':'<span class="badge">locked</span>';
+    const head=el('div',{class:'between'});
+    head.append(el('div',{class:'row',style:'gap:11px'},
+      el('span',{style:`width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:${bg};color:${fg};font-family:var(--mono);font-size:11px;flex:none`, html:done?icon(ICON.check):String(i+1)}),
+      el('div',{}, el('div',{style:'font-weight:600;text-transform:capitalize'},s), el('div',{class:'mono',style:'font-size:11px;color:var(--muted)'},g.items.join(' · ')))),
+      el('div',{html:badge}));
+    row.append(head);
+    // current-stage gate control
+    if(on && i<STAGES.length-1){
+      const next=STAGES[i+1]; const tab=STAGE_TAB[s];
+      const ctl=el('div',{class:'row',style:'margin-top:12px'});
+      if(met){
+        ctl.append(el('button',{class:'btn primary sm',html:icon(ICON.check)+'Approve & advance → '+next,
+          onclick:()=>{ p.stage=next; save(); logDecision(p,'Stage approved: '+s+' → '+next,`The <b>${s}</b> gate was met and approved; the project advanced to <b>${next}</b>.`,'CEO AI'); render(); }}));
+      } else {
+        ctl.append(el('span',{class:'badge warn'},'Gate not met'),
+          tab?el('a',{class:'btn ghost sm',href:'#/p/'+p.id+'/'+tab,html:icon(ICON.spark)+'Complete in '+PROJ_TABS.find(t=>t.id===tab).label}):el('span',{class:'muted',style:'font-size:12.5px'},g.items[0]));
+      }
+      row.append(ctl);
+    }
+    if(done){ row.querySelector('.between').style.cursor='pointer';
+      row.querySelector('.between').onclick=()=>{ p.stage=s; save(); logDecision(p,'Reverted to '+s,'Founder moved the project back to the <b>'+s+'</b> stage.','CEO AI'); render(); }; }
     list.append(row);
   });
-  card.append(el('div',{class:'between',style:'margin-bottom:14px'}, el('div',{class:'eyebrow'},'Pipeline · '+projectProgress(p)+'% complete'),
-    el('div',{class:'prog',style:'flex:1;max-width:200px'},el('i',{style:`width:${projectProgress(p)}%`}))), list);
+  card.append(list);
   v.append(card);
-  v.append(el('p',{class:'muted',style:'font-size:12.5px;margin-top:10px'},'Click any stage to set it. In Milestone 3 these become review gates that require sign-off before advancing.'));
+  v.append(el('p',{class:'muted',style:'font-size:12.5px;margin-top:10px'},'Approve each gate to advance; click a completed stage to revert. The Handoff kit satisfies the launch gate.'));
+}
+
+/* ---- HANDOFF (export to a starter repo + GitHub-ready issues) ---- */
+function tabHandoff(v,p){
+  v.append(tabHead('Handoff','Turn the plan into a production-shaped starter repo and GitHub-ready issues — download and go.',
+    p.exported?[el('span',{class:'badge ok dot'},'Exported')]:null));
+  if(!p.arch||!p.eng){
+    v.append(gate(p,'Design the architecture & plan first','The handoff kit is generated from your architecture and engineering plan.',
+      !p.arch?'arch':'eng', !p.arch?'Design architecture':'Plan engineering'));
+    return;
+  }
+  const {files,slug}=scaffoldSpec(p);
+  const {issues,milestones}=issuesSpec(p);
+  v.append(el('div',{class:'row',style:'margin-bottom:16px'},
+    el('button',{class:'btn primary',html:icon(ICON.down)+'Download handoff kit (.zip)',onclick:()=>downloadKit(p)}),
+    el('button',{class:'btn ghost sm',html:icon(ICON.down)+'issues.json',onclick:()=>downloadBlob(new Blob([JSON.stringify(issues,null,2)],{type:'application/json'}), slug+'-issues.json')})));
+  // scaffold browser
+  const two=el('div',{class:'two'});
+  const treeCard=el('div',{class:'card'}); treeCard.append(el('div',{class:'eyebrow',style:'margin-bottom:12px'},'Scaffold · '+files.length+' files'));
+  const pre=el('pre',{class:'aistream',style:'max-height:440px;color:var(--ink)'}); pre.textContent=files[0].body;
+  const tree=el('div',{class:'stack',style:'gap:3px'});
+  files.forEach((f,i)=>{ const btn=el('button',{class:'btn ghost tiny'+(i===0?' primary':''),style:'width:100%;justify-content:flex-start;font-family:var(--mono);font-size:11.5px',
+    onclick:()=>{ pre.textContent=f.body; tree.querySelectorAll('.btn').forEach(b=>b.classList.remove('primary')); btn.classList.add('primary'); }}, f.path);
+    tree.append(btn); });
+  treeCard.append(tree);
+  const prevCard=el('div',{class:'card'}); prevCard.append(el('div',{class:'eyebrow',style:'margin-bottom:12px'},'Preview'), pre);
+  two.append(treeCard,prevCard); v.append(two);
+  // issues
+  v.append(el('div',{class:'h2',style:'margin:22px 0 12px'}, issues.length+' GitHub-ready issues'));
+  const ic=el('div',{class:'card'});
+  if(milestones.length){ const mrow=el('div',{class:'row',style:'gap:6px;margin-bottom:12px;flex-wrap:wrap'}); milestones.forEach(m=>mrow.append(el('span',{class:'chip'},m.title))); ic.append(mrow); }
+  issues.slice(0,12).forEach(is=>ic.append(el('div',{class:'rec'}, el('span',{class:'rc lo'},'#'),
+    el('div',{}, el('b',{},esc(is.title)), el('div',{class:'rt mono',style:'font-size:11px'}, is.labels.join(' · '))))));
+  if(issues.length>12) ic.append(el('div',{class:'muted',style:'font-size:12.5px;margin-top:8px'},'+ '+(issues.length-12)+' more in issues.json'));
+  v.append(ic);
+  v.append(el('p',{class:'muted',style:'font-size:12.5px;margin-top:10px'},'Unzip into a new repo, then import issues.json via the GitHub CLI/API. One-click GitHub sync lands in a later milestone.'));
+}
+function downloadKit(p){
+  const {files,slug}=scaffoldSpec(p);
+  const {issues,milestones}=issuesSpec(p);
+  const md='# '+p.name+' — engineering issues\n\n'+
+    (milestones.length?('## Milestones\n'+milestones.map(m=>`- **${m.title}** (${m.when}) — ${m.description}`).join('\n')+'\n\n'):'')+
+    issues.map(i=>`## ${i.title}\n\`${i.labels.join(', ')}\`\n\n${i.body}\n`).join('\n');
+  const all=[...files,
+    {path:'ISSUES.md', body:md},
+    {path:'issues.json', body:JSON.stringify(issues,null,2)},
+    {path:'symbolic.project.json', body:JSON.stringify(p,null,2)}];
+  downloadBlob(makeZip(all), slug+'-handoff.zip');
+  if(!p.exported){ p.exported=true;
+    logDecision(p,'Handoff kit exported','Symbolic packaged a Next.js scaffold, a SQL schema, and '+issues.length+' GitHub-ready issues into a downloadable kit — satisfying the launch gate.','Documentation Writer AI');
+    save(); render(); }
+  toast('Handoff kit downloaded');
 }
 
 /* ---- shared small components ---- */
@@ -1483,10 +1574,84 @@ function confirmDelete(p){
   // recolor confirm button
   setTimeout(()=>{const b=$('#modal .btn.primary'); if(b){b.classList.remove('primary'); b.classList.add('ox');}},0);
 }
+function slugify(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'symbolic-app'; }
+function downloadBlob(blob,name){
+  const a=el('a',{href:URL.createObjectURL(blob),download:name});
+  document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
+}
 function exportProject(p){
-  const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
-  const a=el('a',{href:URL.createObjectURL(blob),download:(p.name.replace(/\s+/g,'-').toLowerCase()||'project')+'.symbolic.json'});
-  document.body.append(a); a.click(); a.remove(); toast('Exported JSON');
+  downloadBlob(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}), slugify(p.name)+'.symbolic.json');
+  toast('Exported JSON');
+}
+
+/* ---- handoff scaffold + issues (derived from the artifacts) ---- */
+function scaffoldSpec(p){
+  const d=domainOf(p.idea);
+  const slug=slugify(p.name);
+  const entities=(p.arch?.schema?.map(s=>s.e).filter(Boolean).length?p.arch.schema.map(s=>s.e):d.entities);
+  const noun=(d.noun||'item').replace(/\s+/g,'-').toLowerCase();
+  const feats=(p.pm?.brief?.features||d.features.map(f=>({name:f,mvp:true}))).map(f=>({name:f.name||f,mvp:f.mvp!==false}));
+  const files=[];
+  files.push({path:'README.md', body:
+`# ${p.name}\n\n> ${p.overview.mission}\n\n${p.pm?.brief?.summary||p.idea}\n\n## Stack\n${(p.arch?.stack||d.stack).map(s=>'- '+s).join('\n')}\n\n## Getting started\n\n\`\`\`bash\nnpm install\ncp .env.example .env.local   # fill in values\nnpm run dev\n\`\`\`\n\n## MVP scope\n${p.pm?.brief?.mvp||('The core '+d.noun+' workflow.')}\n\n---\nScaffolded by **Symbolic** — the AI product operating system.\n`});
+  files.push({path:'package.json', body: JSON.stringify({
+    name:slug, version:'0.1.0', private:true,
+    scripts:{ dev:'next dev', build:'next build', start:'next start', lint:'next lint' },
+    dependencies:{ next:'^15.0.0', react:'^18.3.0', 'react-dom':'^18.3.0', '@supabase/supabase-js':'^2.45.0' },
+    devDependencies:{ typescript:'^5.6.0', '@types/react':'^18.3.0', '@types/node':'^22.0.0' }
+  }, null, 2)});
+  files.push({path:'.env.example', body:
+`# ${p.name} — environment\nDATABASE_URL=\nNEXT_PUBLIC_SUPABASE_URL=\nNEXT_PUBLIC_SUPABASE_ANON_KEY=\nSUPABASE_SERVICE_ROLE_KEY=\n# Auth: ${p.arch?.auth||'email + OAuth'}\n`});
+  const sql=entities.map(e=>{ const t=slugify(e).replace(/-/g,'_')+'s';
+    return `create table if not exists ${t} (\n  id uuid primary key default gen_random_uuid(),\n  workspace_id uuid not null,\n  created_at timestamptz not null default now()\n  -- TODO: ${e}-specific columns\n);\nalter table ${t} enable row level security;`; }).join('\n\n');
+  files.push({path:'db/schema.sql', body:`-- ${p.name} — schema (row-level security on by default)\n\n${sql}\n`});
+  files.push({path:`app/api/${noun}/route.ts`, body:
+`import { NextRequest, NextResponse } from 'next/server';\n\n// ${p.name} — ${noun} core CRUD.\n// AuthZ: ${p.arch?.authz||'RBAC enforced at the DB via row-level security'}\n\nexport async function GET(_req: NextRequest) {\n  // TODO: list ${noun} for the current workspace (cursor pagination)\n  return NextResponse.json({ data: [] });\n}\n\nexport async function POST(req: NextRequest) {\n  const body = await req.json();\n  // TODO: validate + insert (idempotent); write an audit-log entry\n  return NextResponse.json({ ok: true }, { status: 201 });\n}\n`});
+  files.push({path:'app/page.tsx', body:
+`export default function Home() {\n  return (\n    <main style={{ padding: 48, fontFamily: 'system-ui' }}>\n      <h1>${p.name}</h1>\n      <p>${p.overview.vision}</p>\n      {/* First core action goes here — target < 10s to first success. */}\n    </main>\n  );\n}\n`});
+  files.push({path:'lib/features.ts', body:`// Feature list from the product brief.\nexport const FEATURES = ${JSON.stringify(feats, null, 2)} as const;\n`});
+  return { files, slug };
+}
+function issuesSpec(p){
+  const issues=[];
+  (p.eng?.epics||[]).forEach(ep=>{ const label='epic:'+slugify(ep.t);
+    (ep.stories||[]).forEach(s=>issues.push({
+      title:s,
+      body:`**Epic:** ${ep.t}\n\n### Acceptance criteria\n- [ ] TODO\n\n### Notes\nEpic story points: ${ep.pts}`,
+      labels:[label] })); });
+  const milestones=(p.eng?.milestones||[]).map(m=>({ title:m.t, description:m.d, when:m.w }));
+  return { issues, milestones };
+}
+
+/* Minimal dependency-free ZIP writer (store method, no compression). */
+let CRC_TABLE;
+function crc32(bytes){
+  if(!CRC_TABLE){ CRC_TABLE=new Uint32Array(256);
+    for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); CRC_TABLE[n]=c>>>0; } }
+  let crc=0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) crc=CRC_TABLE[(crc^bytes[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function makeZip(files){
+  const enc=new TextEncoder();
+  const chunks=[]; let offset=0;
+  const u16=n=>[n&255,(n>>8)&255];
+  const u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  const put=arr=>{ const u=Uint8Array.from(arr); chunks.push(u); offset+=u.length; };
+  const central=[];
+  for(const f of files){
+    const nameB=enc.encode(f.path), dataB=enc.encode(f.body), crc=crc32(dataB), off=offset;
+    put([...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(dataB.length),...u32(dataB.length),...u16(nameB.length),...u16(0)]);
+    put([...nameB]); put([...dataB]);
+    central.push({crc,size:dataB.length,nameB,off});
+  }
+  const cdStart=offset;
+  for(const c of central){
+    put([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(c.crc),...u32(c.size),...u32(c.size),...u16(c.nameB.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(c.off)]);
+    put([...c.nameB]);
+  }
+  put([...u32(0x06054b50),...u16(0),...u16(0),...u16(central.length),...u16(central.length),...u32(offset-cdStart),...u32(cdStart),...u16(0)]);
+  return new Blob(chunks,{type:'application/zip'});
 }
 
 /* ---- command palette ---- */

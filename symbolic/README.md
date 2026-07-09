@@ -38,6 +38,8 @@ vercel --prod         # promote
 | **AI Quality Auditor** | Honest scores across 11 categories + **actionable** recommendations. |
 | **Knowledge Graph** | Interactive, force-directed map connecting idea → goal → feature → screen → data → API → analytics → revenue → feedback. |
 | **Product Memory** | Append-only, traceable decision log — every generated artifact writes an entry. |
+| **Product Factory** | The pipeline as **review gates** — each stage unlocks only when its work lands; approve to advance. |
+| **Handoff** | Packages the plan into a downloadable `.zip`: a Next.js scaffold + SQL schema + **GitHub-ready `issues.json`/`ISSUES.md`**. |
 | **AI Team** | 13 specialists, each with a mission and decision boundaries. |
 | **Design System** | Live token + component gallery (light/dark, WCAG AA). |
 
