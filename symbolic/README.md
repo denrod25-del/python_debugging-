@@ -40,6 +40,7 @@ vercel --prod         # promote
 | **Product Memory** | Append-only, traceable decision log — every generated artifact writes an entry. |
 | **Product Factory** | The pipeline as **review gates** — each stage unlocks only when its work lands; approve to advance. |
 | **Handoff** | Packages the plan into a downloadable `.zip`: a Next.js scaffold + SQL schema + **GitHub-ready `issues.json`/`ISSUES.md`**. |
+| **Marketplace** | Templates that spin up a real pre-filled product (PlumbingOS, AuditScout, Lava Leap, BuildForge AI…), plus prompt/component/workflow packs. |
 | **Academy** | Learn by building — XP, levels, achievements, and lessons that track your *real* work and explain the *why*. |
 | **AI Team** | 13 specialists, each with a mission and decision boundaries. |
 | **Design System** | Live token + component gallery (light/dark, WCAG AA). |

@@ -436,6 +436,8 @@ const ICON={
   check:'<path d="M20 6 9 17l-5-5"/>',
   book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 5v14"/>',
   academy:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/>',
+  store:'<path d="M4 9h16l-1 11H5L4 9z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
 };
 
 /* ---------------- STATE ---------------- */
@@ -940,6 +942,7 @@ const TEAM=[
    ============================================================ */
 const NAV=[
   {id:'workspace',label:'Workspace',icon:ICON.workspace},
+  {id:'market',label:'Market',icon:ICON.store},
   {id:'academy',label:'Academy',icon:ICON.academy},
   {id:'team',label:'AI Team',icon:ICON.team},
   {id:'system',label:'Design System',icon:ICON.system},
@@ -991,6 +994,7 @@ function render(){
   buildSidebar(); setActiveNav(route); crumb(route);
   $('.scroll').scrollTop=0;
   if(route.view==='project'){ const p=P(route.pid); if(!p){location.hash='#/workspace'; return;} viewProject(v,p,route.tab); }
+  else if(route.view==='market') viewMarket(v);
   else if(route.view==='academy') viewAcademy(v);
   else if(route.view==='team') viewTeam(v);
   else if(route.view==='system') viewSystem(v);
@@ -1492,6 +1496,7 @@ const ACH=[
   {id:'operator',n:'The Operator',d:'Take one product through every specialist.',hue:320,ok:()=>anyProj(p=>p.pm.brief&&p.ux&&p.arch&&p.eng&&p.audit.scores)},
   {id:'scholar',n:'Scholar',d:'Complete every lesson.',hue:205,ok:()=>AC().lessons.length>=LESSONS.length},
   {id:'adept',n:'Adept',d:'Reach level 5.',hue:38,ok:()=>level(AC().xp)>=5},
+  {id:'collector',n:'Marketplace Explorer',d:'Start a product from a marketplace template.',hue:265,ok:()=>anyProj(p=>p.fromTemplate)},
 ];
 function checkBadges(silent){ const a=AC(); ACH.forEach(x=>{ if(!a.badges.includes(x.id) && x.ok()){ a.badges.push(x.id); save();
   if(!silent) setTimeout(()=>toast('Achievement · '+x.n),160); } }); updateAcademyNav(); }
@@ -1578,6 +1583,113 @@ function viewAcademy(v){
       el('span',{class:'cn',style:'width:auto;flex:1;'+(done?'':'color:var(--muted)')},t),
       done?el('span',{class:'badge ok'},'done'):el('span',{class:'badge'},'to do'))); });
   v.append(cc);
+}
+
+/* ============================================================
+   MARKETPLACE  (Milestone 5) — templates, packs, prompts, agents.
+   Templates instantiate a real, pre-filled project.
+   ============================================================ */
+const MARKET=[
+  // ---- Templates (install a real project) ----
+  {id:'plumbingos',cat:'template',hue:205,name:'PlumbingOS',author:'B.Symbolic',rating:4.9,installs:'2.1k',
+   tags:['inventory','mobile','offline'],tagline:'Field-service inventory for plumbing crews — parts, trucks, and reorders.',
+   idea:'a plumbing inventory app for field technicians',
+   overview:{vision:'Every plumbing crew knows exactly what\'s on the truck and what to reorder — before the job, not after.',mission:'Give field technicians a 10-second way to track parts across trucks and warehouses, offline.',users:'Field Technicians, Warehouse Managers, Procurement Leads',competitors:'Spreadsheets · clipboards · generic inventory SaaS'}},
+  {id:'auditscout',cat:'template',hue:38,name:'AuditScout',author:'B.Symbolic',rating:4.8,installs:'1.4k',
+   tags:['fintech','compliance','b2b'],tagline:'Compliance audit tracking with evidence trails and reviewer sign-off.',
+   idea:'a compliance audit tracker for finance teams with evidence trails',
+   overview:{vision:'Audits stop being a fire drill — evidence is captured continuously, not scrambled for at year-end.',mission:'Give finance teams one trustworthy place to track controls, evidence, and reviewer sign-off.',users:'Compliance Leads, Auditors, Finance Managers',competitors:'Spreadsheets · email threads · legacy GRC suites'}},
+  {id:'lavaleap',cat:'template',hue:150,name:'Lava Leap',author:'Community',rating:4.7,installs:'980',
+   tags:['social','gamification','consumer'],tagline:'Social challenge app for climbing gyms — routes, streaks, and leaderboards.',
+   idea:'a social challenge app for climbing gyms with routes and leaderboards',
+   overview:{vision:'Climbing gyms feel like a game you play with friends — every send counts, every week has a story.',mission:'Give climbers a fun way to log sends, chase streaks, and compete with their gym community.',users:'Climbers, Route Setters, Gym Owners',competitors:'Paper logbooks · generic fitness apps · Instagram'}},
+  {id:'buildforge',cat:'template',hue:320,name:'BuildForge AI',author:'B.Symbolic',rating:4.9,installs:'3.3k',
+   tags:['saas','ai','devtools'],tagline:'An AI that scaffolds production web apps from a spec.',
+   idea:'an AI tool that generates production web apps from a product spec',
+   overview:{vision:'A founder describes a product and gets a real, deployable app — not a demo.',mission:'Turn a validated spec into a production-ready codebase with tests and CI.',users:'Founders, Solo Developers, Product Teams',competitors:'No-code builders · boilerplates · doing it by hand'}},
+  {id:'cadence',cat:'template',hue:190,name:'Cadence',author:'Community',rating:4.6,installs:'760',
+   tags:['booking','payments'],tagline:'Booking & scheduling for studios — classes, deposits, reminders.',
+   idea:'a booking and scheduling app for yoga and pilates studios',
+   overview:{vision:'Studios fill their schedule and cut no-shows without a receptionist glued to the phone.',mission:'Let clients book, pay a deposit, and get reminders in under a minute.',users:'Clients, Studio Staff, Owners',competitors:'Phone & paper · generic calendars · MindBody'}},
+  {id:'ledgerly',cat:'template',hue:28,name:'Ledgerly',author:'B.Symbolic',rating:4.5,installs:'1.1k',
+   tags:['fintech','b2b','invoicing'],tagline:'Invoicing and payments for small creative agencies.',
+   idea:'an invoicing tool for small creative agencies',
+   overview:{vision:'Agencies get paid faster with invoices that don\'t get lost in email.',mission:'Create, send, and track invoices with a clear picture of what\'s owed.',users:'Agency Owners, Bookkeepers, Clients',competitors:'Manual invoices · spreadsheets · heavyweight accounting suites'}},
+  // ---- Prompt packs (copy to use in your own interview) ----
+  {id:'pp-interview',cat:'prompt',hue:150,name:'Sharper Interviews',author:'B.Symbolic',rating:4.8,installs:'640',
+   tags:['product','discovery'],tagline:'A prompt that makes the PM interview dig for evidence, not opinions.',
+   prompt:'Interview me about my product like a skeptical seed investor. For every claim I make, ask for the evidence behind it, and probe the single riskiest assumption until it\'s concrete. One question at a time.'},
+  {id:'pp-mvp',cat:'prompt',hue:38,name:'Ruthless MVP Scoping',author:'Community',rating:4.7,installs:'520',
+   tags:['product','strategy'],tagline:'Cut a feature list down to the one wedge worth shipping first.',
+   prompt:'Here is my feature list. Act as a product leader who ships. Pick the single wedge that delivers the core value, justify it in one sentence, and tell me exactly what to cut and why — no hedging.'},
+  {id:'pp-a11y',cat:'prompt',hue:205,name:'Accessibility Review',author:'B.Symbolic',rating:4.9,installs:'410',
+   tags:['a11y','ux'],tagline:'Turn a screen description into a WCAG-AA checklist.',
+   prompt:'Given this screen, produce a WCAG 2.2 AA checklist specific to it: keyboard path, focus order, contrast risks, live-region needs, and reduced-motion. Flag the top 3 issues most likely to fail an audit.'},
+  // ---- Component packs / workflows / agents / design (browse & preview) ----
+  {id:'cp-tables',cat:'component',hue:190,name:'Data-Dense Tables',author:'B.Symbolic',rating:4.6,installs:'1.8k',
+   tags:['tables','dashboard'],tagline:'Sortable, virtualized tables with sticky headers and inline edit.',
+   body:'A pack of table primitives tuned for operational tools: virtualized rows, sticky headers, column pinning, inline edit, and empty/loading/error states that match the Symbolic design system. Preview only in this build — installable packs land with the plugin runtime.'},
+  {id:'cp-aikit',cat:'component',hue:150,name:'AI Chat Kit',author:'B.Symbolic',rating:4.8,installs:'2.4k',
+   tags:['ai','chat'],tagline:'Streaming chat, thinking indicator, confidence + reasoning panels.',
+   body:'The AI interface components from the design system, packaged: streaming chat bubbles, a thinking indicator, confidence and risk meters, a reasoning timeline, and an evidence panel. See them live in the Design System.'},
+  {id:'wf-weekend',cat:'workflow',hue:38,name:'0 → MVP Weekend Sprint',author:'Community',rating:4.7,installs:'890',
+   tags:['workflow','sprint'],tagline:'A two-day path from idea to a demoable MVP plan.',
+   body:'A guided workflow: Friday night interview + brief, Saturday UX + architecture, Sunday plan + audit + handoff. Each step maps to a Symbolic specialist and a Product Factory gate. Automation recipes land with the workflow runtime.'},
+  {id:'wf-launch',cat:'workflow',hue:0,name:'Launch-Ready Checklist',author:'B.Symbolic',rating:4.9,installs:'1.2k',
+   tags:['workflow','launch'],tagline:'Security, accessibility, and production-readiness gates before you ship.',
+   body:'A pre-launch workflow that runs the Quality Auditor, hard-gates on Security and Accessibility, and produces a go/no-go with the exact fixes required. Mirrors the launch gate in the Product Factory.'},
+  {id:'ag-growth',cat:'agent',hue:150,name:'Growth Strategist Pack',author:'B.Symbolic',rating:4.6,installs:'700',
+   tags:['agent','growth'],tagline:'Activation, retention, and referral loop specialists.',
+   link:'#/team',body:'Extra AI specialists focused on growth loops — activation, retention, and referral. Meet the full roster in the AI Team.'},
+  {id:'ds-editorial',cat:'design',hue:28,name:'Editorial Serif Theme',author:'B.Symbolic',rating:4.8,installs:'1.5k',
+   tags:['theme','design'],tagline:'The warm serif system Symbolic ships with — tokens & components.',
+   link:'#/system',body:'The Symbolic design system: Playfair / Fraunces / Inter / JetBrains Mono, a warm oxblood + green palette, and every component in light and dark. Explore it in the Design System.'},
+];
+const MARKET_CATS=[['all','All'],['template','Templates'],['prompt','Prompt Packs'],['component','Components'],['workflow','Workflows'],['agent','Agents'],['design','Design']];
+
+function installTemplate(t){
+  const pr=newProject(t.idea); pr.name=t.name; if(t.overview) Object.assign(pr.overview,t.overview); pr.fromTemplate=t.id;
+  logDecision(pr,'Installed “'+t.name+'” template','Started from the '+t.name+' marketplace template — a '+domainOf(t.idea).k+' product with a pre-filled vision, users, and competitors.','CEO AI');
+  save(); award(20,'Template: '+t.name); toast('Installed '+t.name); location.hash='#/p/'+pr.id+'/pm';
+}
+function openInfo(title,node){
+  const m=$('#modal'); m.innerHTML='';
+  m.append(el('div',{class:'between',style:'margin-bottom:14px'}, el('div',{class:'h2'},title),
+    el('button',{class:'icobtn',html:icon('<path d="M18 6 6 18M6 6l12 12"/>'),onclick:closeModal})));
+  m.append(node);
+  m.append(el('div',{class:'row',style:'margin-top:18px;justify-content:flex-end'}, el('button',{class:'btn ghost',onclick:closeModal},'Close')));
+  $('#modalScrim').classList.add('show');
+}
+function marketAction(it){
+  if(it.cat==='template') return el('button',{class:'btn primary sm',html:icon(ICON.plus)+'Use',onclick:()=>installTemplate(it)});
+  if(it.cat==='prompt') return el('button',{class:'btn ghost sm',html:icon(ICON.copy)+'Copy prompt',onclick:async e=>{
+    try{ await navigator.clipboard.writeText(it.prompt); }catch(err){}
+    award(5,'Prompt: '+it.name); }});
+  if(it.link) return el('a',{class:'btn ghost sm',href:it.link,html:icon(ICON.spark)+'Open'});
+  return el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Preview',onclick:()=>openInfo(it.name, el('p',{class:'muted',style:'font-size:14px;line-height:1.6'},it.body||it.tagline))});
+}
+function marketCard(it){
+  const card=el('div',{class:'pcard'});
+  card.append(el('div',{class:'row',style:'gap:7px'}, el('span',{class:'chip'},it.cat), ...(it.tags||[]).slice(0,2).map(t=>el('span',{class:'chip'},t))));
+  card.append(el('div',{class:'row',style:'gap:11px;align-items:center'},
+    el('span',{style:`width:38px;height:38px;border-radius:11px;flex:none;background:hsl(${it.hue} 70% 60%);color:#08130c;display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:16px`}, it.name[0]),
+    el('div',{style:'min-width:0'}, el('div',{class:'pt',style:'font-size:16px'},it.name), el('div',{class:'mono',style:'font-size:10px;color:var(--muted)'}, it.author))));
+  card.append(el('div',{class:'pd'},it.tagline));
+  card.append(el('div',{class:'pfoot'}, el('span',{class:'mono',style:'font-size:10.5px;color:var(--muted)'}, '★ '+it.rating+' · '+it.installs), marketAction(it)));
+  return card;
+}
+function viewMarket(v){
+  v.append(el('div',{class:'eyebrow'},'Marketplace'),
+    el('div',{class:'h1',style:'margin:8px 0 4px'},'Build on <span class="d">what others shipped.</span>'),
+    el('p',{class:'lede'},'Start from a template, drop in a prompt or component pack, or run a workflow. Templates spin up a real, pre-filled product you can take straight through the specialists.'));
+  const state={cat:'all'};
+  const chips=el('div',{class:'row',style:'margin:22px 0 18px;gap:8px'});
+  const grid=el('div',{class:'cardgrid'});
+  function paint(){ grid.innerHTML=''; MARKET.filter(it=>state.cat==='all'||it.cat===state.cat).forEach(it=>grid.append(marketCard(it)));
+    chips.querySelectorAll('button').forEach(b=>b.classList.toggle('primary', b.dataset.c===state.cat)); }
+  MARKET_CATS.forEach(([c,label])=>{ const n=c==='all'?MARKET.length:MARKET.filter(i=>i.cat===c).length;
+    chips.append(el('button',{class:'btn ghost tiny','data-c':c,html:label+' <span style="opacity:.6">'+n+'</span>',onclick:()=>{state.cat=c; paint();}})); });
+  v.append(chips, grid); paint();
 }
 
 /* ---- TEAM ---- */

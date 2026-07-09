@@ -215,8 +215,9 @@ The pipeline is now **gated**: each stage has exit criteria derived from the art
 "Every action teaches" — XP, levels, achievements, and a live challenge checklist all track the *real* work you do (start a product, answer interview questions, generate each artifact, run an audit, approve a gate, export a kit). A six-lesson learning path explains the *why* behind the method (start with one wedge · interview first · states are the product · never trust the client · traceable decisions · score what you ship). Achievements reconcile with real progress; XP surfaces as your level in the sidebar.
 *Still ahead:* interactive in-context walkthroughs, per-lesson challenges with checks, streaks.
 
-**Milestone 5 — Marketplace.**
-Plugins, AI agents, templates, component packs, workflow packs, design systems, prompt libraries, automation recipes.
+**Milestone 5 — Marketplace.** ✅ (shipping in the Market view)
+A browsable marketplace across templates, prompt packs, component packs, workflows, agents, and design systems, filterable by category. **Templates instantiate a real, pre-filled product** — the master prompt's named products (PlumbingOS, AuditScout, Lava Leap, BuildForge AI) plus more — dropping you straight into the pipeline with vision/mission/users/competitors already set. **Prompt packs** copy to your clipboard; the rest preview in place.
+*Still ahead:* an installable plugin/agent runtime, community publishing, automation recipes.
 
 ---
 
