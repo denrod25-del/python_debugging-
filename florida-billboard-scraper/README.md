@@ -68,19 +68,20 @@ python scraper.py --oda-file ODAData.xlsx --out florida.xlsx
 | `--oda-file` | *(none)* | Parse a hand-downloaded FDOT ODA Excel |
 | `--csv` | *(off)* | Also write CSV; bare flag = alongside the `.xlsx`, or give a path |
 
-## National dataset — 18 major US metros
+## National dataset — 26 major US metros
 
 Beyond Florida, the tool ships a national dataset of billboard companies across
-**18 major US OOH markets** (in market-size rank order): New York, Los Angeles,
+**26 major US OOH markets** (in market-size rank order): New York, Los Angeles,
 Chicago, San Francisco, Atlanta, Washington DC, Boston, Dallas, Houston, Miami,
-Philadelphia, Seattle, Phoenix, Denver, San Diego, San Antonio, Austin, Jacksonville.
+Philadelphia, Detroit, Seattle, Minneapolis, Phoenix, Tampa, Denver, Orlando,
+San Diego, Las Vegas, San Antonio, Portland, Charlotte, Nashville, Austin, Jacksonville.
 
 ```bash
 python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**83 companies across all 18 metros** (every market has local operators, not just
+**94 companies across all 26 metros** (every market has local operators, not just
 the nationals). The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
 Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
@@ -97,25 +98,31 @@ every metro tab; each metro also lists its own local operators, e.g.:
 - **Texas** — Houston (20): SignAd, Gilbreath, Avail, Inspiria; Dallas (19):
   Arrington, Ralston, Albert; San Antonio (17); Austin (15): Reagan Outdoor,
   MediaChoice, Burkett.
-- **New metros** — San Francisco (Billboard Source, Can't Miss US), Atlanta
-  (Trailhead, Billboard Company Atlanta), Boston, Washington DC (Capitol Outdoor),
-  Seattle (Pacific Outdoor, Parker, Summus), Denver (Mile High Outdoor, Elevation,
-  Outdoor Ads Inc.), Miami (SDE Media, Carter Outdoor, Plug Talk).
+- **Tier-2 metros** — San Francisco (Billboard Source, Can't Miss US), Atlanta
+  (Trailhead, Billboard Company Atlanta), Washington DC (Capitol Outdoor), Seattle
+  (Pacific Outdoor, Parker, Summus), Denver (Mile High Outdoor, Elevation), Miami
+  (SDE Media, Carter Outdoor, Plug Talk).
+- **Tier-3 metros** — Detroit (International Outdoor), Minneapolis (Franklin
+  Outdoor, Blue Ox), Tampa (Tampa Outdoor, Signal, Logan), Orlando (Orlando
+  Outdoor), Las Vegas (Las Vegas Billboards), Portland (Grapevine, Meadow),
+  Charlotte + Nashville (Adams, Allison Outdoor).
 
 Source: `fbscraper/national.py`.
 
-The national workbook has **22 tabs**:
+The national workbook has **30 tabs**:
 
 - **All Companies** — every company, national operators first, with a "Metros
   Served" column.
-- **City Market Ranking** — the 18 metros ranked by billboard market size and
-  typical ad rates (NYC #1 → Jacksonville #18), with numeric low/high rate columns,
-  premium notes (e.g. Times Square $10k–$1M+/mo), and an **embedded bar chart** of
-  the monthly rate band per metro.
-- **One tab per metro** (18 of them) — just the companies serving that market.
+- **City Market Ranking** — the 26 metros ranked by billboard market size and
+  typical ad rates (NYC #1 → Jacksonville #26), with numeric low/high rate columns,
+  premium notes (e.g. Times Square $10k–$1M+/mo, Vegas Strip up to $25k+), and an
+  **embedded bar chart** of the monthly rate band per metro.
+- **One tab per metro** (26 of them) — just the companies serving that market.
   Depth: NYC 35 · Chicago 26 · LA 22 · Houston 20 · Dallas 19 · Philadelphia 17 ·
-  San Antonio 17 · Miami 15 · Austin 15 · Jacksonville 15 · SF 14 · Seattle 14 ·
-  Phoenix 14 · San Diego 14 · Atlanta 13 · Washington DC 13 · Denver 13 · Boston 11.
+  San Antonio 17 · Charlotte 15 · Miami 15 · Austin 15 · Jacksonville 15 · SF 14 ·
+  Seattle 14 · Tampa 14 · Phoenix 14 · San Diego 14 · Atlanta 13 · Washington DC
+  13 · Detroit 13 · Minneapolis 13 · Denver 13 · Portland 13 · Boston 11 ·
+  Orlando 11 · Las Vegas 11 · Nashville 11.
 - **Pricing Reference** and **About**.
 
 > For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
@@ -164,7 +171,7 @@ florida-billboard-scraper/
   fbscraper/
     models.py                Company dataclass, columns, dedupe
     seed.py                  verified FL starter dataset (Palm Beach first)
-    national.py              18 major US metros dataset (--dataset national)
+    national.py              26 major US metros dataset (--dataset national)
     fdot.py                  FDOT ODA licensees + monthly Excel scraper/parser
     foaa.py                  FOAA member-directory scraper
     pricing.py               market-average reference rates + disclaimer

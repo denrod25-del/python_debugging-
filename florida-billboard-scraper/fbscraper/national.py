@@ -1,8 +1,9 @@
-"""National seed dataset: billboard / OOH companies across 18 major US metros.
+"""National seed dataset: billboard / OOH companies across 26 major US metros.
 
 Markets (market-size rank order): New York, Los Angeles, Chicago, San Francisco,
-Atlanta, Washington DC, Boston, Dallas, Houston, Miami, Philadelphia, Seattle,
-Phoenix, Denver, San Diego, San Antonio, Austin, Jacksonville.
+Atlanta, Washington DC, Boston, Dallas, Houston, Miami, Philadelphia, Detroit,
+Seattle, Minneapolis, Phoenix, Tampa, Denver, Orlando, San Diego, Las Vegas,
+San Antonio, Portland, Charlotte, Nashville, Austin, Jacksonville.
 
 Compiled from public web sources on 2026-07-08 (company sites, market listings,
 industry directories). Same caveat as the Florida seed: this is a real, usable
@@ -29,12 +30,14 @@ from .models import (
     TYPE_BROKER,
 )
 
-# 18 major US OOH markets, listed in market-size rank order (see CITY_MARKET).
+# 26 major US OOH markets, listed in market-size rank order (see CITY_MARKET).
 TOP_CITIES = [
     "New York", "Los Angeles", "Chicago", "San Francisco", "Atlanta",
     "Washington DC", "Boston", "Dallas", "Houston", "Miami",
-    "Philadelphia", "Seattle", "Phoenix", "Denver", "San Diego",
-    "San Antonio", "Austin", "Jacksonville",
+    "Philadelphia", "Detroit", "Seattle", "Minneapolis", "Phoenix",
+    "Tampa", "Denver", "Orlando", "San Diego", "Las Vegas",
+    "San Antonio", "Portland", "Charlotte", "Nashville", "Austin",
+    "Jacksonville",
 ]
 
 _REF = "Static ~$1k–$25k+/4wk; premium/spectacular boards much higher (market avg)"
@@ -102,8 +105,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="New Tradition Media",
         company_type=TYPE_NATIONAL,
-        primary_market="Premium spectaculars: NYC Times Sq, LA Hollywood, Chicago",
-        counties_served="New York; Los Angeles; Chicago",
+        primary_market="Premium spectaculars: NYC Times Sq, LA Hollywood, Chicago, Portland",
+        counties_served="New York; Los Angeles; Chicago; Portland",
         serves_palm_beach="Yes",
         city="Chicago",
         state="IL",
@@ -198,8 +201,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="BM Outdoor Media",
         company_type=TYPE_REGIONAL,
-        primary_market="44 Texas cities + Phoenix, Austin, Seattle, San Diego, Jacksonville",
-        counties_served="Houston; Dallas; San Antonio; Phoenix; Austin; Seattle; San Diego; Jacksonville",
+        primary_market="44 Texas cities + Phoenix, Austin, Seattle, San Diego, Jacksonville, Detroit, Minneapolis, Charlotte, Tampa",
+        counties_served="Houston; Dallas; San Antonio; Phoenix; Austin; Seattle; San Diego; Jacksonville; Detroit; Minneapolis; Charlotte; Tampa",
         serves_palm_beach="No",
         website="https://bmoutdoor.com/",
         pricing_reference=_REF,
@@ -396,8 +399,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="Adams Outdoor Advertising",
         company_type=TYPE_REGIONAL,
-        primary_market="Mid-size US markets (13 states) + Atlanta",
-        counties_served="New York; Atlanta",
+        primary_market="Mid-size US markets (13 states); Atlanta; Charlotte",
+        counties_served="New York; Atlanta; Charlotte",
         serves_palm_beach="No",
         pricing_reference=_REF,
         notes="One of the largest US OOH firms — 11,000+ units across 13 states; traditional + digital.",
@@ -939,8 +942,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="Trailhead Media",
         company_type=TYPE_REGIONAL,
-        primary_market="Atlanta / Southeast (digital OOH)",
-        counties_served="Atlanta",
+        primary_market="Atlanta / Carolinas / Southeast (digital OOH)",
+        counties_served="Atlanta; Charlotte",
         serves_palm_beach="No",
         state="GA",
         website="https://trailheadmedia.com/",
@@ -1029,7 +1032,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Can't Miss US",
         company_type=TYPE_MOBILE,
         primary_market="National mobile (largest digital-truck fleet)",
-        counties_served="San Francisco; Houston",
+        counties_served="San Francisco; Houston; Detroit; Charlotte",
         serves_palm_beach="No",
         website="https://cantmiss.us/",
         pricing_reference="Mobile digital billboard truck — quote only",
@@ -1167,6 +1170,180 @@ NATIONAL_SEED: List[Company] = [
     ),
 
     # ================================================================== #
+    # DETROIT
+    # ================================================================== #
+    Company(
+        company_name="International Outdoor",
+        company_type=TYPE_REGIONAL,
+        primary_market="Metro Detroit / Southeast Michigan",
+        counties_served="Detroit",
+        serves_palm_beach="No",
+        city="Detroit",
+        state="MI",
+        website="https://iobillboard.com/",
+        pricing_reference=_REF,
+        notes="One of the largest OOH firms in SE Michigan — 100+ billboard faces in Metro Detroit.",
+        source="iobillboard.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # MINNEAPOLIS
+    # ================================================================== #
+    Company(
+        company_name="Franklin Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Minnesota / Western Wisconsin",
+        counties_served="Minneapolis",
+        serves_palm_beach="No",
+        state="MN",
+        website="https://franklinoutdoor.com/",
+        pricing_reference=_REF,
+        notes="50+ yrs; deep MN/W-WI roots — 1,000+ fully illuminated billboards.",
+        source="franklinoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Blue Ox Media",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Minneapolis / Twin Cities (digital)",
+        counties_served="Minneapolis",
+        serves_palm_beach="No",
+        city="Minneapolis",
+        state="MN",
+        website="https://www.blueoxmediagroup.com/",
+        pricing_reference="Digital billboard — quote only",
+        notes="Digital displays in the Twin Cities incl. a top-impression board just N of downtown.",
+        source="blueoxmediagroup.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # TAMPA
+    # ================================================================== #
+    Company(
+        company_name="Tampa Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Tampa; Lakeland; Winter Haven; Davenport; Sebring",
+        counties_served="Tampa",
+        serves_palm_beach="No",
+        city="Tampa",
+        state="FL",
+        website="https://tampaoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Digital & static billboards across Tampa Bay and Central FL.",
+        source="tampaoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Signal Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Tampa Bay",
+        counties_served="Tampa",
+        serves_palm_beach="No",
+        state="FL",
+        pricing_reference=_REF,
+        notes="Named among the major Tampa Bay OOH operators.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Logan Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Central West Florida (Tampa region)",
+        counties_served="Tampa",
+        serves_palm_beach="No",
+        website="https://loganoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Covers six central-west FL counties around the Tampa market.",
+        source="loganoutdoor.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # ORLANDO
+    # ================================================================== #
+    Company(
+        company_name="Orlando Outdoor",
+        company_type=TYPE_REGIONAL,
+        primary_market="Orlando; Lakeland; Winter Haven; Ocala; Davenport; Sebring",
+        counties_served="Orlando",
+        serves_palm_beach="No",
+        city="Orlando",
+        state="FL",
+        website="https://www.orlandooutdoor.com/",
+        pricing_reference=_REF,
+        notes="Digital billboards across Orlando and Central FL secondary markets.",
+        source="orlandooutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # LAS VEGAS
+    # ================================================================== #
+    Company(
+        company_name="Las Vegas Billboards",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Las Vegas metro + Strip",
+        counties_served="Las Vegas",
+        serves_palm_beach="No",
+        city="Las Vegas",
+        state="NV",
+        website="https://lasvegasbillboards.com/",
+        pricing_reference="Strip placements premium — quote only",
+        notes="Family-owned, local since 1987; digital & static billboards across the valley & Strip.",
+        source="lasvegasbillboards.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # PORTLAND
+    # ================================================================== #
+    Company(
+        company_name="Grapevine Outdoor",
+        company_type=TYPE_REGIONAL,
+        primary_market="Portland, OR",
+        counties_served="Portland",
+        serves_palm_beach="No",
+        city="Portland",
+        state="OR",
+        website="https://grapevineoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Wallscapes, billboards, digital, advertising trikes/trucks & mall signage; local PDX perspective.",
+        source="grapevineoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Meadow Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Pacific Northwest (Portland region)",
+        counties_served="Portland",
+        serves_palm_beach="No",
+        state="OR",
+        pricing_reference=_REF,
+        notes="Regional PNW billboard operator (inventory aggregated by AdQuick in Portland).",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # CHARLOTTE / NASHVILLE (Carolinas & Tennessee)
+    # ================================================================== #
+    Company(
+        company_name="Allison Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="North Carolina; Tennessee; Georgia",
+        counties_served="Charlotte; Nashville",
+        serves_palm_beach="No",
+        state="NC",
+        website="https://www.allisonoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Est. 1958; printed & digital billboards across NC/TN/GA incl. the TN Tri-Cities.",
+        source="allisonoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
     # NATIONAL BROKERS / MARKETPLACES (book inventory across all listed metros)
     # ================================================================== #
     Company(
@@ -1270,19 +1447,35 @@ CITY_MARKET = [
      "I-95 / Palmetto / Dolphin Expwy and beach/tourism corridors carry premiums."),
     (11, "Philadelphia", "PA", "Tier 2", 1500, 12000,
      "I-95 / Schuylkill Expwy and Center City digital at the top of range."),
-    (12, "Seattle", "WA", "Tier 2/3", 1500, 14000,
+    (12, "Detroit", "MI", "Tier 2/3", 1200, 12000,
+     "I-75 / I-94 / M-10 corridors; International Outdoor runs 100+ Metro Detroit faces."),
+    (13, "Seattle", "WA", "Tier 2/3", 1500, 14000,
      "Billboard supply constrained by regulation; I-5/I-405 corridors strongest."),
-    (13, "Phoenix", "AZ", "Tier 2/3", 1200, 10000,
+    (14, "Minneapolis", "MN", "Tier 2/3", 1200, 12000,
+     "Twin Cities; Franklin Outdoor runs 1,000+ illuminated boards across MN/W-WI."),
+    (15, "Phoenix", "AZ", "Tier 2/3", 1200, 10000,
      "Freeway digital (Loop 101/202, I-10); sports-venue-adjacent units premium."),
-    (14, "Denver", "CO", "Tier 3", 1200, 11000,
+    (16, "Tampa", "FL", "Tier 3", 1200, 11000,
+     "Tampa Bay (Hillsborough/Pinellas); I-4 / I-275 / Veterans Expwy corridors."),
+    (17, "Denver", "CO", "Tier 3", 1200, 11000,
      "I-25 / I-70 corridors; Mile High Outdoor runs 400+ metro displays."),
-    (15, "San Diego", "CA", "Tier 3", 1500, 10000,
+    (18, "Orlando", "FL", "Tier 3 — tourism", 1200, 12000,
+     "I-4 / theme-park & tourist corridors carry premiums; strong visitor reach."),
+    (19, "San Diego", "CA", "Tier 3", 1500, 10000,
      "I-5 / I-805 / I-15 / Hwy-78 corridors; limited inventory keeps rates firm."),
-    (16, "San Antonio", "TX", "Tier 3", 1000, 8000,
+    (20, "Las Vegas", "NV", "Tier 3 — Strip premium", 1500, 25000,
+     "The Strip commands outsized rates (spectaculars far higher); OUTFRONT reaches 99.9% weekly."),
+    (21, "San Antonio", "TX", "Tier 3", 1000, 8000,
      "I-10 / Loop 410 / US-281 the strongest placements."),
-    (17, "Austin", "TX", "Tier 3 — fast-growing", 1200, 12000,
+    (22, "Portland", "OR", "Tier 3", 1200, 11000,
+     "Lamar is the largest footprint + sole PDX operator; wallscapes in the Pearl/Downtown."),
+    (23, "Charlotte", "NC", "Tier 3", 1000, 9000,
+     "I-77 / I-85 / I-485 corridors; Adams Outdoor reaches 1.8M across 22 counties."),
+    (24, "Nashville", "TN", "Tier 3 — fast-growing", 1200, 11000,
+     "I-40 / I-24 / I-65 and Broadway/tourism demand; Allison Outdoor active regionally."),
+    (25, "Austin", "TX", "Tier 3 — fast-growing", 1200, 12000,
      "Reagan Outdoor-dominated; tech-driven demand along I-35 / MoPac / US-183."),
-    (18, "Jacksonville", "FL", "Tier 3", 800, 6000,
+    (26, "Jacksonville", "FL", "Tier 3", 800, 6000,
      "Largest US city by land area; I-95 / I-295 corridors carry the value."),
 ]
 
