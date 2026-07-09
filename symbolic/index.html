@@ -331,6 +331,15 @@ label.fld .hint{font-size:11.5px; color:var(--muted); margin-bottom:6px; font-we
   .launcher{flex-direction:column;}
   .scorewrap{gap:16px;}
 }
+/* AI streaming */
+.aistream{font-family:var(--mono); font-size:12px; line-height:1.6; white-space:pre-wrap; word-break:break-word;
+  background:#0a0d0c; color:var(--muted); border:1px solid var(--line); border-radius:var(--r2); padding:13px 15px; max-height:300px; overflow:auto;}
+html[data-theme="light"] .aistream{background:var(--surface2); color:var(--muted);}
+.aistream .cursor{display:inline-block; width:7px; height:14px; background:var(--accent); margin-left:1px; vertical-align:text-bottom; animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+.aibadge{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep); border:1px solid color-mix(in srgb,var(--accent) 40%,transparent); border-radius:99px; padding:3px 9px;}
+.aibadge i{width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 0 var(--accent); animation:pulse 1.6s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent);}70%{box-shadow:0 0 0 6px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
 .hidden{display:none!important;}
 </style>
 </head>
@@ -698,6 +707,196 @@ function seedGraph(pr){
 const NODE_HUE={idea:150,goal:38,feature:150,screen:205,component:265,data:28,api:320,analytics:190,business:38,revenue:150,feedback:205};
 
 /* ============================================================
+   REAL STREAMING AI  (Milestone 2)
+   Talks to the /api/ai Edge proxy. Streams tokens live; falls back
+   to local synthesis whenever no endpoint is set or a call fails.
+   ============================================================ */
+function hasAI(){ return !!((S.settings.aiEndpoint||'').trim()); }
+function aiModel(){ return (S.settings.aiModel||'').trim() || undefined; }
+
+// Stream from the proxy. Calls onToken(textDelta) as tokens arrive; resolves
+// with the full text. Throws on any transport / server / abort error.
+async function streamAI({system, messages, max_tokens=2048, onToken, signal}={}){
+  const url=(S.settings.aiEndpoint||'').trim();
+  if(!url) throw new Error('No AI endpoint configured');
+  const res=await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({system, messages, max_tokens, model:aiModel(), stream:true}), signal});
+  if(!res.ok){ let m; try{m=(await res.json()).error;}catch(e){} throw new Error(m||('HTTP '+res.status)); }
+  const ct=res.headers.get('content-type')||'';
+  if(ct.includes('application/json')){ // proxy answered non-streaming (or an error)
+    const d=await res.json(); if(d.error) throw new Error(d.error);
+    const t=d.text||''; if(onToken&&t) onToken(t); return t;
+  }
+  const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='', full='';
+  for(;;){
+    const {done,value}=await reader.read(); if(done) break;
+    buf+=dec.decode(value,{stream:true});
+    let nl;
+    while((nl=buf.indexOf('\n'))>=0){
+      const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
+      if(!line.startsWith('data:')) continue;
+      const data=line.slice(5).trim(); if(!data||data==='[DONE]') continue;
+      let evt; try{ evt=JSON.parse(data); }catch(e){ continue; }
+      if(evt.type==='content_block_delta' && evt.delta?.type==='text_delta'){ full+=evt.delta.text; onToken&&onToken(evt.delta.text); }
+      else if(evt.type==='error'){ throw new Error(evt.error?.message||'stream error'); }
+    }
+  }
+  return full;
+}
+async function callAI(opts){ return streamAI(opts); } // non-streaming convenience
+
+function parseJSON(t){
+  let s=String(t||'').trim();
+  const fence=s.match(/```(?:json)?\s*([\s\S]*?)```/i); if(fence) s=fence[1].trim();
+  const a=s.indexOf('{'), b=s.lastIndexOf('}'); if(a>=0 && b>a) s=s.slice(a,b+1);
+  return JSON.parse(s);
+}
+
+// Build the shared project context every specialist prompt starts from.
+function projContext(p, kind){
+  const d=domainOf(p.idea);
+  let c=`Product: ${p.name}\nOne-line idea: ${p.idea}\nDetected domain: ${d.k}\n`+
+        `Vision: ${p.overview.vision}\nMission: ${p.overview.mission}\nUsers: ${p.overview.users}\nCompetitors: ${p.overview.competitors}`;
+  if(p.pm.interview.length){
+    c+='\n\nFounder interview:\n'+p.pm.interview.map(qa=>`Q: ${qa.q}\nA: ${qa.a||'(skipped)'}`).join('\n');
+  }
+  if(kind!=='brief' && p.pm.brief){ c+='\n\nProduct brief:\n'+p.pm.brief.summary+'\nMVP: '+p.pm.brief.mvp; }
+  if((kind==='eng'||kind==='ux') && p.arch){ c+='\n\nStack: '+(p.arch.stack||[]).join('; '); }
+  return c;
+}
+
+/* ---- normalizers: coerce model JSON into the exact shapes the views render.
+   Throw if a critical field is missing so the caller falls back to local. ---- */
+const arr=(x)=>Array.isArray(x)?x:[];
+const str=(x,f='')=>typeof x==='string'&&x.trim()?x.trim():f;
+function normBrief(o){
+  if(!o||!str(o.summary)) throw new Error('brief: no summary');
+  const hues=[150,28,205];
+  return {
+    summary:str(o.summary), problem:str(o.problem,'—'),
+    users:arr(o.users).map(u=>({name:str(u.name,'User'),need:str(u.need,'—')})).slice(0,4),
+    stories:arr(o.stories).map(s=>str(s)).filter(Boolean).slice(0,6),
+    personas:arr(o.personas).slice(0,3).map((ps,i)=>({name:str(ps.name,'Alex'),role:str(ps.role,'User'),
+      quote:str(ps.quote,'“…”'),goals:str(ps.goals,'—'),hue:hues[i]||150})),
+    features:arr(o.features).map((f,i)=>({name:str(f.name,f),mvp:f.mvp!==false&&i<4||f.mvp===true})).slice(0,8),
+    metrics:arr(o.metrics).map(s=>str(s)).filter(Boolean).slice(0,6),
+    risks:arr(o.risks).map(r=>({t:str(r.t,'Risk'),d:str(r.d,'—')})).slice(0,4),
+    mvp:str(o.mvp,'Ship the smallest lovable version of the core workflow.')
+  };
+}
+function normUX(o){
+  if(!o||!arr(o.journeys).length) throw new Error('ux: no journeys');
+  return {
+    journeys:arr(o.journeys).slice(0,3).map(j=>({t:str(j.t,'Journey'),s:arr(j.s).map(x=>str(x)).filter(Boolean)})),
+    hierarchy:arr(o.hierarchy).map(s=>str(s)).filter(Boolean),
+    states:arr(o.states).slice(0,6).map(s=>({k:str(s.k,'State'),d:str(s.d,'—')})),
+    a11y:arr(o.a11y).map(s=>str(s)).filter(Boolean)
+  };
+}
+function normArch(o){
+  if(!o||!arr(o.stack).length) throw new Error('arch: no stack');
+  return {
+    stack:arr(o.stack).map(s=>str(s)).filter(Boolean),
+    schema:arr(o.schema).map(s=>({e:str(s.e||s.entity,'Entity'),note:str(s.note,'—')})),
+    api:arr(o.api).map(s=>str(s)).filter(Boolean),
+    auth:str(o.auth,'—'), authz:str(o.authz,'—'), storage:str(o.storage,'—'), deploy:str(o.deploy,'—'),
+    scale:arr(o.scale).map(s=>str(s)).filter(Boolean),
+    security:arr(o.security).map(s=>str(s)).filter(Boolean)
+  };
+}
+function normEng(o){
+  if(!o||!arr(o.epics).length) throw new Error('eng: no epics');
+  return {
+    epics:arr(o.epics).map(e=>({t:str(e.t,'Epic'),stories:arr(e.stories).map(s=>str(s)).filter(Boolean),
+      pts:Number.isFinite(e.pts)?e.pts:8})),
+    milestones:arr(o.milestones).map(m=>({t:str(m.t,'Milestone'),w:str(m.w,''),d:str(m.d,'—')})),
+    release:str(o.release,'Trunk-based, feature-flagged, ship daily.')
+  };
+}
+
+const AI_KINDS={
+  brief:{ title:'AI Product Manager', working:'Synthesizing your brief…', done:'Brief generated',
+    max:3000, norm:normBrief,
+    build:p=>({ system:"You are the AI Product Manager inside Symbolic, an AI product operating system. Turn the founder's idea and interview into a rigorous product brief. Reply with ONLY a JSON object — no prose, no markdown fences.",
+      user:projContext(p,'brief')+`\n\nReturn JSON exactly:\n{"summary":"","problem":"","users":[{"name":"","need":""}],"stories":["as a … I can …" x4],"personas":[{"name":"","role":"","quote":"","goals":""} x2],"features":[{"name":"","mvp":true} x6],"metrics":["north star + 3 more"],"risks":[{"t":"","d":""} x3],"mvp":""}\nBe specific to THIS product. Keep every field tight and concrete.` }),
+    apply:(p,o)=>{ p.pm.brief=normBrief(o); if(p.stage==='idea'||p.stage==='research')p.stage='requirements';
+      logDecision(p,'Product brief generated (AI)','The AI Product Manager (Claude) streamed a full brief from the interview — executive summary, personas, stories, metrics, risks, and MVP.','Product Manager AI'); seedGraph(p); } },
+  ux:{ title:'AI UX Designer', working:'Designing journeys and states…', done:'UX generated', max:2600, norm:normUX,
+    build:p=>({ system:"You are the AI UX Designer inside Symbolic. Design the user experience from the brief. Reply with ONLY a JSON object.",
+      user:projContext(p,'ux')+`\n\nReturn JSON exactly:\n{"journeys":[{"t":"First run","s":["step" …]},{"t":"Core loop","s":[…]}],"hierarchy":["screen names"],"states":[{"k":"Empty","d":""},{"k":"Loading","d":""},{"k":"Error","d":""},{"k":"Success","d":""}],"a11y":["accessibility notes"]}` }),
+    apply:(p,o)=>{ p.ux=normUX(o); if(STAGES.indexOf(p.stage)<STAGES.indexOf('design'))p.stage='design';
+      logDecision(p,'UX foundation generated (AI)','The AI UX Designer (Claude) streamed journeys, a screen hierarchy, every state, and accessibility notes.','UX Designer AI'); seedGraph(p); } },
+  arch:{ title:'AI Software Architect', working:'Designing the architecture…', done:'Architecture generated', max:3000, norm:normArch,
+    build:p=>({ system:"You are the AI Software Architect inside Symbolic. Recommend a production-ready architecture. Reply with ONLY a JSON object.",
+      user:projContext(p,'arch')+`\n\nReturn JSON exactly:\n{"stack":["choices"],"schema":[{"e":"Entity","note":"columns/notes"}],"api":["endpoints/notes"],"auth":"","authz":"","storage":"","deploy":"","scale":["notes"],"security":["notes"]}` }),
+    apply:(p,o)=>{ p.arch=normArch(o); if(STAGES.indexOf(p.stage)<STAGES.indexOf('engineering'))p.stage='engineering';
+      logDecision(p,'Architecture generated (AI)','The AI Software Architect (Claude) streamed a stack, data model, API, auth, scale, and security plan.','Software Architect AI'); seedGraph(p); } },
+  eng:{ title:'AI Engineering Planner', working:'Breaking down the work…', done:'Plan generated', max:2600, norm:normEng,
+    build:p=>({ system:"You are the AI Engineering Planner inside Symbolic. Turn the brief and architecture into an executable plan. Reply with ONLY a JSON object.",
+      user:projContext(p,'eng')+`\n\nReturn JSON exactly:\n{"epics":[{"t":"","stories":["…"],"pts":13}],"milestones":[{"t":"M1 · …","w":"Weeks 1–2","d":""}],"release":""}` }),
+    apply:(p,o)=>{ p.eng=normEng(o);
+      logDecision(p,'Engineering plan generated (AI)','The AI Engineering Planner (Claude) streamed epics, story points, and a milestone plan.','Backend Engineer AI'); seedGraph(p); } },
+};
+const LOCAL_GEN={ brief:genBrief, ux:genUX, arch:genArch, eng:genEng };
+
+// Route a "Generate" action: stream from Claude when configured, else local.
+function runGen(kind,p){
+  if(hasAI()) aiArtifact(kind,p);
+  else { LOCAL_GEN[kind](p); toast(AI_KINDS[kind].done); render(); }
+}
+
+// Stream an artifact into a live modal, parse JSON, apply — or fall back.
+async function aiArtifact(kind,p){
+  const cfg=AI_KINDS[kind];
+  const m=$('#modal'); m.innerHTML='';
+  m.append(el('div',{class:'between',style:'margin-bottom:14px'},
+    el('div',{class:'h2'},cfg.title),
+    el('span',{class:'aibadge'},el('i'),'Claude · streaming')));
+  const status=el('div',{class:'row',style:'margin-bottom:12px'},
+    el('div',{class:'thinking'},el('i'),el('i'),el('i')),
+    el('span',{class:'muted',style:'font-size:13px'},cfg.working));
+  const pre=el('div',{class:'aistream'});
+  const cur=el('span',{class:'cursor'});
+  m.append(status,pre); pre.append(cur);
+  $('#modalScrim').classList.add('show');
+  let raw='';
+  const onToken=t=>{ raw+=t; cur.remove(); pre.textContent=raw; pre.append(cur); pre.scrollTop=pre.scrollHeight; };
+  try{
+    await streamAI({ system:cfg.build(p).system, messages:[{role:'user',content:cfg.build(p).user}], max_tokens:cfg.max, onToken });
+    const obj=parseJSON(raw);
+    cfg.apply(p,obj); save(); closeModal(); toast(cfg.done); render();
+  }catch(e){
+    console.warn('aiArtifact('+kind+') fell back:',e);
+    try{ LOCAL_GEN[kind](p); save(); }catch(e2){}
+    closeModal(); toast('AI unavailable — generated locally', false); render();
+  }
+}
+
+/* ---- streaming founder interview (AI Product Manager) ---- */
+function interviewMessages(p){
+  const msgs=[{role:'user',content:`My product idea: "${p.idea}". Please interview me to understand it — ask your first question.`}];
+  p.pm.interview.forEach(qa=>{ msgs.push({role:'assistant',content:qa.q}); if(qa.a!=null) msgs.push({role:'user',content:qa.a}); });
+  return msgs;
+}
+const PM_SYSTEM="You are the AI Product Manager inside Symbolic, an AI product operating system. Interview the founder to fully understand their product. Ask ONE sharp, specific question at a time — probe the target user, their current workaround, the single wedge feature, the riskiest assumption, and the success metric. Each question is 1–2 sentences, no preamble, no numbering. After about five exchanges you'll have enough. Ask only the next question.";
+
+async function askNextQuestion(p, bubbleBody){
+  const cursor=el('span',{class:'cursor'}); bubbleBody.textContent=''; bubbleBody.append(cursor);
+  let full='';
+  try{
+    await streamAI({ system:PM_SYSTEM, messages:interviewMessages(p), max_tokens:400,
+      onToken:t=>{ full+=t; cursor.remove(); bubbleBody.textContent=full; bubbleBody.append(cursor); } });
+  }catch(e){
+    // fall back to the canned bank so the interview still works offline
+    full = nextQuestion(p) || 'Tell me more about who this is for and why now.';
+    bubbleBody.textContent=full;
+  }
+  cursor.remove();
+  p.pm.interview.push({q:full.trim(), a:null}); save();
+  return full.trim();
+}
+
+/* ============================================================
    AI TEAM
    ============================================================ */
 const TEAM=[
@@ -873,8 +1072,9 @@ function nextStepText(p){ return {pm:'Run the AI Product Manager interview — i
 
 /* ---- PRODUCT MANAGER (interview) ---- */
 function tabPM(v,p){
+  if(hasAI()) return tabPMAI(v,p);
   v.append(tabHead('AI Product Manager', 'I\'ll interview you until I understand the product — then synthesize a full brief.',
-    p.pm.brief?[el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Regenerate brief',onclick:()=>{genBrief(p); render();}})]:null));
+    p.pm.brief?[el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Regenerate brief',onclick:()=>runGen('brief',p)})]:null));
 
   // interview
   const q=nextQuestion(p);
@@ -901,6 +1101,9 @@ function tabPM(v,p){
     p.pm.interview.length?el('button',{class:'btn ghost sm',html:'Reset interview',onclick:()=>{p.pm.interview=[]; save(); render();}}):null));
   v.append(chat);
 
+  renderBrief(v,p);
+}
+function renderBrief(v,p){
   if(!p.pm.brief) return;
   const b=p.pm.brief;
   v.append(el('div',{class:'h2',style:'margin:24px 0 14px'},'The brief'));
@@ -934,15 +1137,64 @@ function tabPM(v,p){
   mvp.append(el('div',{class:'eyebrow',style:'margin-bottom:8px'},'MVP definition'), el('p',{style:'font-size:14.5px;line-height:1.6'},esc(b.mvp)));
   v.append(mvp);
 }
+/* streaming AI interview + brief */
+function tabPMAI(v,p){
+  v.append(tabHead('AI Product Manager', 'A live interview with Claude — answer, and it adapts. Then it streams a full brief.',
+    [ el('span',{class:'aibadge'},el('i'),'Live AI'),
+      p.pm.brief?el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Regenerate brief',onclick:()=>runGen('brief',p)}):null ]));
+
+  const card=el('div',{class:'card'});
+  card.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Founder interview'));
+  const log=el('div',{class:'chatlog'});
+  log.append(msg('ai',`Let's understand <b>${esc(p.name)}</b>. I'll ask a few sharp questions, then write the brief.`));
+  p.pm.interview.forEach(qa=>{ log.append(msg('ai',esc(qa.q))); if(qa.a) log.append(msg('me',esc(qa.a))); });
+  card.append(log);
+  const foot=el('div',{}); card.append(foot);
+  v.append(card);
+
+  const last=p.pm.interview[p.pm.interview.length-1];
+  const awaiting=last && last.a==null;
+
+  function answerForm(){
+    foot.innerHTML='';
+    const form=el('form',{class:'row',style:'margin-top:6px', onsubmit:e=>{e.preventDefault();
+      const val=$('#ansInput').value.trim(); if(!val)return;
+      const cur=p.pm.interview[p.pm.interview.length-1]; if(cur) cur.a=val; save();
+      log.append(msg('me',esc(val))); foot.innerHTML=''; ask(); }});
+    const inp=el('input',{type:'text',id:'ansInput',placeholder:'Your answer…','aria-label':'Answer'});
+    form.append(inp, el('button',{class:'btn primary',type:'submit',html:icon(ICON.send)}));
+    foot.append(form); setTimeout(()=>inp.focus(),40);
+  }
+  async function ask(){
+    const b=msg('ai',''); log.append(b); const body=b.querySelector('.bubble');
+    await askNextQuestion(p, body);
+    if(p.pm.interview.length>=6) doneBar(); else answerForm();
+  }
+  function doneBar(){
+    foot.innerHTML='';
+    foot.append(el('div',{class:'row',style:'margin-top:8px'}, el('span',{class:'badge ok dot'},'Enough to synthesize'),
+      el('span',{class:'muted',style:'font-size:13px'},'Generate the brief, or keep talking.')));
+  }
+  const actions=el('div',{class:'row',style:'margin-top:14px'});
+  actions.append(el('button',{class:'btn primary',html:icon(ICON.spark)+(p.pm.brief?'Regenerate brief':'Generate brief'),onclick:()=>runGen('brief',p)}));
+  if(p.pm.interview.length) actions.append(el('button',{class:'btn ghost sm',html:'Reset interview',onclick:()=>{p.pm.interview=[]; save(); render();}}));
+  card.append(actions);
+
+  if(awaiting) answerForm();
+  else if(!p.pm.interview.length) ask();               // stream the very first question
+  else doneBar();
+
+  renderBrief(v,p);
+}
 function msg(who,html){ const m=el('div',{class:'msg '+who}); const av=who==='ai'?'S':'You'[0];
   m.append(el('span',{class:'mav'},who==='ai'?'S':'Y'), el('div',{class:'bubble',html:html.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')})); return m; }
 
 /* ---- UX ---- */
 function tabUX(v,p){
   v.append(tabHead('AI UX Designer','Journeys, screen hierarchy, and every state — with accessibility built in.',
-    [ p.pm.brief? genBtn(p.ux?'Regenerate':'Generate UX',()=>{genUX(p); toast('UX generated'); render();}) : null ]));
+    [ p.pm.brief? genBtn(p.ux?'Regenerate':'Generate UX',()=>runGen('ux',p)) : null ]));
   if(!p.pm.brief){ v.append(gate(p,'Generate the product brief first','The UX Designer builds on the Product Manager\'s brief.','pm','Run the interview')); return; }
-  if(!p.ux){ v.append(promperCard('Design the user experience','Journeys, screen hierarchy, and empty/loading/error/success states.',()=>{genUX(p); render();})); return; }
+  if(!p.ux){ v.append(promperCard('Design the user experience','Journeys, screen hierarchy, and empty/loading/error/success states.',()=>runGen('ux',p))); return; }
   const u=p.ux;
   const two=el('div',{class:'two'});
   u.journeys.forEach(j=>{ const d=el('div',{class:'docblk'}); d.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.ux)}),el('h4',{},j.t+' journey')));
@@ -958,9 +1210,9 @@ function tabUX(v,p){
 /* ---- ARCH ---- */
 function tabArch(v,p){
   v.append(tabHead('AI Software Architect','Stack, schema, API, auth, deployment, scale, and security.',
-    [ p.pm.brief? genBtn(p.arch?'Regenerate':'Generate architecture',()=>{genArch(p); toast('Architecture generated'); render();}) : null ]));
+    [ p.pm.brief? genBtn(p.arch?'Regenerate':'Generate architecture',()=>runGen('arch',p)) : null ]));
   if(!p.pm.brief){ v.append(gate(p,'Generate the product brief first','Architecture decisions follow from the brief.','pm','Run the interview')); return; }
-  if(!p.arch){ v.append(promperCard('Design the architecture','A production-ready stack, data model, and security plan.',()=>{genArch(p); render();})); return; }
+  if(!p.arch){ v.append(promperCard('Design the architecture','A production-ready stack, data model, and security plan.',()=>runGen('arch',p))); return; }
   const a=p.arch;
   v.append(docBlock('Recommended stack',ICON.arch, ul(a.stack.map(esc))));
   const two=el('div',{class:'two'});
@@ -983,9 +1235,9 @@ function tabArch(v,p){
 /* ---- ENG ---- */
 function tabEng(v,p){
   v.append(tabHead('AI Engineering Planner','Epics, stories, story points, and a milestone plan the team can start Monday.',
-    [ p.pm.brief? genBtn(p.eng?'Regenerate':'Generate plan',()=>{genEng(p); toast('Plan generated'); render();}) : null ]));
+    [ p.pm.brief? genBtn(p.eng?'Regenerate':'Generate plan',()=>runGen('eng',p)) : null ]));
   if(!p.pm.brief){ v.append(gate(p,'Generate the product brief first','The plan is built from the brief\'s features.','pm','Run the interview')); return; }
-  if(!p.eng){ v.append(promperCard('Plan the engineering','Break the product into epics, stories, and milestones.',()=>{genEng(p); render();})); return; }
+  if(!p.eng){ v.append(promperCard('Plan the engineering','Break the product into epics, stories, and milestones.',()=>runGen('eng',p))); return; }
   const e=p.eng;
   const two=el('div',{class:'two'});
   e.epics.forEach(ep=>{const d=el('div',{class:'docblk'}); d.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.eng)}),el('h4',{},ep.t),el('span',{class:'badge',style:'margin-left:auto'},ep.pts+' pts')));
@@ -1196,15 +1448,32 @@ $('#modalScrim').addEventListener('click',e=>{if(e.target.id==='modalScrim')clos
 
 function openSettings(){
   openModal('AI & settings', form=>{
-    form.append(el('p',{class:'muted',style:'font-size:13px;margin-bottom:16px'},'Symbolic works fully offline with local synthesis. Add an AI endpoint for higher-fidelity, project-specific generation — the same /api/ai proxy pattern this monorepo already ships.'));
-    const f1=el('label',{class:'fld'}); f1.append(el('span',{class:'lb'},'AI endpoint (optional)'), el('span',{class:'hint'},'e.g. https://your-proxy.vercel.app/api/ai'));
-    const i1=el('input',{id:'setEndpoint',type:'text',placeholder:'https://…/api/ai'}); i1.value=S.settings.aiEndpoint||''; f1.append(i1); form.append(f1);
+    form.append(el('div',{class:'row',style:'margin-bottom:14px'},
+      el('span',{class:hasAI()?'aibadge':'badge'}, hasAI()?[el('i'),'Real AI streaming — on']:'Local synthesis (offline)')));
+    form.append(el('p',{class:'muted',style:'font-size:13px;margin-bottom:16px'},'Symbolic works fully offline with local synthesis. Add the /api/ai endpoint (deployed with this project) and every specialist streams live from Claude, with local fallback if a call fails.'));
+    const f1=el('label',{class:'fld'}); f1.append(el('span',{class:'lb'},'AI endpoint'), el('span',{class:'hint'},'This deploy exposes it at /api/ai — or paste a proxy URL.'));
+    const i1=el('input',{id:'setEndpoint',type:'text',placeholder:'/api/ai  or  https://…/api/ai'}); i1.value=S.settings.aiEndpoint||''; f1.append(i1); form.append(f1);
+    // test connection (streams a tiny reply)
+    const out=el('span',{class:'mono',style:'font-size:12px;color:var(--muted)'});
+    const testBtn=el('button',{class:'btn ghost sm',type:'button',html:icon(ICON.spark)+'Test connection', onclick:async()=>{
+      const ep=$('#setEndpoint').value.trim(); if(!ep){ out.textContent='Add an endpoint URL first.'; return; }
+      out.style.color='var(--muted)'; out.textContent='Connecting…';
+      const se=S.settings.aiEndpoint, sm=S.settings.aiModel; S.settings.aiEndpoint=ep; S.settings.aiModel=$('#setModel').value.trim();
+      let acc='';
+      try{ await streamAI({messages:[{role:'user',content:'Reply with exactly: Symbolic connected.'}], max_tokens:32, onToken:t=>{acc+=t; out.textContent=acc;}});
+        out.style.color='var(--accent-deep)'; out.textContent='✓ '+(acc.trim()||'connected'); }
+      catch(err){ out.style.color='var(--red)'; out.textContent='✗ '+(err.message||'failed'); }
+      finally{ S.settings.aiEndpoint=se; S.settings.aiModel=sm; }
+    }});
+    form.append(el('div',{class:'row',style:'margin:-6px 0 16px'}, testBtn, out));
+    const f1b=el('label',{class:'fld'}); f1b.append(el('span',{class:'lb'},'Model (optional)'), el('span',{class:'hint'},'Blank = the proxy default (claude-opus-4-8).'));
+    const i1b=el('input',{id:'setModel',type:'text',placeholder:'claude-opus-4-8'}); i1b.value=S.settings.aiModel||''; f1b.append(i1b); form.append(f1b);
     const f2=el('label',{class:'fld'}); f2.append(el('span',{class:'lb'},'Theme'));
     const sel=el('select',{id:'setTheme'}); ['auto','light','dark'].forEach(t=>sel.append(el('option',{value:t,...(S.settings.theme===t?{selected:'selected'}:{})},titleCase(t)))); f2.append(sel); form.append(f2);
     form.append(el('hr'));
     form.append(el('div',{class:'between'}, el('div',{}, el('div',{class:'lb'},'Reset workspace'), el('span',{class:'hint'},'Deletes all local projects. Cannot be undone.')),
-      el('button',{class:'btn ghost sm',html:icon(ICON.trash)+'Reset',onclick:()=>{ if(confirm('Delete ALL projects and settings?')){ localStorage.removeItem(KEY); S=load(); closeModal(); applyTheme(); location.hash='#/workspace'; render(); toast('Workspace reset'); } }}) ));
-  }, ()=>{ S.settings.aiEndpoint=$('#setEndpoint').value.trim(); S.settings.theme=$('#setTheme').value; save(); applyTheme(); toast('Settings saved'); });
+      el('button',{class:'btn ghost sm',type:'button',html:icon(ICON.trash)+'Reset',onclick:()=>{ if(confirm('Delete ALL projects and settings?')){ localStorage.removeItem(KEY); S=load(); closeModal(); applyTheme(); location.hash='#/workspace'; render(); toast('Workspace reset'); } }}) ));
+  }, ()=>{ S.settings.aiEndpoint=$('#setEndpoint').value.trim(); S.settings.aiModel=$('#setModel').value.trim(); S.settings.theme=$('#setTheme').value; save(); applyTheme(); toast('Settings saved'); });
 }
 $('#openSettings').addEventListener('click',openSettings);
 

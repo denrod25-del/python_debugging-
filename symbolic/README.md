@@ -41,9 +41,23 @@ vercel --prod         # promote
 | **AI Team** | 13 specialists, each with a mission and decision boundaries. |
 | **Design System** | Live token + component gallery (light/dark, WCAG AA). |
 
-Plus: **⌘K command palette**, light / dark / auto theme, JSON export per project, mobile-first responsive layout, and an optional AI endpoint (Settings) that reuses this repo's `/api/ai` proxy pattern for higher-fidelity generation.
+Plus: **⌘K command palette**, light / dark / auto theme, JSON export per project, mobile-first responsive layout.
 
-**It works fully offline** — generation runs as deterministic, domain-aware synthesis (it detects inventory / marketplace / social / health / fintech / education / booking / commerce ideas and tailors the output). Add an endpoint to upgrade it.
+**It works fully offline** — generation runs as deterministic, domain-aware synthesis (it detects inventory / marketplace / social / health / fintech / education / booking / commerce ideas and tailors the output).
+
+## Real streaming AI (optional)
+
+This project ships a streaming Edge Function at **`api/ai.js`** (`/api/ai`) that forwards to the Anthropic Messages API — your key stays server-side. Wire it up:
+
+1. Deploy, then set `ANTHROPIC_API_KEY` in the Vercel project (optionally `SYMBOLIC_MODEL`, default `claude-opus-4-8`).
+2. In the app: **Settings (⚙) → AI endpoint → `/api/ai` → Test connection.**
+
+With it on:
+
+- **AI Product Manager** runs a *live, adaptive interview* — Claude's questions stream in token-by-token and adapt to your answers.
+- **Product Manager / UX / Architect / Engineering** stream structured JSON that's parsed into the rich views (you watch it generate).
+
+Every AI call **falls back to local synthesis** if the endpoint is missing or a request fails — the app never breaks. Running locally without a server? Leave the endpoint blank and everything still works.
 
 ## Domain intelligence
 

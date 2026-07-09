@@ -203,8 +203,9 @@ Each stage is reviewable and editable. A project's `stage` field tracks position
 **Milestone 1 — Symbolic Core (shipping in `index.html`).**
 Workspace + projects, Overview, AI Product Manager (interview → brief), Architect, UX, Engineering Planner, Quality Auditor, Knowledge Graph, Product Memory, AI Team, Design System gallery, command palette, light/dark, localStorage, JSON export, optional AI endpoint. ✅ (v1)
 
-**Milestone 2 — Real AI + persistence.**
-Wire the client to an Edge proxy (`/api/ai`, reuse `pydojo-proxy`), streaming responses, confidence + reasoning surfaced. Move storage from localStorage to Supabase/Postgres with auth. Multi-user workspaces.
+**Milestone 2 — Real streaming AI.** ✅ (shipping in `api/ai.js` + client)
+A streaming Edge Function at `/api/ai` forwards to the Anthropic Messages API (key stays server-side). The client streams tokens live: the Product Manager runs a **real, adaptive interview** with Claude (questions typed token-by-token), and the PM / UX / Architect / Engineering specialists stream **structured JSON** that's parsed into the existing rich views. Every AI call falls back to local synthesis on any error, so the app never breaks. Default model `claude-opus-4-8` (override with `SYMBOLIC_MODEL` or in Settings).
+*Still ahead:* move storage from localStorage to Supabase/Postgres with auth; multi-user workspaces; surfaced confidence + reasoning.
 
 **Milestone 3 — Product Factory & handoff.**
 Stage gates with review/approve, artifact diffing, export to real scaffolding (Next.js repo, schema migrations, API stubs). Engineering plan → GitHub issues.
@@ -219,6 +220,5 @@ Plugins, AI agents, templates, component packs, workflow packs, design systems, 
 
 ## 10. Non-goals (for v1)
 
-- No real backend or auth yet — client-only, localStorage.
-- No live model calls required — local synthesis is the default; an endpoint is optional.
+- No persistence backend or auth yet — client-only, localStorage. (Live model calls now work via `/api/ai`; storage is still local.)
 - Not a code generator yet — it produces *plans and specs*, not shipping app code (Milestone 3).
