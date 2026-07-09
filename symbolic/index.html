@@ -1,0 +1,1282 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Symbolic — AI Product Operating System</title>
+<meta name="description" content="Symbolic is the operating system for creating software companies. From idea to production-ready product, in one calm, intelligent workspace. By B.Symbolic.">
+<meta name="theme-color" content="#0C0E0D" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FAF7F5" media="(prefers-color-scheme: light)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,800&family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================ TOKENS ============================ */
+:root{
+  --oxblood:#B0474B; --accent:#69F0A5; --accent-deep:#2D8858; --amber:#FFCC66; --red:#ff6b6b; --blue:#7cc7ff; --violet:#c79bff;
+  --display:'Playfair Display',Georgia,serif;
+  --serif:'Fraunces',Georgia,serif;
+  --sans:'Inter',-apple-system,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --r1:8px; --r2:12px; --r3:16px; --r4:22px;
+  --sp:4px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+html[data-theme="dark"]{
+  --bg:#0C0E0D; --surface:#131817; --surface2:#0f1413; --raised:#182220;
+  --ink:#E8EFE9; --muted:#7D8B82; --faint:#4b544f; --line:#222b27; --line2:#2c3833;
+  --shadow:0 18px 48px -18px rgba(0,0,0,.75), 0 2px 6px rgba(0,0,0,.4);
+  --grad: radial-gradient(900px 480px at 92% -10%, rgba(176,71,75,.14), transparent 60%),
+          radial-gradient(760px 520px at -10% 108%, rgba(105,240,165,.06), transparent 55%);
+  --oxblood:#B0474B; --accent:#69F0A5;
+}
+html[data-theme="light"]{
+  --bg:#FAF7F5; --surface:#FFFFFF; --surface2:#F4EFEC; --raised:#FFFFFF;
+  --ink:#1A1D1B; --muted:#6B7670; --faint:#A9B0AB; --line:#E7E0DB; --line2:#DAD2CC;
+  --shadow:0 18px 40px -22px rgba(60,40,30,.35), 0 1px 3px rgba(60,40,30,.08);
+  --grad: radial-gradient(900px 480px at 92% -12%, rgba(143,52,55,.08), transparent 60%),
+          radial-gradient(760px 520px at -10% 108%, rgba(27,158,90,.05), transparent 55%);
+  --oxblood:#8F3437; --accent:#1B9E5A; --accent-deep:#137a45; --amber:#B7791F;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{background:var(--grad),var(--bg); color:var(--ink); font-family:var(--sans);
+  -webkit-font-smoothing:antialiased; font-size:15px; line-height:1.5; overflow-x:hidden;}
+::selection{background:var(--accent); color:#0C0E0D;}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer; border:0; background:none; color:inherit;}
+input,textarea,select{font-family:inherit;}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important; transition-duration:.001ms!important;}}
+
+/* ============================ LAYOUT ============================ */
+.app{display:grid; grid-template-columns:248px 1fr; min-height:100vh;}
+/* Sidebar */
+aside{position:sticky; top:0; height:100vh; border-right:1px solid var(--line);
+  background:linear-gradient(180deg,var(--surface),var(--surface2)); display:flex; flex-direction:column; padding:16px 12px; gap:6px; z-index:20;}
+.brand{display:flex; align-items:center; gap:11px; padding:6px 8px 14px;}
+.mark{width:38px; height:38px; border-radius:11px; flex:none;
+  background:linear-gradient(140deg,var(--oxblood),#5e2224); color:#FAF6F4;
+  display:grid; place-items:center; font-family:var(--display); font-weight:800; font-size:20px; box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+.brand .nm{font-family:var(--serif); font-weight:800; font-size:19px; letter-spacing:-.02em;}
+.brand .nm .d{color:var(--accent);}
+.brand .tag{font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:1px;}
+.navlbl{font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); padding:12px 10px 6px;}
+.nav{display:flex; flex-direction:column; gap:2px;}
+.nav a{display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:var(--r1); color:var(--muted);
+  font-weight:500; font-size:13.5px; transition:.14s var(--ease); position:relative;}
+.nav a:hover{color:var(--ink); background:var(--surface2);}
+.nav a.on{color:var(--ink); background:var(--surface2);}
+.nav a.on::before{content:''; position:absolute; left:-12px; top:8px; bottom:8px; width:3px; border-radius:0 3px 3px 0; background:var(--accent);}
+.nav a svg{width:17px; height:17px; flex:none; stroke-width:1.9;}
+.nav a .ct{margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--muted); background:var(--surface); border:1px solid var(--line); border-radius:99px; padding:1px 7px;}
+.side-foot{margin-top:auto; display:flex; flex-direction:column; gap:8px; padding-top:12px; border-top:1px solid var(--line);}
+.themebtn{display:flex; align-items:center; gap:9px; padding:8px 11px; border-radius:var(--r1); color:var(--muted); font-size:13px; font-weight:500; transition:.14s;}
+.themebtn:hover{background:var(--surface2); color:var(--ink);}
+.themebtn svg{width:16px; height:16px;}
+.byline{font-family:var(--mono); font-size:9.5px; color:var(--faint); padding:2px 11px;}
+.byline a{color:var(--oxblood); font-weight:600;}
+
+/* Topbar */
+main{min-width:0; display:flex; flex-direction:column;}
+.topbar{position:sticky; top:0; z-index:15; display:flex; align-items:center; gap:12px;
+  padding:12px 26px; background:color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--line);}
+.crumb{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); font-weight:500; min-width:0;}
+.crumb b{color:var(--ink); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.crumb .sep{color:var(--faint);}
+.cmdk{margin-left:auto; display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r1); padding:7px 12px; color:var(--muted); font-size:13px; transition:.14s; min-width:180px;}
+.cmdk:hover{border-color:var(--line2); color:var(--ink);}
+.cmdk svg{width:15px; height:15px;}
+.cmdk .kbd{margin-left:auto;}
+.kbd{font-family:var(--mono); font-size:10.5px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--muted); background:var(--surface2);}
+.icobtn{width:36px; height:36px; border-radius:var(--r1); display:grid; place-items:center; color:var(--muted); border:1px solid var(--line); background:var(--surface); transition:.14s;}
+.icobtn:hover{color:var(--ink); border-color:var(--line2);}
+.icobtn svg{width:17px; height:17px; stroke-width:1.9;}
+
+.scroll{flex:1; overflow-y:auto; padding:26px 26px 80px;}
+.container{max-width:1080px; margin:0 auto;}
+
+/* ============================ PRIMITIVES ============================ */
+.h1{font-family:var(--serif); font-weight:800; font-size:30px; letter-spacing:-.02em; line-height:1.1;}
+.h1 .d{color:var(--accent);}
+.h2{font-family:var(--serif); font-weight:700; font-size:21px; letter-spacing:-.01em;}
+.lede{color:var(--muted); font-size:15px; max-width:60ch; margin-top:6px; line-height:1.55;}
+.eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);}
+.eyebrow .d{color:var(--accent);}
+.card{background:linear-gradient(180deg,var(--surface),var(--surface2)); border:1px solid var(--line); border-radius:var(--r3); padding:22px;}
+.card.flat{background:var(--surface);}
+.card + .card, .stack > * + *{margin-top:14px;}
+.muted{color:var(--muted);}
+.mono{font-family:var(--mono);}
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+.between{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;}
+.spacer{flex:1;}
+.grid{display:grid; gap:16px;}
+hr{border:0; border-top:1px solid var(--line); margin:18px 0;}
+
+.btn{display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; padding:10px 17px; border-radius:var(--r2);
+  transition:.15s var(--ease); border:1px solid transparent; white-space:nowrap;}
+.btn svg{width:16px; height:16px; stroke-width:2;}
+.btn.primary{background:var(--accent); color:#08130c;} .btn.primary:hover{filter:brightness(1.06); transform:translateY(-1px); box-shadow:0 8px 20px -8px var(--accent);}
+.btn.ghost{border-color:var(--line); color:var(--ink); background:var(--surface);} .btn.ghost:hover{border-color:var(--line2); background:var(--surface2);}
+.btn.ox{background:var(--oxblood); color:#FAF6F4;} .btn.ox:hover{filter:brightness(1.08);}
+.btn.sm{font-size:12.5px; padding:7px 12px; border-radius:var(--r1);}
+.btn.tiny{font-size:11.5px; padding:5px 9px; border-radius:var(--r1); gap:5px;}
+.btn:disabled{opacity:.4; cursor:not-allowed; transform:none; box-shadow:none;}
+
+.badge{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10.5px; font-weight:500;
+  border:1px solid var(--line); border-radius:99px; padding:3px 10px; color:var(--muted); background:var(--surface);}
+.badge.dot::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--accent);}
+.badge.ok{color:var(--accent-deep); border-color:color-mix(in srgb,var(--accent) 40%,transparent);}
+.badge.warn{color:var(--amber); border-color:color-mix(in srgb,var(--amber) 40%,transparent);}
+.badge.ox{color:var(--oxblood); border-color:color-mix(in srgb,var(--oxblood) 40%,transparent);}
+
+.chip{font-family:var(--mono); font-size:10.5px; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:4px 11px; background:var(--surface2);}
+
+input[type=text], textarea, select{width:100%; background:var(--surface2); color:var(--ink); border:1px solid var(--line);
+  border-radius:var(--r2); padding:11px 13px; font-size:14px; line-height:1.55; transition:.14s;}
+textarea{resize:vertical; min-height:96px; font-family:var(--sans);}
+input:focus, textarea:focus, select:focus{outline:none; border-color:var(--accent); background:var(--surface);}
+label.fld{display:block; margin-bottom:14px;}
+label.fld .lb{display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--ink);}
+label.fld .hint{font-size:11.5px; color:var(--muted); margin-bottom:6px; font-weight:400;}
+
+/* progress */
+.prog{height:7px; background:var(--surface2); border:1px solid var(--line); border-radius:99px; overflow:hidden;}
+.prog i{display:block; height:100%; background:linear-gradient(90deg,var(--accent-deep),var(--accent)); width:0; transition:width .6s var(--ease);}
+.skel{background:linear-gradient(100deg,var(--surface2) 30%, var(--line) 50%, var(--surface2) 70%); background-size:200% 100%; animation:sk 1.3s infinite; border-radius:8px;}
+@keyframes sk{to{background-position:-200% 0;}}
+
+/* ============================ WORKSPACE ============================ */
+.hero{position:relative; overflow:hidden; border-radius:var(--r4); border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--surface),var(--surface2)); padding:34px 32px; margin-bottom:26px;}
+.hero::after{content:''; position:absolute; inset:0; background:radial-gradient(600px 300px at 88% -30%, color-mix(in srgb,var(--oxblood) 22%,transparent), transparent 70%); pointer-events:none;}
+.hero .h1{font-size:34px; max-width:20ch;}
+.launcher{margin-top:22px; display:flex; gap:10px; max-width:640px; position:relative; z-index:2;}
+.launcher input{font-size:15.5px; padding:14px 16px;}
+.cardgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;}
+.pcard{text-align:left; background:linear-gradient(180deg,var(--surface),var(--surface2)); border:1px solid var(--line);
+  border-radius:var(--r3); padding:20px; transition:.16s var(--ease); position:relative; overflow:hidden; display:flex; flex-direction:column; gap:12px;}
+.pcard:hover{transform:translateY(-2px); border-color:var(--line2); box-shadow:var(--shadow);}
+.pcard .pt{font-family:var(--serif); font-weight:700; font-size:18px; letter-spacing:-.01em; line-height:1.2;}
+.pcard .pd{font-size:13px; color:var(--muted); line-height:1.45; min-height:36px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.pcard .pfoot{display:flex; align-items:center; justify-content:space-between; margin-top:auto;}
+.score{font-family:var(--display); font-weight:800; font-size:20px;}
+.score.na{color:var(--faint); font-size:15px; font-family:var(--mono); font-weight:500;}
+.ring{--v:0; --c:var(--accent); width:42px; height:42px; border-radius:50%; display:grid; place-items:center; flex:none;
+  background:conic-gradient(var(--c) calc(var(--v)*1%), var(--line) 0);}
+.ring::after{content:attr(data-n); width:34px; height:34px; border-radius:50%; background:var(--surface); display:grid; place-items:center;
+  font-family:var(--display); font-weight:800; font-size:13px; color:var(--ink);}
+.newcard{border:1.5px dashed var(--line2); background:transparent; align-items:center; justify-content:center; color:var(--muted); min-height:170px; gap:8px; font-weight:600; font-size:14px;}
+.newcard:hover{color:var(--ink); border-color:var(--accent); background:var(--surface2);}
+.newcard svg{width:26px; height:26px;}
+
+/* ============================ PROJECT ============================ */
+.subnav{display:flex; gap:4px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:var(--r2); padding:5px; margin-bottom:22px; overflow-x:auto;}
+.subnav button{display:inline-flex; align-items:center; gap:7px; font-weight:600; font-size:13px; color:var(--muted); padding:8px 13px; border-radius:var(--r1); transition:.14s; white-space:nowrap;}
+.subnav button svg{width:15px; height:15px; stroke-width:1.9;}
+.subnav button:hover{color:var(--ink); background:var(--surface2);}
+.subnav button.on{color:#08130c; background:var(--accent);}
+.subnav button .g{width:6px; height:6px; border-radius:50%; background:var(--amber);}
+.subnav button.on .g{background:#08130c;}
+
+.two{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.three{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+
+/* generated doc blocks */
+.docblk{border:1px solid var(--line); border-radius:var(--r2); overflow:hidden; margin-bottom:12px; background:var(--surface);}
+.docblk > .dh{display:flex; align-items:center; gap:9px; padding:11px 15px; border-bottom:1px solid var(--line); background:var(--surface2);}
+.docblk > .dh .di{width:24px; height:24px; border-radius:7px; display:grid; place-items:center; background:color-mix(in srgb,var(--accent) 16%,transparent); color:var(--accent-deep);}
+.docblk > .dh .di svg{width:14px; height:14px; stroke-width:2;}
+.docblk > .dh h4{font-family:var(--serif); font-weight:700; font-size:14.5px;}
+.docblk > .db{padding:15px; font-size:13.8px; line-height:1.62; color:var(--ink);}
+.docblk .db p{color:var(--muted);} .docblk .db p + p{margin-top:8px;}
+.docblk .db ul{list-style:none; display:flex; flex-direction:column; gap:8px;}
+.docblk .db ul li{position:relative; padding-left:20px; color:var(--ink);}
+.docblk .db ul li::before{content:''; position:absolute; left:4px; top:8px; width:6px; height:6px; border-radius:2px; background:var(--accent); transform:rotate(45deg);}
+.docblk .db ul li b{color:var(--ink);}
+.docblk .db ul li span{color:var(--muted);}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:13px;}
+.kv dt{font-family:var(--mono); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding-top:2px;}
+.kv dd{color:var(--ink);}
+
+.persona{border:1px solid var(--line); border-radius:var(--r2); padding:14px; background:var(--surface2);}
+.persona .pa{display:flex; align-items:center; gap:11px; margin-bottom:9px;}
+.persona .av{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-family:var(--display); font-weight:800; color:#08130c; flex:none;}
+.persona .pn{font-family:var(--serif); font-weight:700; font-size:15px;} .persona .pr{font-size:11.5px; color:var(--muted);}
+.persona .quote{font-family:var(--serif); font-style:italic; font-size:13.5px; color:var(--ink); border-left:2px solid var(--accent); padding-left:11px; margin:9px 0;}
+
+/* interview */
+.chatlog{display:flex; flex-direction:column; gap:14px; margin-bottom:16px;}
+.msg{display:flex; gap:11px; max-width:88%;}
+.msg .mav{width:30px; height:30px; border-radius:9px; flex:none; display:grid; place-items:center; font-family:var(--serif); font-weight:800; font-size:13px;}
+.msg.ai .mav{background:linear-gradient(140deg,var(--oxblood),#5e2224); color:#FAF6F4;}
+.msg.me{margin-left:auto; flex-direction:row-reverse;}
+.msg.me .mav{background:var(--accent); color:#08130c;}
+.bubble{border:1px solid var(--line); border-radius:14px; padding:11px 15px; font-size:14px; line-height:1.55; background:var(--surface);}
+.msg.ai .bubble{border-top-left-radius:4px;}
+.msg.me .bubble{border-top-right-radius:4px; background:color-mix(in srgb,var(--accent) 12%,var(--surface)); border-color:color-mix(in srgb,var(--accent) 30%,var(--line));}
+.thinking{display:inline-flex; gap:4px; align-items:center; padding:4px 0;}
+.thinking i{width:6px; height:6px; border-radius:50%; background:var(--muted); animation:tk 1s infinite;}
+.thinking i:nth-child(2){animation-delay:.15s;} .thinking i:nth-child(3){animation-delay:.3s;}
+@keyframes tk{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-3px);}}
+
+/* audit */
+.scorewrap{display:flex; align-items:center; gap:22px; flex-wrap:wrap;}
+.bigring{--v:0; --c:var(--accent); width:112px; height:112px; border-radius:50%; display:grid; place-items:center; flex:none;
+  background:conic-gradient(var(--c) calc(var(--v)*1%), var(--line) 0);}
+.bigring::after{content:attr(data-n); width:92px; height:92px; border-radius:50%; background:var(--surface); display:grid; place-items:center;
+  font-family:var(--display); font-weight:800; font-size:30px;}
+.catrow{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);}
+.catrow:last-child{border-bottom:0;}
+.catrow .cn{font-size:13.5px; font-weight:500; width:150px; flex:none;}
+.catrow .cbar{flex:1; height:8px; border-radius:99px; background:var(--surface2); border:1px solid var(--line); overflow:hidden;}
+.catrow .cbar i{display:block; height:100%; border-radius:99px;}
+.catrow .cv{font-family:var(--mono); font-size:12px; width:34px; text-align:right; color:var(--muted);}
+.rec{display:flex; gap:11px; padding:12px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+.rec:last-child{border:0;}
+.rec .rc{width:22px; height:22px; border-radius:7px; flex:none; display:grid; place-items:center; font-family:var(--mono); font-size:10px; font-weight:600;}
+.rec .rc.hi{background:color-mix(in srgb,var(--red) 18%,transparent); color:var(--red);}
+.rec .rc.md{background:color-mix(in srgb,var(--amber) 20%,transparent); color:var(--amber);}
+.rec .rc.lo{background:color-mix(in srgb,var(--accent) 18%,transparent); color:var(--accent-deep);}
+.rec b{font-weight:600;} .rec .rt{color:var(--muted); line-height:1.5;}
+
+/* graph */
+.graphwrap{position:relative; border:1px solid var(--line); border-radius:var(--r3); overflow:hidden; background:
+  radial-gradient(1px 1px at 20px 20px, var(--line) 1px, transparent 0) 0 0/26px 26px, var(--surface);}
+#graph{display:block; width:100%; height:460px;}
+.glegend{position:absolute; top:12px; left:12px; display:flex; gap:6px; flex-wrap:wrap; max-width:70%;}
+.glegend .gl{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-family:var(--mono); background:color-mix(in srgb,var(--surface) 86%,transparent); border:1px solid var(--line); border-radius:99px; padding:3px 9px; color:var(--muted);}
+.glegend .gl i{width:8px; height:8px; border-radius:50%;}
+
+/* memory */
+.tl{position:relative; padding-left:26px;}
+.tl::before{content:''; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:var(--line);}
+.tlitem{position:relative; padding:0 0 20px;}
+.tlitem::before{content:''; position:absolute; left:-22px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:3px solid var(--bg);}
+.tlitem .tt{font-family:var(--serif); font-weight:700; font-size:15px;}
+.tlitem .tm{font-family:var(--mono); font-size:10.5px; color:var(--muted); margin:2px 0 6px;}
+.tlitem .tw{font-size:13.5px; color:var(--muted); line-height:1.55;}
+.tlitem .tw b{color:var(--ink); font-weight:600;}
+
+/* team */
+.teamgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px;}
+.spec{border:1px solid var(--line); border-radius:var(--r3); padding:18px; background:linear-gradient(180deg,var(--surface),var(--surface2)); transition:.15s;}
+.spec:hover{border-color:var(--line2); transform:translateY(-2px); box-shadow:var(--shadow);}
+.spec .sh{display:flex; align-items:center; gap:11px; margin-bottom:11px;}
+.spec .sav{width:40px; height:40px; border-radius:12px; flex:none; display:grid; place-items:center; font-family:var(--serif); font-weight:800; font-size:16px; color:#08130c;}
+.spec .sn{font-family:var(--serif); font-weight:700; font-size:15.5px; line-height:1.1;}
+.spec .sr{font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;}
+.spec .sm{font-size:13px; color:var(--muted); line-height:1.5;}
+.spec .sb{margin-top:11px; padding-top:11px; border-top:1px solid var(--line); font-size:11.5px; color:var(--muted);}
+.spec .sb b{color:var(--ink); font-weight:600;}
+
+/* design system gallery */
+.swatch{height:60px; border-radius:var(--r2); border:1px solid var(--line); display:flex; align-items:flex-end; padding:7px 9px; font-family:var(--mono); font-size:10px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4);}
+.compdemo{display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:16px; border:1px solid var(--line); border-radius:var(--r2); background:var(--surface2);}
+
+/* confidence / risk meters (AI components) */
+.meter{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted);}
+.meter .mb{flex:1; height:6px; border-radius:99px; background:var(--surface2); border:1px solid var(--line); overflow:hidden; min-width:80px;}
+.meter .mb i{display:block; height:100%;}
+
+/* empty state */
+.empty{text-align:center; padding:46px 20px; color:var(--muted);}
+.empty .ei{width:54px; height:54px; margin:0 auto 14px; border-radius:16px; display:grid; place-items:center; background:var(--surface2); border:1px solid var(--line);}
+.empty .ei svg{width:26px; height:26px; color:var(--muted);}
+
+/* ============================ MODAL / PALETTE / TOAST ============================ */
+.scrim{position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); z-index:40; display:grid; opacity:0; pointer-events:none; transition:.18s;}
+.scrim.show{opacity:1; pointer-events:auto;}
+.modal{place-self:center; width:min(560px,92vw); max-height:86vh; overflow:auto; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r4); box-shadow:var(--shadow); padding:26px; transform:translateY(8px) scale(.99); transition:.18s var(--ease);}
+.scrim.show .modal{transform:none;}
+.palette{place-self:start center; margin-top:12vh; width:min(600px,94vw); background:var(--surface); border:1px solid var(--line2);
+  border-radius:var(--r3); box-shadow:var(--shadow); overflow:hidden; transform:translateY(-8px); transition:.18s var(--ease);}
+.scrim.show .palette{transform:none;}
+.palette .pin{display:flex; align-items:center; gap:11px; padding:15px 18px; border-bottom:1px solid var(--line);}
+.palette .pin svg{width:18px; height:18px; color:var(--muted);}
+.palette .pin input{border:0; background:none; padding:0; font-size:16px;}
+.palette .pin input:focus{outline:none;}
+.palette .plist{max-height:52vh; overflow:auto; padding:8px;}
+.palette .pitem{display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--r1); cursor:pointer; font-size:14px;}
+.palette .pitem .pk{width:26px; height:26px; border-radius:7px; display:grid; place-items:center; background:var(--surface2); border:1px solid var(--line); color:var(--muted);}
+.palette .pitem .pk svg{width:15px; height:15px;}
+.palette .pitem .pmeta{margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--faint);}
+.palette .pitem.sel, .palette .pitem:hover{background:var(--surface2);}
+.palette .pitem.sel{box-shadow:inset 0 0 0 1px var(--accent);}
+
+.toasts{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px; align-items:center;}
+.toast{background:var(--ink); color:var(--bg); font-size:13px; font-weight:500; padding:10px 16px; border-radius:99px; box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:9px; animation:tin .3s var(--ease);}
+.toast svg{width:15px; height:15px;}
+@keyframes tin{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+
+/* mobile */
+.mobar{display:none;}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  aside{display:none;}
+  .scroll{padding:20px 16px 92px;}
+  .topbar{padding:11px 16px;}
+  .cmdk{min-width:auto;} .cmdk span.lbl, .cmdk .kbd{display:none;}
+  .two,.three{grid-template-columns:1fr;}
+  .mobar{display:flex; position:fixed; bottom:0; left:0; right:0; z-index:30; background:color-mix(in srgb,var(--bg) 92%,transparent);
+    backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:8px 6px calc(8px + env(safe-area-inset-bottom)); justify-content:space-around;}
+  .mobar a{display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--muted); font-size:10px; font-weight:600; padding:4px 10px; border-radius:var(--r1);}
+  .mobar a.on{color:var(--accent);}
+  .mobar a svg{width:21px; height:21px; stroke-width:1.9;}
+  .hero .h1{font-size:26px;} .h1{font-size:25px;}
+  .launcher{flex-direction:column;}
+  .scorewrap{gap:16px;}
+}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside>
+    <a class="brand" href="#/workspace" aria-label="Symbolic home">
+      <span class="mark">S</span>
+      <span>
+        <span class="nm">Symb<span class="d">·</span>lic</span>
+        <span class="tag">Product OS</span>
+      </span>
+    </a>
+    <div class="navlbl">Build</div>
+    <nav class="nav" id="mainNav"></nav>
+    <div class="side-foot">
+      <button class="themebtn" id="themeToggle" aria-label="Toggle theme"></button>
+      <div class="byline">By <a href="https://bsymbolic.com" target="_blank" rel="noopener">B.Symbolic</a> · v1</div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+    <div class="topbar">
+      <div class="crumb" id="crumb"></div>
+      <button class="cmdk" id="openPalette" aria-label="Open command palette">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <span class="lbl">Search or jump to…</span>
+        <span class="kbd">⌘K</span>
+      </button>
+      <button class="icobtn" id="openSettings" aria-label="Settings" title="AI & settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <div class="scroll"><div class="container" id="view"></div></div>
+  </main>
+</div>
+
+<!-- mobile bottom bar -->
+<nav class="mobar" id="mobar"></nav>
+
+<!-- scrims -->
+<div class="scrim" id="paletteScrim"><div class="palette" role="dialog" aria-label="Command palette">
+  <div class="pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="paletteInput" placeholder="Search projects and sections…" autocomplete="off"></div>
+  <div class="plist" id="paletteList"></div>
+</div></div>
+
+<div class="scrim" id="modalScrim"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   SYMBOLIC — AI Product Operating System · Phase 1 (Symbolic Core)
+   Single-file reference implementation. Client-only, localStorage.
+   ============================================================ */
+const $ = (s,r=document)=>r.querySelector(s);
+const el=(t,a={},...kids)=>{const n=document.createElement(t);
+  for(const[k,v]of Object.entries(a)){ if(k==='class')n.className=v; else if(k==='html')n.innerHTML=v; else if(k.startsWith('on'))n.addEventListener(k.slice(2),v); else if(v!=null)n.setAttribute(k,v);}
+  for(const kid of kids.flat()){ if(kid!=null) n.append(kid.nodeType?kid:document.createTextNode(kid)); } return n;};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const now=()=>Date.now();
+const fmtDate=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+const fmtTime=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+function icon(p){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;}
+const ICON={
+  workspace:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  team:'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M17 14a6 6 0 0 1 4 6"/>',
+  system:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+  overview:'<path d="M4 5h16M4 12h10M4 19h7"/>',
+  pm:'<path d="M8 10h8M8 14h5"/><rect x="3" y="4" width="18" height="16" rx="2"/>',
+  ux:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 18v3M16 18v3M7 21h10"/>',
+  arch:'<path d="M3 21h18M6 21V9l6-4 6 4v12M10 21v-5h4v5"/>',
+  eng:'<path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/>',
+  audit:'<path d="M9 11l3 3 8-8"/><path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
+  graph:'<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8 7l8 8M8.4 7.4l7-.4M16 9l-3 5.5"/>',
+  memory:'<path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/>',
+  roadmap:'<path d="M4 20V8l8-4 8 4v12"/><path d="M4 12h16M12 4v16"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  send:'<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
+  down:'<path d="M12 3v14M6 11l6 6 6-6M5 21h14"/>',
+  trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 5v14"/>',
+};
+
+/* ---------------- STATE ---------------- */
+const KEY='symbolic.workspace.v1';
+let S = load();
+function load(){
+  try{const v=JSON.parse(localStorage.getItem(KEY)); if(v&&v.version===1) return v;}catch(e){}
+  return {version:1, settings:{theme:'auto', aiEndpoint:'', aiKey:''}, projects:{}, activeProjectId:null};
+}
+let saveT; function save(){clearTimeout(saveT); saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},120);}
+const P = id => S.projects[id];
+
+/* ---------------- THEME ---------------- */
+function applyTheme(){
+  const t = S.settings.theme;
+  const eff = t==='auto' ? (matchMedia('(prefers-color-scheme: light)').matches?'light':'dark') : t;
+  document.documentElement.setAttribute('data-theme', eff);
+  const b=$('#themeToggle');
+  b.innerHTML = (eff==='dark'?icon(ICON.sun):icon(ICON.moon)) + `<span>${t==='auto'?'Auto theme':eff==='dark'?'Dark':'Light'}</span>`;
+}
+$('#themeToggle').addEventListener('click',()=>{
+  const order=['auto','light','dark']; const i=order.indexOf(S.settings.theme);
+  S.settings.theme=order[(i+1)%3]; save(); applyTheme();
+});
+matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{ if(S.settings.theme==='auto') applyTheme(); });
+
+/* ---------------- TOASTS ---------------- */
+function toast(msg, ok=true){
+  const t=el('div',{class:'toast'}, ok?el('span',{html:icon(ICON.check)}):null, msg);
+  t.querySelector('svg')?.style && (t.querySelector('svg').style.color='var(--accent)');
+  $('#toasts').append(t); setTimeout(()=>{t.style.opacity='0'; t.style.transform='translateY(8px)'; setTimeout(()=>t.remove(),250);},2400);
+}
+
+/* ============================================================
+   DOMAIN INTELLIGENCE — tailors generated artifacts to the idea
+   ============================================================ */
+const DOMAINS=[
+  {k:'inventory',rx:/invent|stock|warehouse|supply|parts|sku|plumb|hardware|logisti/i,
+   noun:'inventory',users:['field technicians','warehouse managers','procurement leads'],
+   features:['Barcode / QR scanning','Stock levels & low-stock alerts','Supplier & purchase orders','Multi-location tracking','Usage history & audit log','Offline-first mobile capture'],
+   stack:['Next.js + React Native (Expo) for field use','Postgres (Supabase) with row-level security','Edge functions for sync','Background jobs for reorder alerts'],
+   entities:['Item','Location','StockMovement','Supplier','PurchaseOrder','User']},
+  {k:'marketplace',rx:/marketplace|two-?sided|buyers? and sellers|vendors|gig|freelanc|rental/i,
+   noun:'marketplace',users:['buyers','sellers/providers','platform operators'],
+   features:['Dual onboarding (buyer & seller)','Search, filters & discovery','Listings & availability','Escrow / split payments','Ratings & reviews','Messaging & disputes'],
+   stack:['Next.js (App Router)','Stripe Connect for split payments','Postgres + full-text search','Typesense/Algolia for discovery'],
+   entities:['User','Listing','Order','Payment','Review','Message']},
+  {k:'social',rx:/social|communit|feed|follow|network|forum|creator/i,
+   noun:'social product',users:['creators','members','moderators'],
+   features:['Profiles & follows','Activity feed & ranking','Posts, media & reactions','Notifications','Moderation & reporting','Discovery / trending'],
+   stack:['Next.js + WebSockets for realtime','Postgres + Redis for feeds','CDN for media','Edge caching for the feed'],
+   entities:['User','Post','Follow','Reaction','Comment','Notification']},
+  {k:'health',rx:/health|patient|clinic|medical|therap|wellness|fitness|care/i,
+   noun:'health product',users:['patients / clients','providers / coaches','clinic admins'],
+   features:['Secure profiles & intake','Appointment scheduling','Progress tracking & charts','Messaging (HIPAA-aware)','Care plans & reminders','Reports & exports'],
+   stack:['Next.js with strict RBAC','Postgres with encryption at rest','Audit logging on every PHI access','SOC2/HIPAA-aligned hosting'],
+   entities:['Patient','Provider','Appointment','Record','Message','CarePlan']},
+  {k:'fintech',rx:/financ|payment|bank|invoice|budget|crypto|wallet|expense|accounting/i,
+   noun:'fintech product',users:['account holders','finance teams','administrators'],
+   features:['Secure onboarding & KYC','Balances & transactions','Transfers / payments','Statements & exports','Alerts & limits','Reconciliation'],
+   stack:['Next.js + typed API layer','Postgres with double-entry ledger','Idempotent payment jobs','Strong audit + fraud checks'],
+   entities:['Account','Transaction','Ledger','Statement','User','AlertRule']},
+  {k:'education',rx:/learn|course|educat|student|teach|training|academy|quiz|school/i,
+   noun:'learning product',users:['learners','instructors','admins'],
+   features:['Course & lesson builder','Progress & XP tracking','Quizzes & assessments','Certificates','Cohorts & discussion','Analytics for instructors'],
+   stack:['Next.js + MDX for lessons','Postgres for progress','Video via Mux/CDN','Background grading jobs'],
+   entities:['Course','Lesson','Enrollment','Submission','User','Certificate']},
+  {k:'booking',rx:/book|appointment|reserv|schedul|calendar|salon|restaurant|event/i,
+   noun:'booking product',users:['customers','staff / providers','owners'],
+   features:['Availability calendar','Online booking & rescheduling','Reminders (SMS/email)','Payments & deposits','Staff management','No-show handling'],
+   stack:['Next.js','Postgres with time-zone-safe slots','Twilio/Resend for reminders','Stripe for deposits'],
+   entities:['Service','Slot','Booking','Customer','Staff','Payment']},
+  {k:'ecommerce',rx:/shop|store|ecommerce|e-commerce|product catalog|checkout|cart|retail/i,
+   noun:'commerce product',users:['shoppers','merchants','support'],
+   features:['Catalog & variants','Cart & checkout','Payments & tax','Order fulfillment','Discounts & promotions','Customer accounts'],
+   stack:['Next.js commerce','Stripe + tax provider','Postgres for orders','Search + CDN for media'],
+   entities:['Product','Variant','Cart','Order','Customer','Discount']},
+];
+const GENERIC={k:'app',noun:'product',users:['primary users','power users','administrators'],
+  features:['Onboarding & auth','Core workflow','Dashboard & search','Notifications','Settings & profile','Admin & analytics'],
+  stack:['Next.js (App Router) + TypeScript','Supabase (Postgres + Auth)','React Query + Zustand','Vercel Edge deployment'],
+  entities:['User','Workspace','Item','Activity','Setting']};
+function domainOf(idea){ const s=idea||''; return DOMAINS.find(d=>d.rx.test(s))||GENERIC; }
+function titleCase(s){return (s||'').replace(/\b\w/g,c=>c.toUpperCase());}
+/* derive a friendly product name from an idea */
+function nameFromIdea(idea){
+  let s=(idea||'').trim().replace(/^(i (want|need|would like) to |build (me )?a?n? ?|create (a|an)? ?|make (a|an)? ?|an? )/i,'');
+  s=s.replace(/\bapp\b|\bplatform\b|\btool\b|\bproduct\b|\bwebsite\b/ig,'').trim();
+  s=s.split(/[.,\n]/)[0].split(' ').slice(0,4).join(' ');
+  return titleCase(s||'New Product');
+}
+
+/* ============================================================
+   PROJECT FACTORY
+   ============================================================ */
+const STAGES=['idea','research','validation','requirements','design','engineering','testing','launch','iteration'];
+function newProject(idea){
+  const d=domainOf(idea);
+  const pr={ id:uid(), name:nameFromIdea(idea), idea:idea.trim(), createdAt:now(), stage:'idea',
+    overview:{
+      vision:`A ${d.noun} that makes ${d.users[0]} dramatically faster and calmer at their core job.`,
+      mission:`Give ${d.users[0]} one trustworthy place to ${idea.replace(/^.*?(build|create|make)\s+/i,'').trim()||'get the job done'} — without the busywork.`,
+      users:d.users.map(titleCase).join(', '),
+      competitors:'Spreadsheets · legacy incumbents · in-house tools · doing nothing'
+    },
+    pm:{interview:[], brief:null},
+    ux:null, arch:null, eng:null,
+    audit:{scores:null, recs:[], scoredAt:null},
+    memory:[], graph:null
+  };
+  logDecision(pr,'Project created',`Founder started with the idea: “${pr.idea}”. Symbolic detected the <b>${d.k}</b> domain and pre-seeded vision, users, and competitors.`,'CEO AI');
+  S.projects[pr.id]=pr; S.activeProjectId=pr.id; save(); return pr;
+}
+function logDecision(pr,title,why,who){ pr.memory.unshift({id:uid(),ts:now(),title,why,who}); }
+function delProject(id){ delete S.projects[id]; if(S.activeProjectId===id)S.activeProjectId=null; save(); }
+
+/* ---------- interview questions (adaptive) ---------- */
+function nextQuestion(pr){
+  const asked=pr.pm.interview.length;
+  const d=domainOf(pr.idea);
+  const bank=[
+    `Let's sharpen the target. Among ${d.users.join(', ')} — who feels this pain the most acutely, and when?`,
+    `What does that person do *today* to cope? Walk me through their current workaround.`,
+    `If Symbolic nailed exactly one thing in the MVP, what single outcome would make them say “I can't go back”?`,
+    `What's the riskiest assumption we're making — the thing that, if wrong, sinks the whole idea?`,
+    `How will we know it's working in month one? Name a number you'd actually watch.`,
+  ];
+  return bank[asked] || null;
+}
+
+/* ---------- generators ---------- */
+function firstAnswer(pr,i){ return (pr.pm.interview[i]?.a||'').trim(); }
+function genBrief(pr){
+  const d=domainOf(pr.idea);
+  const painUser=firstAnswer(pr,0)||d.users[0];
+  const workaround=firstAnswer(pr,1)||'spreadsheets and memory';
+  const wedge=firstAnswer(pr,2)||`the core ${d.noun} workflow, done in seconds`;
+  const risk=firstAnswer(pr,3)||`that ${d.users[0]} will change their existing habit`;
+  const metric=firstAnswer(pr,4)||'weekly active users completing the core action';
+  const brief={
+    summary:`${pr.name} is a ${d.noun} for ${d.users.map(titleCase).join(', ')}. It replaces ${workaround} with one calm, fast surface focused on ${wedge}. The wedge is deliberately narrow so we can be excellent at one job before expanding.`,
+    problem:`Today, ${painUser} rely on ${workaround}. It's slow, error-prone, and invisible to the rest of the team — mistakes surface too late and no one can answer “what happened and why.”`,
+    users:d.users.map((u,i)=>({name:titleCase(u), need:[`Get the core job done without friction`,`Trust the data and see history`,`Oversee, configure, and report`][i]||'Use the product effectively'})),
+    stories:[
+      `As a ${d.users[0]}, I can complete the core action in under 10 seconds so I stay in flow.`,
+      `As a ${d.users[0]}, I can see history and undo mistakes so I trust the system.`,
+      `As a ${d.users[1]||'manager'}, I can see what's happening across the team at a glance.`,
+      `As a ${d.users[2]||'admin'}, I can configure, invite, and control access safely.`,
+    ],
+    personas:[
+      {name:titleCase(d.users[0]).split(' ')[0]||'Alex', role:titleCase(d.users[0]), quote:`“I don't have time to fight software — I just need it done and done right.”`, goals:'Speed, accuracy, zero training', hue:150},
+      {name:(titleCase(d.users[1]||'Manager')).split(' ')[0], role:titleCase(d.users[1]||'Team Manager'), quote:`“I need to trust the numbers before I report them upward.”`, goals:'Visibility, control, confidence', hue:28},
+    ],
+    features:d.features.map((f,i)=>({name:f, mvp:i<3})),
+    metrics:[`North star: ${metric}`,'Activation: % of new users who complete the core action in session 1','Retention: week-4 return rate','Time-to-value: median seconds to first success'],
+    risks:[
+      {t:'Behavior change', d:`Riskiest assumption — ${risk}. Mitigate with a migration path from ${workaround} and a 60-second onboarding.`},
+      {t:'Data trust', d:'If the data is ever wrong, trust collapses. Ship audit history + undo from day one.'},
+      {t:'Scope creep', d:`Everything past ${wedge} is a distraction until the wedge is loved.`},
+    ],
+    mvp:`Ship only: ${d.features.slice(0,3).join(' · ')}. Success = ${metric} trending up over 4 weeks with a majority of new users reaching first success in session one. Everything else waits.`,
+  };
+  pr.pm.brief=brief; if(pr.stage==='idea'||pr.stage==='research') pr.stage='requirements';
+  logDecision(pr,'Product brief generated','AI Product Manager synthesized the interview into an executive summary, personas, user stories, success metrics, risks, and an MVP definition.','Product Manager AI');
+  seedGraph(pr); save(); return brief;
+}
+function genUX(pr){
+  const d=domainOf(pr.idea);
+  pr.ux={
+    journeys:[
+      {t:'First run', s:['Land → clear value in one line','Sign up (SSO or email)','60-sec guided setup with sample data','First core action → success moment','Prompt to invite / go deeper']},
+      {t:'Core loop', s:['Open to today\'s work','Do the core action','See it reflected instantly','Review history / undo if needed','Leave confident']},
+    ],
+    hierarchy:['Auth / onboarding','Home (today\'s work)',...d.features.slice(0,4).map(f=>f.split(' ')[0]+' view'),'Search','Settings & team','Admin & analytics'],
+    states:[
+      {k:'Empty', d:'Every list has a warm empty state: one sentence of why, one primary action, optional “load sample data.”'},
+      {k:'Loading', d:'Skeletons that match final layout — never spinners on full pages. Optimistic UI on the core action.'},
+      {k:'Error', d:'Plain-language cause + the one action to recover. Never a raw stack trace. Errors are logged to Product Memory.'},
+      {k:'Success', d:'A quiet confirmation (motion, not modal). The core action feels instantaneous.'},
+    ],
+    a11y:['Semantic landmarks + skip link','Full keyboard path through the core loop','Focus-visible rings, ≥44px targets','WCAG AA contrast in both themes','prefers-reduced-motion respected','Live-region announcements for async results'],
+  };
+  if(STAGES.indexOf(pr.stage)<STAGES.indexOf('design')) pr.stage='design';
+  logDecision(pr,'UX foundation generated','AI UX Designer produced journeys, screen hierarchy, and empty/loading/error/success states with accessibility notes.','UX Designer AI');
+  seedGraph(pr); save(); return pr.ux;
+}
+function genArch(pr){
+  const d=domainOf(pr.idea);
+  pr.arch={
+    stack:d.stack,
+    schema:d.entities.map(e=>({e, note:{User:'auth, role, workspace_id',Item:'core record, soft-delete, timestamps'}[e]||'FK to workspace, audit fields'})),
+    api:['REST + typed client (or tRPC)','`/auth/*` — session & SSO','`/'+d.noun.replace(/\s/g,'')+'/*` — core CRUD + list','`/events` — activity & webhooks','Rate-limited, idempotent writes'],
+    auth:'Email + SSO (OAuth). Sessions via secure http-only cookies. Passwordless option for field users.',
+    authz:'Role-based (owner / member / viewer) enforced at the DB with row-level security — never trust the client.',
+    storage:'Postgres for relational data; object storage (S3-compatible) for media; Redis for hot paths & rate limits.',
+    deploy:'Vercel (edge for reads, serverless for writes) or containerized. Preview deploy per PR. IaC + migrations in CI.',
+    scale:['Read replicas + edge caching for hot views','Background queue for heavy/async work','Cursor pagination everywhere','Partition high-volume tables by workspace'],
+    security:['RLS + least-privilege service roles','Encrypt secrets & PII at rest','Audit log on every mutation','CSP, HSTS, dependency scanning','Signed webhooks; idempotency keys'],
+  };
+  if(STAGES.indexOf(pr.stage)<STAGES.indexOf('engineering')) pr.stage='engineering';
+  logDecision(pr,'Architecture generated',`AI Software Architect recommended a <b>${d.stack[0]}</b> foundation with row-level security, a ${d.entities.length}-table schema, and a scale + security plan.`,'Software Architect AI');
+  seedGraph(pr); save(); return pr.arch;
+}
+function genEng(pr){
+  const d=domainOf(pr.idea);
+  const feats=(pr.pm.brief?.features||d.features.map(f=>({name:f,mvp:true})));
+  pr.eng={
+    epics:[
+      {t:'Foundation', stories:['Auth & sessions','Workspace & roles','Design-system shell','CI/CD + migrations'], pts:13},
+      {t:'Core loop', stories:feats.slice(0,3).map(f=>f.name), pts:21},
+      {t:'Trust & history', stories:['Audit log','Undo / soft-delete','Search'], pts:13},
+      {t:'Admin & analytics', stories:['Team management','Usage analytics','Settings'], pts:8},
+    ],
+    milestones:[
+      {t:'M1 · Walking skeleton', w:'Weeks 1–2', d:'Auth + one core action end-to-end in production behind a flag.'},
+      {t:'M2 · MVP', w:'Weeks 3–5', d:`${feats.filter(f=>f.mvp!==false).slice(0,3).map(f=>f.name).join(', ')} + audit history.`},
+      {t:'M3 · Private beta', w:'Weeks 6–8', d:'10 design partners, analytics, weekly iteration on the north-star metric.'},
+      {t:'M4 · Launch', w:'Weeks 9–12', d:'Harden, accessibility + security review, public launch + iteration loop.'},
+    ],
+    release:'Trunk-based, feature-flagged. Ship to production every day; promote flags weekly after review. Each stage of the Product Factory gates the next.',
+  };
+  logDecision(pr,'Engineering plan generated','AI Engineering Planner broke the product into epics, stories, story points, and a 12-week milestone plan.','Backend Engineer AI');
+  seedGraph(pr); save(); return pr.eng;
+}
+const AUDIT_CATS=['Visual Design','UX','Accessibility','Performance','Security','AI Explainability','Product Strategy','Conversion','Mobile Experience','Engineering','Production Readiness'];
+function genAudit(pr){
+  // score by how much foundation exists — an honest, deterministic rubric
+  const has={brief:!!pr.pm.brief, ux:!!pr.ux, arch:!!pr.arch, eng:!!pr.eng, iv:pr.pm.interview.length};
+  const base=52;
+  const bump=(cond,n)=>cond?n:0;
+  const scores={
+    'Visual Design':78+bump(has.ux,8),
+    'UX':base+bump(has.ux,26)+bump(has.iv>=3,6),
+    'Accessibility':60+bump(has.ux,28),
+    'Performance':64+bump(has.arch,20),
+    'Security':50+bump(has.arch,34),
+    'AI Explainability':70+bump(pr.memory.length>3,16),
+    'Product Strategy':base+bump(has.brief,30)+bump(has.iv>=4,8),
+    'Conversion':base+bump(has.brief,18)+bump(has.ux,10),
+    'Mobile Experience':72+bump(has.ux,10),
+    'Engineering':base+bump(has.arch,20)+bump(has.eng,16),
+    'Production Readiness':44+bump(has.arch,20)+bump(has.eng,18)+bump(has.ux,8),
+  };
+  Object.keys(scores).forEach(k=>scores[k]=Math.min(96,scores[k]));
+  const recs=[];
+  if(!has.brief) recs.push({p:'hi',t:'Run the Product Manager interview',d:'No product brief yet. The interview is the single highest-leverage step — it feeds every other specialist.'});
+  if(!has.arch) recs.push({p:'hi',t:'Generate the architecture',d:'Security & Production Readiness are capped until there\'s a data model, auth, and deployment plan.'});
+  if(!has.ux) recs.push({p:'md',t:'Define UX states',d:'Add empty / loading / error / success states — the difference between a demo and a product.'});
+  if(!has.eng) recs.push({p:'md',t:'Break work into a plan',d:'Turn the brief into epics and milestones so the team can start Monday.'});
+  if(has.iv<4) recs.push({p:'md',t:'Go deeper in the interview',d:'Answer at least 4 interview questions so personas and risks are grounded, not guessed.'});
+  recs.push({p:'lo',t:'Wire a real AI endpoint',d:'Local synthesis is on. Add an endpoint in Settings for higher-fidelity, project-specific generation.'});
+  recs.push({p:'lo',t:'Accessibility pass before launch',d:'Manually test the full keyboard path and screen-reader flow through the core loop.'});
+  pr.audit={scores, recs, scoredAt:now()};
+  logDecision(pr,'Quality audit run',`AI Quality Auditor scored ${AUDIT_CATS.length} categories (overall ${overall(scores)}) and produced ${recs.length} actionable recommendations.`,'QA Engineer AI');
+  save(); return pr.audit;
+}
+function overall(scores){ const v=Object.values(scores); return Math.round(v.reduce((a,b)=>a+b,0)/v.length); }
+function projectProgress(pr){ return Math.round((STAGES.indexOf(pr.stage))/(STAGES.length-1)*100); }
+
+/* ---------- knowledge graph seeding ---------- */
+function seedGraph(pr){
+  const d=domainOf(pr.idea);
+  const nodes=[{id:'idea',kind:'idea',label:pr.name}];
+  const links=[];
+  const add=(id,kind,label,from)=>{nodes.push({id,kind,label}); if(from)links.push({s:from,t:id});};
+  add('goal','goal','Loved wedge','idea');
+  (pr.pm.brief?.features||d.features.map(f=>({name:f}))).slice(0,4).forEach((f,i)=>add('f'+i,'feature',(f.name||f).split(' ').slice(0,2).join(' '),'goal'));
+  if(pr.ux){ (pr.ux.hierarchy||[]).slice(1,4).forEach((s,i)=>add('s'+i,'screen',s.replace(/ view| \/.*/,''),'f'+Math.min(i,3))); }
+  if(pr.arch){ d.entities.slice(0,3).forEach((e,i)=>add('d'+i,'data',e,'s'+Math.min(i,2))); add('api','api','API','d0'); }
+  add('an','analytics','Analytics','goal');
+  add('biz','business','Business goal','idea'); add('rev','revenue','Revenue','biz'); add('fb','feedback','Feedback','rev'); links.push({s:'fb',t:'idea'});
+  pr.graph={nodes,links};
+}
+const NODE_HUE={idea:150,goal:38,feature:150,screen:205,component:265,data:28,api:320,analytics:190,business:38,revenue:150,feedback:205};
+
+/* ============================================================
+   AI TEAM
+   ============================================================ */
+const TEAM=[
+  {n:'CEO',r:'Vision & priority',m:'Keeps the mission true and says no to everything that isn\'t the wedge.',bound:'Sets priority; does not override domain specialists on their craft.',hue:38},
+  {n:'Product Manager',r:'Problem & scope',m:'Interviews the founder, defines the problem, personas, and the MVP.',bound:'Owns scope; defers implementation to engineering.',hue:150},
+  {n:'UX Designer',r:'Flows & states',m:'Designs journeys, hierarchy, and every empty/error/loading state.',bound:'Owns interaction; UI Designer owns pixels.',hue:205},
+  {n:'UI Designer',r:'Visual system',m:'Turns UX into a premium, accessible, themed interface.',bound:'Owns visual craft within the design system.',hue:265},
+  {n:'Software Architect',r:'System shape',m:'Chooses the stack, schema, API, auth, and scaling strategy.',bound:'Owns architecture; engineers own the code.',hue:28},
+  {n:'Frontend Engineer',r:'Client build',m:'Builds the interface with the design system and accessibility baked in.',bound:'Implements specs; escalates ambiguity to PM/UX.',hue:190},
+  {n:'Backend Engineer',r:'Data & APIs',m:'Builds the data layer, APIs, and background jobs.',bound:'Owns server correctness within the architecture.',hue:320},
+  {n:'Security Engineer',r:'Trust & safety',m:'Reviews authz, data handling, and the audit trail.',bound:'Can block a launch on a critical vulnerability.',hue:0},
+  {n:'QA Engineer',r:'Quality',m:'Audits every project across 11 categories with actionable fixes.',bound:'Reports and gates; does not redesign.',hue:150},
+  {n:'Marketing Strategist',r:'Positioning',m:'Sharpens the story: who it\'s for and why it wins.',bound:'Owns message; PM owns product truth.',hue:38},
+  {n:'Growth Strategist',r:'Loops & metrics',m:'Designs activation, retention, and referral loops.',bound:'Proposes experiments; PM prioritizes.',hue:150},
+  {n:'Documentation Writer',r:'Knowledge',m:'Writes feature docs, decisions, and the Academy lessons.',bound:'Documents decisions; does not make them.',hue:205},
+  {n:'Support Specialist',r:'Voice of user',m:'Feeds real user pain back into Product Memory and the roadmap.',bound:'Advocates; PM triages into scope.',hue:190},
+];
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+const NAV=[
+  {id:'workspace',label:'Workspace',icon:ICON.workspace},
+  {id:'team',label:'AI Team',icon:ICON.team},
+  {id:'system',label:'Design System',icon:ICON.system},
+];
+const PROJ_TABS=[
+  {id:'overview',label:'Overview',icon:ICON.overview},
+  {id:'pm',label:'Product Manager',icon:ICON.pm},
+  {id:'ux',label:'UX Designer',icon:ICON.ux},
+  {id:'arch',label:'Architect',icon:ICON.arch},
+  {id:'eng',label:'Engineering',icon:ICON.eng},
+  {id:'audit',label:'Quality Auditor',icon:ICON.audit},
+  {id:'graph',label:'Knowledge Graph',icon:ICON.graph},
+  {id:'memory',label:'Product Memory',icon:ICON.memory},
+  {id:'roadmap',label:'Roadmap',icon:ICON.roadmap},
+];
+function buildSidebar(){
+  const nav=$('#mainNav'); nav.innerHTML='';
+  NAV.forEach(n=>nav.append(el('a',{href:'#/'+n.id,'data-nav':n.id,html:icon(n.icon)+`<span>${n.label}</span>`})));
+  // projects list
+  const ids=Object.keys(S.projects);
+  if(ids.length){
+    nav.append(el('div',{class:'navlbl'},'Projects'));
+    ids.slice(0,8).forEach(id=>{const p=P(id);
+      nav.append(el('a',{href:'#/p/'+id+'/overview','data-proj':id,html:icon(ICON.spark)+`<span>${esc(p.name)}</span>`+`<span class="ct">${projectProgress(p)}%</span>`}));});
+  }
+  // mobile
+  const mo=$('#mobar'); mo.innerHTML='';
+  NAV.forEach(n=>mo.append(el('a',{href:'#/'+n.id,'data-nav':n.id,html:icon(n.icon)+`<span>${n.label.split(' ')[0]}</span>`})));
+}
+function parseHash(){
+  const h=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
+  if(h[0]==='p'&&h[1]) return {view:'project', pid:h[1], tab:h[2]||'overview'};
+  return {view:h[0]||'workspace'};
+}
+function setActiveNav(route){
+  document.querySelectorAll('[data-nav]').forEach(a=>a.classList.toggle('on', a.dataset.nav===route.view && route.view!=='project'));
+  document.querySelectorAll('[data-proj]').forEach(a=>a.classList.toggle('on', route.view==='project'&&a.dataset.proj===route.pid));
+}
+function crumb(route){
+  const c=$('#crumb');
+  if(route.view==='project'){ const p=P(route.pid); const tab=PROJ_TABS.find(t=>t.id===route.tab);
+    c.innerHTML=`<a href="#/workspace">Workspace</a> <span class="sep">/</span> <b>${esc(p?.name||'—')}</b> <span class="sep">/</span> ${tab?.label||''}`;
+  } else { const n=NAV.find(x=>x.id===route.view); c.innerHTML=`<b>${n?.label||'Symbolic'}</b>`; }
+}
+function render(){
+  const route=parseHash(); const v=$('#view'); v.innerHTML='';
+  buildSidebar(); setActiveNav(route); crumb(route);
+  $('.scroll').scrollTop=0;
+  if(route.view==='project'){ const p=P(route.pid); if(!p){location.hash='#/workspace'; return;} viewProject(v,p,route.tab); }
+  else if(route.view==='team') viewTeam(v);
+  else if(route.view==='system') viewSystem(v);
+  else viewWorkspace(v);
+}
+window.addEventListener('hashchange',render);
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+function viewWorkspace(v){
+  const ids=Object.keys(S.projects).sort((a,b)=>P(b).createdAt-P(a).createdAt);
+  const hero=el('div',{class:'hero'});
+  hero.innerHTML=`
+    <div class="eyebrow"><span class="d">◆</span> AI Product Operating System</div>
+    <div class="h1" style="margin-top:10px">The operating system that <span class="d">builds software companies.</span></div>
+    <p class="lede">Type an idea. Symbolic guides you from idea → research → validation → requirements → design → engineering → testing → launch. One calm, intelligent workspace.</p>`;
+  const launch=el('form',{class:'launcher', onsubmit:e=>{e.preventDefault(); const val=$('#ideaInput').value.trim(); if(val.length<3){toast('Tell me a little more about the idea',false);return;} const pr=newProject(val); location.hash='#/p/'+pr.id+'/pm';}});
+  launch.append(el('input',{type:'text',id:'ideaInput',placeholder:'I want to build a plumbing inventory app…','aria-label':'Describe your product idea'}),
+    el('button',{class:'btn primary',type:'submit',html:icon(ICON.spark)+'Start building'}));
+  hero.append(launch);
+  v.append(hero);
+
+  v.append(el('div',{class:'between',style:'margin-bottom:14px'},
+    el('div',{class:'h2'},'Your products'),
+    el('span',{class:'badge'}, ids.length+' project'+(ids.length===1?'':'s'))));
+
+  const grid=el('div',{class:'cardgrid'});
+  ids.forEach(id=>{const p=P(id); const sc=p.audit.scores?overall(p.audit.scores):null;
+    const card=el('a',{class:'pcard',href:'#/p/'+id+'/overview'});
+    card.innerHTML=`
+      <div class="row" style="gap:9px">
+        <span class="chip">${esc(domainOf(p.idea).k)}</span>
+        <span class="chip">stage · ${esc(p.stage)}</span>
+      </div>
+      <div class="pt">${esc(p.name)}</div>
+      <div class="pd">${esc(p.idea)}</div>
+      <div class="prog" style="margin-top:2px"><i style="width:${projectProgress(p)}%"></i></div>
+      <div class="pfoot">
+        <span class="mono" style="font-size:11px;color:var(--muted)">${fmtDate(p.createdAt)}</span>
+        ${sc!=null?`<div class="ring" data-n="${sc}" style="--v:${sc};--c:${sc>=75?'var(--accent)':sc>=55?'var(--amber)':'var(--red)'}"></div>`:`<span class="score na">unscored</span>`}
+      </div>`;
+    grid.append(card);
+  });
+  const nc=el('button',{class:'pcard newcard', onclick:()=>{$('#ideaInput')?.focus(); window.scrollTo?.(0,0); $('.scroll').scrollTop=0;}});
+  nc.innerHTML=icon(ICON.plus)+'<span>New product</span>';
+  grid.append(nc);
+  v.append(grid);
+}
+
+function viewProject(v,p,tab){
+  // subnav
+  const sn=el('div',{class:'subnav'});
+  PROJ_TABS.forEach(t=>{
+    const done=isTabDone(p,t.id);
+    const b=el('button',{class:tab===t.id?'on':'', onclick:()=>location.hash='#/p/'+p.id+'/'+t.id,
+      html:icon(t.icon)+`<span>${t.label}</span>`+(done?`<span class="g" title="has content"></span>`:'')});
+    sn.append(b);
+  });
+  v.append(sn);
+  const body=el('div',{}); v.append(body);
+  ({overview:tabOverview,pm:tabPM,ux:tabUX,arch:tabArch,eng:tabEng,audit:tabAudit,graph:tabGraph,memory:tabMemory,roadmap:tabRoadmap}[tab]||tabOverview)(body,p);
+}
+function isTabDone(p,id){return ({overview:true,pm:!!p.pm.brief,ux:!!p.ux,arch:!!p.arch,eng:!!p.eng,audit:!!p.audit.scores,graph:!!p.graph,memory:p.memory.length>1,roadmap:true})[id];}
+
+/* ---- header helper for a tab ---- */
+function tabHead(title,sub,actions){
+  const h=el('div',{class:'between',style:'margin-bottom:18px'});
+  h.append(el('div',{},el('div',{class:'h1',style:'font-size:24px'},title),sub?el('p',{class:'lede',style:'font-size:14px'},sub):null));
+  if(actions) h.append(el('div',{class:'row'},...actions));
+  return h;
+}
+function genBtn(label,fn){ return el('button',{class:'btn primary',html:icon(ICON.spark)+label, onclick:fn}); }
+function docBlock(title,iconPath,bodyNode){
+  const b=el('div',{class:'docblk'});
+  b.append(el('div',{class:'dh'}, el('span',{class:'di',html:icon(iconPath)}), el('h4',{},title)));
+  b.append(el('div',{class:'db'}, bodyNode)); return b;
+}
+function ul(items){ const u=el('ul',{}); items.forEach(i=>u.append(el('li',{html:i}))); return u; }
+
+/* ---- OVERVIEW ---- */
+function tabOverview(v,p){
+  v.append(tabHead('Overview', 'The one-paragraph truth of this product. Edit anything — Symbolic remembers.',
+    [el('button',{class:'btn ghost sm',html:icon(ICON.down)+'Export JSON', onclick:()=>exportProject(p)}),
+     el('button',{class:'btn ghost sm',html:icon(ICON.trash)+'Delete', onclick:()=>confirmDelete(p)})]));
+  const fields=[['vision','Vision','Where this goes if it wins'],['mission','Mission','What we do, in one sentence'],['users','Users','Who it\'s for'],['competitors','Competitors','What we replace']];
+  const grid=el('div',{class:'two'});
+  fields.forEach(([k,lb,hint])=>{
+    const card=el('div',{class:'card'});
+    const ta=el('textarea',{rows:k==='vision'||k==='mission'?3:2, oninput:e=>{p.overview[k]=e.target.value; save();}}); ta.value=p.overview[k]||'';
+    card.append(el('div',{class:'eyebrow',style:'margin-bottom:8px'},lb), el('div',{class:'muted',style:'font-size:12px;margin-bottom:9px'},hint), ta);
+    grid.append(card);
+  });
+  v.append(grid);
+  v.append(el('div',{class:'card',style:'margin-top:16px'},
+    el('div',{class:'between'},
+      el('div',{}, el('div',{class:'h2'},'Next best step'), el('p',{class:'muted',style:'font-size:13.5px;margin-top:4px'}, nextStepText(p))),
+      genBtn(nextStepLabel(p), ()=>location.hash='#/p/'+p.id+'/'+nextStepTab(p)))));
+}
+function nextStepTab(p){ if(!p.pm.brief)return'pm'; if(!p.ux)return'ux'; if(!p.arch)return'arch'; if(!p.eng)return'eng'; if(!p.audit.scores)return'audit'; return'graph'; }
+function nextStepLabel(p){ return {pm:'Interview me',ux:'Design the UX',arch:'Design architecture',eng:'Plan engineering',audit:'Run quality audit',graph:'View graph'}[nextStepTab(p)]; }
+function nextStepText(p){ return {pm:'Run the AI Product Manager interview — it feeds every other specialist.',ux:'Turn the brief into journeys and screen states.',arch:'Design the data model, API, auth, and deployment.',eng:'Break the product into epics and milestones.',audit:'Score the product across 11 categories.',graph:'Everything connects — explore the knowledge graph.'}[nextStepTab(p)]; }
+
+/* ---- PRODUCT MANAGER (interview) ---- */
+function tabPM(v,p){
+  v.append(tabHead('AI Product Manager', 'I\'ll interview you until I understand the product — then synthesize a full brief.',
+    p.pm.brief?[el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Regenerate brief',onclick:()=>{genBrief(p); render();}})]:null));
+
+  // interview
+  const q=nextQuestion(p);
+  const chat=el('div',{class:'card'});
+  const log=el('div',{class:'chatlog'});
+  chat.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Founder interview'));
+  // intro
+  log.append(msg('ai',`Tell me about **${esc(p.name)}**. I'll ask a few sharp questions, then write the brief. You can generate any time.`));
+  p.pm.interview.forEach((qa,i)=>{ log.append(msg('ai',esc(qa.q))); if(qa.a) log.append(msg('me',esc(qa.a))); });
+  if(q) log.append(msg('ai',esc(q)));
+  chat.append(log);
+  if(q){
+    const form=el('form',{class:'row',style:'margin-top:6px', onsubmit:e=>{e.preventDefault(); const val=$('#ansInput').value.trim(); if(!val)return; p.pm.interview.push({q, a:val}); save(); render();}});
+    const inp=el('input',{type:'text',id:'ansInput',placeholder:'Your answer…','aria-label':'Answer'});
+    form.append(inp, el('button',{class:'btn primary',type:'submit',html:icon(ICON.send)}));
+    chat.append(form);
+    setTimeout(()=>inp.focus(),40);
+  } else {
+    chat.append(el('div',{class:'row',style:'margin-top:6px'}, el('span',{class:'badge ok dot'},'Interview complete'),
+      el('span',{class:'muted',style:'font-size:13px'},'Enough to synthesize a strong brief.')));
+  }
+  chat.append(el('div',{class:'row',style:'margin-top:14px'},
+    genBtn(p.pm.brief?'Regenerate brief':'Generate brief',()=>{genBrief(p); toast('Brief generated'); render();}),
+    p.pm.interview.length?el('button',{class:'btn ghost sm',html:'Reset interview',onclick:()=>{p.pm.interview=[]; save(); render();}}):null));
+  v.append(chat);
+
+  if(!p.pm.brief) return;
+  const b=p.pm.brief;
+  v.append(el('div',{class:'h2',style:'margin:24px 0 14px'},'The brief'));
+  v.append(docBlock('Executive summary',ICON.overview, el('p',{},esc(b.summary))));
+  v.append(docBlock('Problem statement',ICON.pm, el('p',{},esc(b.problem))));
+  const two=el('div',{class:'two'});
+  // personas
+  const pers=el('div',{class:'docblk'}); pers.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.team)}),el('h4',{},'Personas')));
+  const pb=el('div',{class:'db',style:'display:flex;flex-direction:column;gap:12px'});
+  b.personas.forEach(ps=>{const c=el('div',{class:'persona'});
+    c.innerHTML=`<div class="pa"><span class="av" style="background:hsl(${ps.hue} 70% 60%)">${esc(ps.name[0])}</span><span><div class="pn">${esc(ps.name)}</div><div class="pr">${esc(ps.role)}</div></span></div>
+      <div class="quote">${esc(ps.quote)}</div><div class="muted" style="font-size:12.5px"><b style="color:var(--ink)">Goals:</b> ${esc(ps.goals)}</div>`;
+    pb.append(c);}); pers.append(pb); two.append(pers);
+  // stories
+  two.append(docBlock('User stories',ICON.eng, ul(b.stories.map(esc))));
+  v.append(two);
+  const two2=el('div',{class:'two'});
+  two2.append(docBlock('Success metrics',ICON.audit, ul(b.metrics.map(esc))));
+  const feat=el('div',{class:'docblk'}); feat.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.spark)}),el('h4',{},'Feature list')));
+  const fb=el('div',{class:'db'}); const fu=el('ul',{});
+  b.features.forEach(f=>fu.append(el('li',{html:`<b>${esc(f.name)}</b> ${f.mvp?'<span class="badge ok" style="margin-left:6px">MVP</span>':'<span class="badge" style="margin-left:6px">later</span>'}`})));
+  fb.append(fu); feat.append(fb); two2.append(feat);
+  v.append(two2);
+  // risks
+  const risk=el('div',{class:'docblk'}); risk.append(el('div',{class:'dh'},el('span',{class:'di',html:icon('<path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>')}),el('h4',{},'Risks')));
+  const rb=el('div',{class:'db',style:'display:flex;flex-direction:column;gap:10px'});
+  b.risks.forEach(r=>rb.append(el('div',{html:`<b>${esc(r.t)}.</b> <span class="muted">${esc(r.d)}</span>`})));
+  risk.append(rb); v.append(risk);
+  // mvp
+  const mvp=el('div',{class:'card',style:'margin-top:12px;border-color:color-mix(in srgb,var(--accent) 40%,var(--line))'});
+  mvp.append(el('div',{class:'eyebrow',style:'margin-bottom:8px'},'MVP definition'), el('p',{style:'font-size:14.5px;line-height:1.6'},esc(b.mvp)));
+  v.append(mvp);
+}
+function msg(who,html){ const m=el('div',{class:'msg '+who}); const av=who==='ai'?'S':'You'[0];
+  m.append(el('span',{class:'mav'},who==='ai'?'S':'Y'), el('div',{class:'bubble',html:html.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')})); return m; }
+
+/* ---- UX ---- */
+function tabUX(v,p){
+  v.append(tabHead('AI UX Designer','Journeys, screen hierarchy, and every state — with accessibility built in.',
+    [ p.pm.brief? genBtn(p.ux?'Regenerate':'Generate UX',()=>{genUX(p); toast('UX generated'); render();}) : null ]));
+  if(!p.pm.brief){ v.append(gate(p,'Generate the product brief first','The UX Designer builds on the Product Manager\'s brief.','pm','Run the interview')); return; }
+  if(!p.ux){ v.append(promperCard('Design the user experience','Journeys, screen hierarchy, and empty/loading/error/success states.',()=>{genUX(p); render();})); return; }
+  const u=p.ux;
+  const two=el('div',{class:'two'});
+  u.journeys.forEach(j=>{ const d=el('div',{class:'docblk'}); d.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.ux)}),el('h4',{},j.t+' journey')));
+    const b=el('div',{class:'db'}); const ol=el('ul',{}); j.s.forEach((s,i)=>ol.append(el('li',{html:`<span class="mono" style="color:var(--muted)">${i+1}.</span> ${esc(s)}`}))); b.append(ol); d.append(b); two.append(d); });
+  v.append(two);
+  v.append(docBlock('Screen hierarchy',ICON.system, ul(u.hierarchy.map(esc))));
+  const stateGrid=el('div',{class:'two'});
+  u.states.forEach(s=>stateGrid.append(docBlock(s.k+' state',ICON.overview, el('p',{},esc(s.d)))));
+  v.append(stateGrid);
+  v.append(docBlock('Accessibility',ICON.check, ul(u.a11y.map(esc))));
+}
+
+/* ---- ARCH ---- */
+function tabArch(v,p){
+  v.append(tabHead('AI Software Architect','Stack, schema, API, auth, deployment, scale, and security.',
+    [ p.pm.brief? genBtn(p.arch?'Regenerate':'Generate architecture',()=>{genArch(p); toast('Architecture generated'); render();}) : null ]));
+  if(!p.pm.brief){ v.append(gate(p,'Generate the product brief first','Architecture decisions follow from the brief.','pm','Run the interview')); return; }
+  if(!p.arch){ v.append(promperCard('Design the architecture','A production-ready stack, data model, and security plan.',()=>{genArch(p); render();})); return; }
+  const a=p.arch;
+  v.append(docBlock('Recommended stack',ICON.arch, ul(a.stack.map(esc))));
+  const two=el('div',{class:'two'});
+  // schema
+  const sc=el('div',{class:'docblk'}); sc.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.system)}),el('h4',{},'Database schema')));
+  const scb=el('div',{class:'db'}); const kv=el('dl',{class:'kv'}); a.schema.forEach(s=>{kv.append(el('dt',{},s.e), el('dd',{},s.note));}); scb.append(kv); sc.append(scb); two.append(sc);
+  two.append(docBlock('API structure',ICON.eng, ul(a.api.map(esc))));
+  v.append(two);
+  const two2=el('div',{class:'two'});
+  two2.append(docBlock('Authentication',ICON.check, el('p',{},esc(a.auth))));
+  two2.append(docBlock('Authorization',ICON.check, el('p',{},esc(a.authz))));
+  v.append(two2);
+  const two3=el('div',{class:'two'});
+  two3.append(docBlock('Scalability',ICON.roadmap, ul(a.scale.map(esc))));
+  two3.append(docBlock('Security',ICON.audit, ul(a.security.map(esc))));
+  v.append(two3);
+  v.append(docBlock('Storage & deployment',ICON.arch, el('div',{}, el('p',{html:'<b>Storage.</b> '+esc(a.storage)}), el('p',{html:'<b>Deployment.</b> '+esc(a.deploy),style:'margin-top:8px'}))));
+}
+
+/* ---- ENG ---- */
+function tabEng(v,p){
+  v.append(tabHead('AI Engineering Planner','Epics, stories, story points, and a milestone plan the team can start Monday.',
+    [ p.pm.brief? genBtn(p.eng?'Regenerate':'Generate plan',()=>{genEng(p); toast('Plan generated'); render();}) : null ]));
+  if(!p.pm.brief){ v.append(gate(p,'Generate the product brief first','The plan is built from the brief\'s features.','pm','Run the interview')); return; }
+  if(!p.eng){ v.append(promperCard('Plan the engineering','Break the product into epics, stories, and milestones.',()=>{genEng(p); render();})); return; }
+  const e=p.eng;
+  const two=el('div',{class:'two'});
+  e.epics.forEach(ep=>{const d=el('div',{class:'docblk'}); d.append(el('div',{class:'dh'},el('span',{class:'di',html:icon(ICON.eng)}),el('h4',{},ep.t),el('span',{class:'badge',style:'margin-left:auto'},ep.pts+' pts')));
+    d.append(el('div',{class:'db'}, ul(ep.stories.map(esc)))); two.append(d);});
+  v.append(two);
+  v.append(el('div',{class:'h2',style:'margin:22px 0 12px'},'Milestones'));
+  const tl=el('div',{class:'tl'});
+  e.milestones.forEach(m=>{const it=el('div',{class:'tlitem'}); it.innerHTML=`<div class="tt">${esc(m.t)}</div><div class="tm">${esc(m.w)}</div><div class="tw">${esc(m.d)}</div>`; tl.append(it);});
+  v.append(tl);
+  v.append(el('div',{class:'card',style:'margin-top:12px'}, el('div',{class:'eyebrow',style:'margin-bottom:8px'},'Release strategy'), el('p',{style:'font-size:14px'},esc(e.release))));
+}
+
+/* ---- AUDIT ---- */
+function tabAudit(v,p){
+  v.append(tabHead('AI Quality Auditor','An honest score across 11 categories — with actionable fixes, not just numbers.',
+    [ genBtn(p.audit.scores?'Re-run audit':'Run audit',()=>{genAudit(p); toast('Audit complete'); render();}) ]));
+  if(!p.audit.scores){ v.append(promperCard('Score this product','11 categories, weighted by how much foundation exists.',()=>{genAudit(p); render();})); return; }
+  const sc=p.audit.scores; const ov=overall(sc);
+  const top=el('div',{class:'card'}); const wrap=el('div',{class:'scorewrap'});
+  const color=n=>n>=75?'var(--accent)':n>=55?'var(--amber)':'var(--red)';
+  wrap.append(el('div',{class:'bigring','data-n':ov,style:`--v:${ov};--c:${color(ov)}`}));
+  const cats=el('div',{style:'flex:1;min-width:260px'});
+  AUDIT_CATS.forEach(c=>{const n=Math.round(sc[c]); const r=el('div',{class:'catrow'});
+    r.innerHTML=`<span class="cn">${c}</span><span class="cbar"><i style="width:${n}%;background:${color(n)}"></i></span><span class="cv">${n}</span>`; cats.append(r);});
+  wrap.append(cats); top.append(wrap);
+  top.append(el('div',{class:'muted',style:'margin-top:14px;font-size:13px'},`Overall ${ov}/100 · last run ${fmtTime(p.audit.scoredAt)}. Scores rise as you complete the brief, UX, architecture, and plan.`));
+  v.append(top);
+  v.append(el('div',{class:'h2',style:'margin:22px 0 12px'},'Recommendations'));
+  const rc=el('div',{class:'card'});
+  p.audit.recs.forEach(r=>{const cl=r.p==='hi'?'hi':r.p==='md'?'md':'lo'; const lbl=r.p==='hi'?'!':r.p==='md'?'~':'✓';
+    rc.append(el('div',{class:'rec'}, el('span',{class:'rc '+cl},lbl), el('div',{}, el('b',{},r.t), el('div',{class:'rt'},r.d))));});
+  v.append(rc);
+}
+
+/* ---- GRAPH ---- */
+function tabGraph(v,p){
+  v.append(tabHead('Knowledge Graph','Everything connects — idea → goal → feature → screen → data → API → analytics → revenue → feedback.',
+    [el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Rebuild',onclick:()=>{seedGraph(p); save(); render();}})]));
+  if(!p.graph) seedGraph(p);
+  const wrap=el('div',{class:'graphwrap'});
+  const legend=el('div',{class:'glegend'});
+  const kinds=[...new Set(p.graph.nodes.map(n=>n.kind))];
+  kinds.forEach(k=>legend.append(el('span',{class:'gl',html:`<i style="background:hsl(${NODE_HUE[k]||150} 70% 55%)"></i>${k}`})));
+  const canvas=el('canvas',{id:'graph'});
+  wrap.append(legend,canvas); v.append(wrap);
+  v.append(el('p',{class:'muted',style:'font-size:12.5px;margin-top:10px'},'Generated from this project\'s artifacts. As you complete the brief, UX, and architecture, more of the graph fills in. Drag nodes to explore.'));
+  requestAnimationFrame(()=>drawGraph(canvas,p.graph));
+}
+function drawGraph(canvas,g){
+  const dpr=Math.min(devicePixelRatio||1,2); const W=canvas.clientWidth, H=460;
+  canvas.width=W*dpr; canvas.height=H*dpr; const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const N=g.nodes.map((n,i)=>({...n, x:W/2+Math.cos(i/g.nodes.length*6.28)*Math.min(W,H)*0.32+(i%3-1)*20, y:H/2+Math.sin(i/g.nodes.length*6.28)*H*0.32, vx:0,vy:0}));
+  const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+  const L=g.links.map(l=>({s:byId[l.s],t:byId[l.t]})).filter(l=>l.s&&l.t);
+  const css=getComputedStyle(document.documentElement);
+  const line=css.getPropertyValue('--line2')||'#333'; const ink=css.getPropertyValue('--ink')||'#eee';
+  let drag=null, hover=null, raf, ticks=0;
+  function step(){
+    // simple force layout
+    for(const a of N){ for(const b of N){ if(a===b)continue; let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1; let f=1400/d2; a.vx+=dx*f*0.0016; a.vy+=dy*f*0.0016; } }
+    for(const l of L){ let dx=l.t.x-l.s.x,dy=l.t.y-l.s.y,d=Math.hypot(dx,dy)||1,f=(d-110)*0.008; l.s.vx+=dx/d*f; l.s.vy+=dy/d*f; l.t.vx-=dx/d*f; l.t.vy-=dy/d*f; }
+    for(const n of N){ n.vx+=(W/2-n.x)*0.001; n.vy+=(H/2-n.y)*0.001; if(n!==drag){ n.x+=n.vx*=.86; n.y+=n.vy*=.86;} n.x=Math.max(60,Math.min(W-60,n.x)); n.y=Math.max(34,Math.min(H-34,n.y)); }
+    draw(); if(ticks++<260||drag) raf=requestAnimationFrame(step);
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.lineWidth=1.4;
+    for(const l of L){ ctx.strokeStyle=line; ctx.globalAlpha=.7; ctx.beginPath(); ctx.moveTo(l.s.x,l.s.y);
+      const mx=(l.s.x+l.t.x)/2,my=(l.s.y+l.t.y)/2-14; ctx.quadraticCurveTo(mx,my,l.t.x,l.t.y); ctx.stroke(); }
+    ctx.globalAlpha=1;
+    for(const n of N){ const hue=NODE_HUE[n.kind]||150; const r=n.kind==='idea'?15:11;
+      ctx.beginPath(); ctx.arc(n.x,n.y,r+ (n===hover?3:0),0,6.29);
+      ctx.fillStyle=`hsl(${hue} 70% 55%)`; ctx.shadowColor=`hsl(${hue} 70% 55%)`; ctx.shadowBlur=n===hover?16:8; ctx.fill(); ctx.shadowBlur=0;
+      ctx.fillStyle=ink.trim(); ctx.font='500 11px Inter, sans-serif'; ctx.textAlign='center';
+      ctx.fillText(n.label.length>16?n.label.slice(0,15)+'…':n.label, n.x, n.y+r+13);
+    }
+  }
+  function pos(e){const rect=canvas.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-rect.top; return {cx,cy};}
+  function pick(cx,cy){ return N.find(n=>Math.hypot(n.x-cx,n.y-cy)<16); }
+  canvas.onmousedown=e=>{const{cx,cy}=pos(e); drag=pick(cx,cy); };
+  canvas.onmousemove=e=>{const{cx,cy}=pos(e); if(drag){drag.x=cx;drag.y=cy;drag.vx=drag.vy=0;} else {hover=pick(cx,cy); canvas.style.cursor=hover?'grab':'default';} if(!raf)step();};
+  window.addEventListener('mouseup',()=>{drag=null;});
+  canvas.ontouchstart=e=>{const{cx,cy}=pos(e); drag=pick(cx,cy); if(drag)e.preventDefault();};
+  canvas.ontouchmove=e=>{if(!drag)return; e.preventDefault(); const{cx,cy}=pos(e); drag.x=cx;drag.y=cy;drag.vx=drag.vy=0; if(!raf)step();};
+  canvas.ontouchend=()=>{drag=null;};
+  step();
+}
+
+/* ---- MEMORY ---- */
+function tabMemory(v,p){
+  v.append(tabHead('Product Memory','Every decision, why it was made, and who made it. Append-only and traceable.',
+    [el('button',{class:'btn ghost sm',html:icon(ICON.plus)+'Add decision',onclick:()=>addDecision(p)})]));
+  if(!p.memory.length){ v.append(emptyState('No decisions yet','Every generated artifact writes a traceable entry here.')); return; }
+  const card=el('div',{class:'card'}); const tl=el('div',{class:'tl'});
+  p.memory.forEach(m=>{const it=el('div',{class:'tlitem'});
+    it.innerHTML=`<div class="tt">${esc(m.title)}</div><div class="tm">${fmtTime(m.ts)} · ${esc(m.who)}</div><div class="tw">${m.why}</div>`; tl.append(it);});
+  card.append(tl); v.append(card);
+}
+function addDecision(p){
+  openModal('Log a decision', form=>{
+    form.append(field('Title','decT','text','e.g. Chose Postgres over Mongo'), field('Why','decW','area','What made this the right call?'), field('Who','decWho','text','e.g. Software Architect AI'));
+  }, ()=>{ const t=$('#decT').value.trim(); if(!t){toast('Add a title',false);return false;} logDecision(p,t,esc($('#decW').value.trim()||'—'),$('#decWho').value.trim()||'Founder'); save(); render(); toast('Decision logged'); });
+}
+
+/* ---- ROADMAP ---- */
+function tabRoadmap(v,p){
+  v.append(tabHead('Roadmap','The Product Factory pipeline. Each stage is reviewable — advance when it\'s ready.',null));
+  const card=el('div',{class:'card'});
+  const cur=STAGES.indexOf(p.stage);
+  const list=el('div',{class:'stack'});
+  STAGES.forEach((s,i)=>{const done=i<cur, on=i===cur;
+    const row=el('div',{class:'catrow',style:'cursor:pointer', onclick:()=>{p.stage=s; save(); logDecision(p,'Stage set to '+s,'Founder moved the project to the <b>'+s+'</b> stage of the Product Factory.','CEO AI'); render();}});
+    row.innerHTML=`<span class="rc ${done?'lo':on?'md':''}" style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:${done?'color-mix(in srgb,var(--accent) 18%,transparent)':on?'color-mix(in srgb,var(--amber) 20%,transparent)':'var(--surface2)'};color:${done?'var(--accent-deep)':on?'var(--amber)':'var(--muted)'};font-family:var(--mono);font-size:11px">${done?'✓':i+1}</span>
+      <span class="cn" style="width:auto;flex:1;font-weight:${on?'700':'500'};text-transform:capitalize">${s}</span>
+      ${on?'<span class="badge warn">current</span>':done?'<span class="badge ok">done</span>':'<span class="badge">upcoming</span>'}`;
+    list.append(row);
+  });
+  card.append(el('div',{class:'between',style:'margin-bottom:14px'}, el('div',{class:'eyebrow'},'Pipeline · '+projectProgress(p)+'% complete'),
+    el('div',{class:'prog',style:'flex:1;max-width:200px'},el('i',{style:`width:${projectProgress(p)}%`}))), list);
+  v.append(card);
+  v.append(el('p',{class:'muted',style:'font-size:12.5px;margin-top:10px'},'Click any stage to set it. In Milestone 3 these become review gates that require sign-off before advancing.'));
+}
+
+/* ---- shared small components ---- */
+function gate(p,title,sub,tab,cta){ return el('div',{class:'card'}, emptyStateNode(title,sub, el('a',{class:'btn primary',href:'#/p/'+p.id+'/'+tab,html:icon(ICON.spark)+cta}))); }
+function promperCard(title,sub,fn){ return el('div',{class:'card'}, emptyStateNode(title,sub, el('button',{class:'btn primary',html:icon(ICON.spark)+'Generate',onclick:fn}))); }
+function emptyState(title,sub){ return el('div',{class:'card'}, emptyStateNode(title,sub,null)); }
+function emptyStateNode(title,sub,action){ const e=el('div',{class:'empty'}); e.append(el('div',{class:'ei',html:icon(ICON.spark)}), el('div',{class:'h2',style:'font-size:17px'},title), el('p',{class:'muted',style:'margin:6px auto 0;max-width:44ch;font-size:13.5px'},sub)); if(action){const w=el('div',{style:'margin-top:16px'}); w.append(action); e.append(w);} return e; }
+
+/* ---- TEAM ---- */
+function viewTeam(v){
+  v.append(el('div',{class:'eyebrow'},'The AI Team'),
+    el('div',{class:'h1',style:'margin:8px 0 4px'},'Thirteen specialists, <span class="d">one product mind.</span>'),
+    el('p',{class:'lede'},'Each specialist has a mission, decision boundaries, and collaboration rules — so every recommendation is attributable and its authority is clear.'));
+  const grid=el('div',{class:'teamgrid',style:'margin-top:24px'});
+  TEAM.forEach(t=>{const s=el('div',{class:'spec'});
+    s.innerHTML=`<div class="sh"><span class="sav" style="background:hsl(${t.hue} 70% 60%)">${esc(t.n[0])}</span><span><div class="sn">${esc(t.n)} AI</div><div class="sr">${esc(t.r)}</div></span></div>
+      <div class="sm">${esc(t.m)}</div><div class="sb"><b>Boundary:</b> ${esc(t.bound)}</div>`;
+    grid.append(s);});
+  v.append(grid);
+}
+
+/* ---- DESIGN SYSTEM ---- */
+function viewSystem(v){
+  v.append(el('div',{class:'eyebrow'},'Design System'),
+    el('div',{class:'h1',style:'margin:8px 0 4px'},'One calm, <span class="d">accessible system.</span>'),
+    el('p',{class:'lede'},'Tokens and components that power the whole platform — light and dark, responsive, WCAG AA. This page renders live from the same tokens the app uses.'));
+  // colors
+  const colors=[['--oxblood','Brand'],['--accent','AI Accent'],['--amber','Warn'],['--red','Error'],['--blue','Info'],['--violet','Special']];
+  const cg=el('div',{class:'grid',style:'grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-top:22px'});
+  colors.forEach(([tok,nm])=>cg.append(el('div',{class:'swatch',style:`background:var(${tok})`},nm)));
+  v.append(el('div',{class:'card'}, el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Color'), cg));
+  // type
+  const tcard=el('div',{class:'card'}); tcard.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Typography'));
+  tcard.append(el('div',{style:'font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em'},'Playfair Display'),
+    el('div',{style:'font-family:var(--serif);font-weight:600;font-size:22px;margin-top:6px'},'Fraunces — the editorial serif'),
+    el('div',{style:'font-size:16px;margin-top:6px'},'Inter — the interface sans that carries the product'),
+    el('div',{class:'mono',style:'margin-top:6px;color:var(--muted)'},'JetBrains Mono — data, code, labels'));
+  v.append(tcard);
+  // buttons + badges
+  const comp=el('div',{class:'card'}); comp.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Buttons, badges & controls'));
+  const d1=el('div',{class:'compdemo'});
+  d1.innerHTML=`<button class="btn primary">Primary</button><button class="btn ghost">Ghost</button><button class="btn ox">Brand</button><button class="btn primary" disabled>Disabled</button>`;
+  const d2=el('div',{class:'compdemo',style:'margin-top:10px'});
+  d2.innerHTML=`<span class="badge dot">Live</span><span class="badge ok">Success</span><span class="badge warn">Warning</span><span class="badge ox">Brand</span><span class="chip">chip</span><span class="kbd">⌘K</span>`;
+  comp.append(d1,d2);
+  v.append(comp);
+  // AI components
+  const ai=el('div',{class:'card'}); ai.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'AI components'));
+  const ad=el('div',{class:'two'});
+  const conf=el('div',{class:'compdemo',style:'flex-direction:column;align-items:stretch;gap:12px'});
+  conf.innerHTML=`<div class="meter"><span>Confidence</span><span class="mb"><i style="width:82%;background:var(--accent)"></i></span><span class="mono">82%</span></div>
+    <div class="meter"><span>Risk</span><span class="mb"><i style="width:34%;background:var(--amber)"></i></span><span class="mono">low</span></div>
+    <div class="thinking" aria-label="thinking"><i></i><i></i><i></i></div>`;
+  const chat=el('div',{class:'compdemo',style:'flex-direction:column;align-items:stretch;gap:10px'});
+  chat.append(msg('ai','Here\'s the recommendation with **evidence** attached.'), msg('me','Ship it.'));
+  ad.append(el('div',{}, el('div',{class:'muted',style:'font-size:12px;margin-bottom:8px'},'Confidence · Risk · Thinking'), conf),
+            el('div',{}, el('div',{class:'muted',style:'font-size:12px;margin-bottom:8px'},'AI chat'), chat));
+  ai.append(ad);
+  v.append(ai);
+  // progress + skeleton
+  const misc=el('div',{class:'two'});
+  const pcard=el('div',{class:'card'}); pcard.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Progress'),
+    el('div',{class:'prog'},el('i',{style:'width:64%'})));
+  const scard=el('div',{class:'card'}); scard.append(el('div',{class:'eyebrow',style:'margin-bottom:14px'},'Skeleton'),
+    el('div',{class:'skel',style:'height:14px;margin-bottom:8px'}), el('div',{class:'skel',style:'height:14px;width:70%'}));
+  misc.append(pcard,scard); v.append(misc);
+}
+
+/* ============================================================
+   MODAL / SETTINGS / PALETTE / EXPORT
+   ============================================================ */
+function field(label,id,type,ph){ const w=el('label',{class:'fld'}); w.append(el('span',{class:'lb'},label));
+  w.append(type==='area'?el('textarea',{id,placeholder:ph,rows:3}):el('input',{id,type:'text',placeholder:ph})); return w; }
+let modalConfirm=null;
+function openModal(title,build,onConfirm,confirmLabel='Save'){
+  const m=$('#modal'); m.innerHTML='';
+  m.append(el('div',{class:'between',style:'margin-bottom:16px'}, el('div',{class:'h2'},title),
+    el('button',{class:'icobtn',html:icon('<path d="M18 6 6 18M6 6l12 12"/>'),onclick:closeModal})));
+  const form=el('div',{}); build(form); m.append(form);
+  m.append(el('div',{class:'row',style:'margin-top:20px;justify-content:flex-end'},
+    el('button',{class:'btn ghost',onclick:closeModal},'Cancel'),
+    el('button',{class:'btn primary',onclick:()=>{ if(onConfirm()!==false) closeModal(); }},confirmLabel)));
+  $('#modalScrim').classList.add('show');
+}
+function closeModal(){ $('#modalScrim').classList.remove('show'); }
+$('#modalScrim').addEventListener('click',e=>{if(e.target.id==='modalScrim')closeModal();});
+
+function openSettings(){
+  openModal('AI & settings', form=>{
+    form.append(el('p',{class:'muted',style:'font-size:13px;margin-bottom:16px'},'Symbolic works fully offline with local synthesis. Add an AI endpoint for higher-fidelity, project-specific generation — the same /api/ai proxy pattern this monorepo already ships.'));
+    const f1=el('label',{class:'fld'}); f1.append(el('span',{class:'lb'},'AI endpoint (optional)'), el('span',{class:'hint'},'e.g. https://your-proxy.vercel.app/api/ai'));
+    const i1=el('input',{id:'setEndpoint',type:'text',placeholder:'https://…/api/ai'}); i1.value=S.settings.aiEndpoint||''; f1.append(i1); form.append(f1);
+    const f2=el('label',{class:'fld'}); f2.append(el('span',{class:'lb'},'Theme'));
+    const sel=el('select',{id:'setTheme'}); ['auto','light','dark'].forEach(t=>sel.append(el('option',{value:t,...(S.settings.theme===t?{selected:'selected'}:{})},titleCase(t)))); f2.append(sel); form.append(f2);
+    form.append(el('hr'));
+    form.append(el('div',{class:'between'}, el('div',{}, el('div',{class:'lb'},'Reset workspace'), el('span',{class:'hint'},'Deletes all local projects. Cannot be undone.')),
+      el('button',{class:'btn ghost sm',html:icon(ICON.trash)+'Reset',onclick:()=>{ if(confirm('Delete ALL projects and settings?')){ localStorage.removeItem(KEY); S=load(); closeModal(); applyTheme(); location.hash='#/workspace'; render(); toast('Workspace reset'); } }}) ));
+  }, ()=>{ S.settings.aiEndpoint=$('#setEndpoint').value.trim(); S.settings.theme=$('#setTheme').value; save(); applyTheme(); toast('Settings saved'); });
+}
+$('#openSettings').addEventListener('click',openSettings);
+
+function confirmDelete(p){
+  openModal('Delete project?', form=>{ form.append(el('p',{class:'muted',style:'font-size:14px'},`This permanently deletes “${p.name}” and all its artifacts. This cannot be undone.`)); },
+    ()=>{ delProject(p.id); location.hash='#/workspace'; render(); toast('Project deleted'); }, 'Delete');
+  // recolor confirm button
+  setTimeout(()=>{const b=$('#modal .btn.primary'); if(b){b.classList.remove('primary'); b.classList.add('ox');}},0);
+}
+function exportProject(p){
+  const blob=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
+  const a=el('a',{href:URL.createObjectURL(blob),download:(p.name.replace(/\s+/g,'-').toLowerCase()||'project')+'.symbolic.json'});
+  document.body.append(a); a.click(); a.remove(); toast('Exported JSON');
+}
+
+/* ---- command palette ---- */
+let paletteItems=[], paletteSel=0;
+function openPalette(){
+  buildPaletteItems(''); $('#paletteScrim').classList.add('show'); const i=$('#paletteInput'); i.value=''; setTimeout(()=>i.focus(),30);
+}
+function closePalette(){ $('#paletteScrim').classList.remove('show'); }
+function buildPaletteItems(q){
+  q=q.toLowerCase();
+  const items=[];
+  NAV.forEach(n=>items.push({label:n.label,meta:'section',icon:n.icon,go:'#/'+n.id}));
+  Object.values(S.projects).forEach(p=>{ items.push({label:p.name,meta:'project',icon:ICON.spark,go:'#/p/'+p.id+'/overview'});
+    PROJ_TABS.forEach(t=>items.push({label:p.name+' — '+t.label,meta:'tab',icon:t.icon,go:'#/p/'+p.id+'/'+t.id})); });
+  items.push({label:'New product',meta:'action',icon:ICON.plus,go:'#/workspace',act:()=>setTimeout(()=>$('#ideaInput')?.focus(),50)});
+  items.push({label:'Settings',meta:'action',icon:ICON.system,act:openSettings});
+  paletteItems=items.filter(it=>it.label.toLowerCase().includes(q)).slice(0,40); paletteSel=0; renderPalette();
+}
+function renderPalette(){
+  const list=$('#paletteList'); list.innerHTML='';
+  if(!paletteItems.length){ list.append(el('div',{class:'empty',style:'padding:24px'},'No matches')); return; }
+  paletteItems.forEach((it,i)=>{ const row=el('div',{class:'pitem'+(i===paletteSel?' sel':''), onclick:()=>runPalette(it)});
+    row.innerHTML=`<span class="pk">${icon(it.icon)}</span><span>${esc(it.label)}</span><span class="pmeta">${it.meta}</span>`; list.append(row); });
+}
+function runPalette(it){ closePalette(); if(it.go) location.hash=it.go; if(it.act) it.act(); }
+$('#openPalette').addEventListener('click',openPalette);
+$('#paletteInput').addEventListener('input',e=>buildPaletteItems(e.target.value));
+$('#paletteScrim').addEventListener('click',e=>{if(e.target.id==='paletteScrim')closePalette();});
+$('#paletteInput').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault(); paletteSel=Math.min(paletteSel+1,paletteItems.length-1); renderPalette(); scrollSel();}
+  else if(e.key==='ArrowUp'){e.preventDefault(); paletteSel=Math.max(paletteSel-1,0); renderPalette(); scrollSel();}
+  else if(e.key==='Enter'){e.preventDefault(); if(paletteItems[paletteSel]) runPalette(paletteItems[paletteSel]);}
+});
+function scrollSel(){ $('#paletteList .pitem.sel')?.scrollIntoView({block:'nearest'}); }
+
+/* ---- global keys ---- */
+window.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); $('#paletteScrim').classList.contains('show')?closePalette():openPalette(); }
+  else if(e.key==='Escape'){ closePalette(); closeModal(); }
+});
+
+/* ============================================================
+   BOOT — seed a demo project on first run
+   ============================================================ */
+function boot(){
+  applyTheme();
+  if(!Object.keys(S.projects).length){
+    const demo=newProject('I want to build a plumbing inventory app for field technicians');
+    demo.pm.interview=[
+      {q:nextQuestion(demo), a:'Field technicians on job sites — they lose the most time hunting for parts.'},
+    ];
+    // advance the demo so the workspace looks alive
+    genBrief(demo); genArch(demo); genUX(demo); genEng(demo); genAudit(demo);
+    demo.stage='engineering'; S.activeProjectId=demo.id; save();
+  }
+  if(!location.hash) location.hash='#/workspace';
+  render();
+}
+boot();
+</script>
+</body>
+</html>
