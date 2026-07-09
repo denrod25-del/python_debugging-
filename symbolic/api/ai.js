@@ -35,6 +35,9 @@ function env(name) {
 }
 
 function corsHeaders() {
+  // SECURITY: with ALLOWED_ORIGIN unset this defaults to "*", i.e. an open,
+  // unauthenticated proxy any site can call to spend your Anthropic key. Fine
+  // for local/dev; in production set ALLOWED_ORIGIN to your app's origin.
   const allow = env("ALLOWED_ORIGIN") || "*";
   return {
     "Access-Control-Allow-Origin": allow,
@@ -137,15 +140,12 @@ export default async function handler(req) {
 
   // Streaming: pipe the Anthropic SSE straight through to the client.
   if (stream) {
-    // Clear the abort timer once the stream finishes flowing.
-    const passthrough = upstream.body.pipeThrough(
-      new TransformStream({
-        flush() {
-          clearTimeout(timeout);
-        },
-      })
-    );
-    return new Response(passthrough, {
+    // The response headers are in, so the connection is healthy — clear the
+    // connect-timeout guard now. Leaving it armed against the fetch signal
+    // would abort a legitimately long generation mid-stream. Overall stream
+    // duration is bounded by the platform's function limit.
+    clearTimeout(timeout);
+    return new Response(upstream.body, {
       status: 200,
       headers: {
         "Content-Type": "text/event-stream; charset=utf-8",

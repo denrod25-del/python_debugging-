@@ -614,7 +614,7 @@ function genBrief(pr){
     ],
     mvp:`Ship only: ${d.features.slice(0,3).join(' · ')}. Success = ${metric} trending up over 4 weeks with a majority of new users reaching first success in session one. Everything else waits.`,
   };
-  pr.pm.brief=brief; if(pr.stage==='idea'||pr.stage==='research') pr.stage='requirements';
+  pr.pm.brief=brief; // stage advances only when you approve the gate in the Product Factory
   logDecision(pr,'Product brief generated','AI Product Manager synthesized the interview into an executive summary, personas, user stories, success metrics, risks, and an MVP definition.','Product Manager AI');
   seedGraph(pr); save(); return brief;
 }
@@ -634,7 +634,6 @@ function genUX(pr){
     ],
     a11y:['Semantic landmarks + skip link','Full keyboard path through the core loop','Focus-visible rings, ≥44px targets','WCAG AA contrast in both themes','prefers-reduced-motion respected','Live-region announcements for async results'],
   };
-  if(STAGES.indexOf(pr.stage)<STAGES.indexOf('design')) pr.stage='design';
   logDecision(pr,'UX foundation generated','AI UX Designer produced journeys, screen hierarchy, and empty/loading/error/success states with accessibility notes.','UX Designer AI');
   seedGraph(pr); save(); return pr.ux;
 }
@@ -651,7 +650,6 @@ function genArch(pr){
     scale:['Read replicas + edge caching for hot views','Background queue for heavy/async work','Cursor pagination everywhere','Partition high-volume tables by workspace'],
     security:['RLS + least-privilege service roles','Encrypt secrets & PII at rest','Audit log on every mutation','CSP, HSTS, dependency scanning','Signed webhooks; idempotency keys'],
   };
-  if(STAGES.indexOf(pr.stage)<STAGES.indexOf('engineering')) pr.stage='engineering';
   logDecision(pr,'Architecture generated',`AI Software Architect recommended a <b>${d.stack[0]}</b> foundation with row-level security, a ${d.entities.length}-table schema, and a scale + security plan.`,'Software Architect AI');
   seedGraph(pr); save(); return pr.arch;
 }
@@ -737,11 +735,11 @@ function aiModel(){ return (S.settings.aiModel||'').trim() || undefined; }
 
 // Stream from the proxy. Calls onToken(textDelta) as tokens arrive; resolves
 // with the full text. Throws on any transport / server / abort error.
-async function streamAI({system, messages, max_tokens=2048, onToken, signal}={}){
-  const url=(S.settings.aiEndpoint||'').trim();
+async function streamAI({system, messages, max_tokens=2048, onToken, signal, endpoint, model}={}){
+  const url=(endpoint||S.settings.aiEndpoint||'').trim();
   if(!url) throw new Error('No AI endpoint configured');
   const res=await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({system, messages, max_tokens, model:aiModel(), stream:true}), signal});
+    body:JSON.stringify({system, messages, max_tokens, model:(model||aiModel()), stream:true}), signal});
   if(!res.ok){ let m; try{m=(await res.json()).error;}catch(e){} throw new Error(m||('HTTP '+res.status)); }
   const ct=res.headers.get('content-type')||'';
   if(ct.includes('application/json')){ // proxy answered non-streaming (or an error)
@@ -749,28 +747,34 @@ async function streamAI({system, messages, max_tokens=2048, onToken, signal}={})
     const t=d.text||''; if(onToken&&t) onToken(t); return t;
   }
   const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='', full='';
-  for(;;){
-    const {done,value}=await reader.read(); if(done) break;
-    buf+=dec.decode(value,{stream:true});
-    let nl;
-    while((nl=buf.indexOf('\n'))>=0){
-      const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
-      if(!line.startsWith('data:')) continue;
-      const data=line.slice(5).trim(); if(!data||data==='[DONE]') continue;
-      let evt; try{ evt=JSON.parse(data); }catch(e){ continue; }
-      if(evt.type==='content_block_delta' && evt.delta?.type==='text_delta'){ full+=evt.delta.text; onToken&&onToken(evt.delta.text); }
-      else if(evt.type==='error'){ throw new Error(evt.error?.message||'stream error'); }
+  try{
+    for(;;){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      let nl;
+      while((nl=buf.indexOf('\n'))>=0){
+        const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
+        if(!line.startsWith('data:')) continue;
+        const data=line.slice(5).trim(); if(!data||data==='[DONE]') continue;
+        let evt; try{ evt=JSON.parse(data); }catch(e){ continue; }
+        if(evt.type==='content_block_delta' && evt.delta?.type==='text_delta'){ full+=evt.delta.text; onToken&&onToken(evt.delta.text); }
+        else if(evt.type==='error'){ throw new Error(evt.error?.message||'stream error'); }
+      }
     }
-  }
+  } finally { try{ await reader.cancel(); }catch(e){} } // release the connection so the proxy stops streaming
   return full;
 }
 async function callAI(opts){ return streamAI(opts); } // non-streaming convenience
 
 function parseJSON(t){
-  let s=String(t||'').trim();
-  const fence=s.match(/```(?:json)?\s*([\s\S]*?)```/i); if(fence) s=fence[1].trim();
-  const a=s.indexOf('{'), b=s.lastIndexOf('}'); if(a>=0 && b>a) s=s.slice(a,b+1);
-  return JSON.parse(s);
+  const raw=String(t||'').trim();
+  const cands=[];
+  const fence=raw.match(/```(?:json)?\s*([\s\S]*?)```/i); if(fence) cands.push(fence[1].trim());
+  cands.push(raw);
+  const a=raw.indexOf('{'), b=raw.lastIndexOf('}'); if(a>=0 && b>a) cands.push(raw.slice(a,b+1));
+  let err;
+  for(const c of cands){ try{ return JSON.parse(c); }catch(e){ err=e; } }
+  throw err||new Error('no JSON found');
 }
 
 // Build the shared project context every specialist prompt starts from.
@@ -840,17 +844,17 @@ const AI_KINDS={
     max:3000, norm:normBrief,
     build:p=>({ system:"You are the AI Product Manager inside Symbolic, an AI product operating system. Turn the founder's idea and interview into a rigorous product brief. Reply with ONLY a JSON object — no prose, no markdown fences.",
       user:projContext(p,'brief')+`\n\nReturn JSON exactly:\n{"summary":"","problem":"","users":[{"name":"","need":""}],"stories":["as a … I can …" x4],"personas":[{"name":"","role":"","quote":"","goals":""} x2],"features":[{"name":"","mvp":true} x6],"metrics":["north star + 3 more"],"risks":[{"t":"","d":""} x3],"mvp":""}\nBe specific to THIS product. Keep every field tight and concrete.` }),
-    apply:(p,o)=>{ p.pm.brief=normBrief(o); if(p.stage==='idea'||p.stage==='research')p.stage='requirements';
+    apply:(p,o)=>{ p.pm.brief=normBrief(o);
       logDecision(p,'Product brief generated (AI)','The AI Product Manager (Claude) streamed a full brief from the interview — executive summary, personas, stories, metrics, risks, and MVP.','Product Manager AI'); seedGraph(p); } },
   ux:{ title:'AI UX Designer', working:'Designing journeys and states…', done:'UX generated', max:2600, norm:normUX,
     build:p=>({ system:"You are the AI UX Designer inside Symbolic. Design the user experience from the brief. Reply with ONLY a JSON object.",
       user:projContext(p,'ux')+`\n\nReturn JSON exactly:\n{"journeys":[{"t":"First run","s":["step" …]},{"t":"Core loop","s":[…]}],"hierarchy":["screen names"],"states":[{"k":"Empty","d":""},{"k":"Loading","d":""},{"k":"Error","d":""},{"k":"Success","d":""}],"a11y":["accessibility notes"]}` }),
-    apply:(p,o)=>{ p.ux=normUX(o); if(STAGES.indexOf(p.stage)<STAGES.indexOf('design'))p.stage='design';
+    apply:(p,o)=>{ p.ux=normUX(o);
       logDecision(p,'UX foundation generated (AI)','The AI UX Designer (Claude) streamed journeys, a screen hierarchy, every state, and accessibility notes.','UX Designer AI'); seedGraph(p); } },
   arch:{ title:'AI Software Architect', working:'Designing the architecture…', done:'Architecture generated', max:3000, norm:normArch,
     build:p=>({ system:"You are the AI Software Architect inside Symbolic. Recommend a production-ready architecture. Reply with ONLY a JSON object.",
       user:projContext(p,'arch')+`\n\nReturn JSON exactly:\n{"stack":["choices"],"schema":[{"e":"Entity","note":"columns/notes"}],"api":["endpoints/notes"],"auth":"","authz":"","storage":"","deploy":"","scale":["notes"],"security":["notes"]}` }),
-    apply:(p,o)=>{ p.arch=normArch(o); if(STAGES.indexOf(p.stage)<STAGES.indexOf('engineering'))p.stage='engineering';
+    apply:(p,o)=>{ p.arch=normArch(o);
       logDecision(p,'Architecture generated (AI)','The AI Software Architect (Claude) streamed a stack, data model, API, auth, scale, and security plan.','Software Architect AI'); seedGraph(p); } },
   eng:{ title:'AI Engineering Planner', working:'Breaking down the work…', done:'Plan generated', max:2600, norm:normEng,
     build:p=>({ system:"You are the AI Engineering Planner inside Symbolic. Turn the brief and architecture into an executable plan. Reply with ONLY a JSON object.",
@@ -862,13 +866,16 @@ const LOCAL_GEN={ brief:genBrief, ux:genUX, arch:genArch, eng:genEng };
 
 // Route a "Generate" action: stream from Claude when configured, else local.
 const GEN_LABEL={brief:'Product brief',ux:'UX foundation',arch:'Architecture',eng:'Engineering plan'};
+function genExists(kind,p){ return kind==='brief' ? !!p.pm.brief : !!p[kind]; }
+// XP is granted only the first time an artifact is created — regenerating is free but earns nothing.
 function runGen(kind,p){
-  if(hasAI()) aiArtifact(kind,p);
-  else { LOCAL_GEN[kind](p); award(20,GEN_LABEL[kind]); toast(AI_KINDS[kind].done); render(); }
+  const first=!genExists(kind,p);
+  if(hasAI()) aiArtifact(kind,p,first);
+  else { LOCAL_GEN[kind](p); if(first&&genExists(kind,p)) award(20,GEN_LABEL[kind]); toast(AI_KINDS[kind].done); render(); }
 }
 
 // Stream an artifact into a live modal, parse JSON, apply — or fall back.
-async function aiArtifact(kind,p){
+async function aiArtifact(kind,p,first){
   const cfg=AI_KINDS[kind];
   const m=$('#modal'); m.innerHTML='';
   m.append(el('div',{class:'between',style:'margin-bottom:14px'},
@@ -886,11 +893,11 @@ async function aiArtifact(kind,p){
   try{
     await streamAI({ system:cfg.build(p).system, messages:[{role:'user',content:cfg.build(p).user}], max_tokens:cfg.max, onToken });
     const obj=parseJSON(raw);
-    cfg.apply(p,obj); save(); closeModal(); award(20,GEN_LABEL[kind]); toast(cfg.done); render();
+    cfg.apply(p,obj); save(); closeModal(); if(first&&genExists(kind,p)) award(20,GEN_LABEL[kind]); toast(cfg.done); render();
   }catch(e){
     console.warn('aiArtifact('+kind+') fell back:',e);
     try{ LOCAL_GEN[kind](p); save(); }catch(e2){}
-    closeModal(); toast('AI unavailable — generated locally', false); render();
+    closeModal(); if(first&&genExists(kind,p)) award(20,GEN_LABEL[kind]); toast('AI unavailable — generated locally', false); render();
   }
 }
 
@@ -1029,6 +1036,7 @@ function viewWorkspace(v){
       <div class="row" style="gap:9px">
         <span class="chip">${esc(domainOf(p.idea).k)}</span>
         <span class="chip">stage · ${esc(p.stage)}</span>
+        ${p.demo?'<span class="chip" style="color:var(--amber)">sample</span>':''}
       </div>
       <div class="pt">${esc(p.name)}</div>
       <div class="pd">${esc(p.idea)}</div>
@@ -1125,7 +1133,7 @@ function tabPM(v,p){
       el('span',{class:'muted',style:'font-size:13px'},'Enough to synthesize a strong brief.')));
   }
   chat.append(el('div',{class:'row',style:'margin-top:14px'},
-    genBtn(p.pm.brief?'Regenerate brief':'Generate brief',()=>{genBrief(p); toast('Brief generated'); render();}),
+    genBtn(p.pm.brief?'Regenerate brief':'Generate brief',()=>runGen('brief',p)),
     p.pm.interview.length?el('button',{class:'btn ghost sm',html:'Reset interview',onclick:()=>{p.pm.interview=[]; save(); render();}}):null));
   v.append(chat);
 
@@ -1396,7 +1404,9 @@ function tabRoadmap(v,p){
       const ctl=el('div',{class:'row',style:'margin-top:12px'});
       if(met){
         ctl.append(el('button',{class:'btn primary sm',html:icon(ICON.check)+'Approve & advance → '+next,
-          onclick:()=>{ p.stage=next; save(); logDecision(p,'Stage approved: '+s+' → '+next,`The <b>${s}</b> gate was met and approved; the project advanced to <b>${next}</b>.`,'CEO AI'); award(12,'Gate: '+next); render(); }}));
+          onclick:()=>{ const idx=i+1, firstReach=idx>(p.stageMax||0); p.stage=next;
+            if(firstReach){ p.stageMax=idx; logDecision(p,'Stage approved: '+s+' → '+next,`The <b>${s}</b> gate was met and approved; the project advanced to <b>${next}</b>.`,'CEO AI'); award(12,'Gate: '+next); }
+            save(); render(); }}));
       } else {
         ctl.append(el('span',{class:'badge warn'},'Gate not met'),
           tab?el('a',{class:'btn ghost sm',href:'#/p/'+p.id+'/'+tab,html:icon(ICON.spark)+'Complete in '+PROJ_TABS.find(t=>t.id===tab).label}):el('span',{class:'muted',style:'font-size:12.5px'},g.items[0]));
@@ -1475,16 +1485,17 @@ function emptyStateNode(title,sub,action){ const e=el('div',{class:'empty'}); e.
    XP / achievements / lessons all track the real work you do.
    ============================================================ */
 function AC(){ if(!S.academy||typeof S.academy!=='object') S.academy={xp:0,badges:[],lessons:[]};
-  S.academy.badges=S.academy.badges||[]; S.academy.lessons=S.academy.lessons||[]; S.academy.xp=S.academy.xp||0; return S.academy; }
+  S.academy.badges=S.academy.badges||[]; S.academy.lessons=S.academy.lessons||[]; S.academy.copied=S.academy.copied||[]; S.academy.xp=S.academy.xp||0; return S.academy; }
 function level(xp){ return 1+Math.floor((xp||0)/100); }
 function updateAcademyNav(){ const c=document.querySelector('[data-nav="academy"] .ct'); if(c) c.textContent='Lv '+level(AC().xp); }
 function award(xp,label){ const a=AC(); const b=level(a.xp); a.xp+=xp; const af=level(a.xp); save();
   toast('+'+xp+' XP · '+label); if(af>b) setTimeout(()=>toast('Level '+af+' reached ✦'),320);
   checkBadges(); updateAcademyNav(); }
 
-const anyProj=fn=>Object.values(S.projects).some(fn);
+// The seeded sample project doesn't count toward achievements/challenges — you earn those by doing the work.
+const anyProj=fn=>Object.values(S.projects).some(p=>!p.demo&&fn(p));
 const ACH=[
-  {id:'first-product',n:'First Product',d:'Start your first product in the workspace.',hue:150,ok:()=>Object.keys(S.projects).length>0},
+  {id:'first-product',n:'First Product',d:'Start your first product in the workspace.',hue:150,ok:()=>anyProj(()=>true)},
   {id:'curious',n:'The Curious Founder',d:'Answer 3 interview questions.',hue:205,ok:()=>anyProj(p=>p.pm.interview.filter(q=>q.a).length>=3)},
   {id:'pm',n:'Product Mind',d:'Generate a product brief.',hue:150,ok:()=>anyProj(p=>p.pm.brief)},
   {id:'designer',n:'Experience Designer',d:'Design the UX foundation.',hue:265,ok:()=>anyProj(p=>p.ux)},
@@ -1569,7 +1580,7 @@ function viewAcademy(v){
   // challenges (live checklist)
   v.append(el('div',{class:'h2',style:'margin:26px 0 12px'},'Challenges'));
   const chs=[
-    ['Create your first product',()=>Object.keys(S.projects).length>0],
+    ['Create your first product',()=>anyProj(()=>true)],
     ['Answer 3 interview questions',()=>anyProj(p=>p.pm.interview.filter(q=>q.a).length>=3)],
     ['Generate a product brief',()=>anyProj(p=>p.pm.brief)],
     ['Design the architecture',()=>anyProj(p=>p.arch)],
@@ -1662,9 +1673,10 @@ function openInfo(title,node){
 }
 function marketAction(it){
   if(it.cat==='template') return el('button',{class:'btn primary sm',html:icon(ICON.plus)+'Use',onclick:()=>installTemplate(it)});
-  if(it.cat==='prompt') return el('button',{class:'btn ghost sm',html:icon(ICON.copy)+'Copy prompt',onclick:async e=>{
-    try{ await navigator.clipboard.writeText(it.prompt); }catch(err){}
-    award(5,'Prompt: '+it.name); }});
+  if(it.cat==='prompt') return el('button',{class:'btn ghost sm',html:icon(ICON.copy)+'Copy prompt',onclick:async()=>{
+    let ok=true; try{ await navigator.clipboard.writeText(it.prompt); }catch(err){ ok=false; }
+    if(!ok){ toast('Copy failed — select the text manually', false); return; }
+    const a=AC(); if(!a.copied.includes(it.id)){ a.copied.push(it.id); award(5,'Prompt: '+it.name); } else toast('Prompt copied'); }});
   if(it.link) return el('a',{class:'btn ghost sm',href:it.link,html:icon(ICON.spark)+'Open'});
   return el('button',{class:'btn ghost sm',html:icon(ICON.spark)+'Preview',onclick:()=>openInfo(it.name, el('p',{class:'muted',style:'font-size:14px;line-height:1.6'},it.body||it.tagline))});
 }
@@ -1783,12 +1795,11 @@ function openSettings(){
     const testBtn=el('button',{class:'btn ghost sm',type:'button',html:icon(ICON.spark)+'Test connection', onclick:async()=>{
       const ep=$('#setEndpoint').value.trim(); if(!ep){ out.textContent='Add an endpoint URL first.'; return; }
       out.style.color='var(--muted)'; out.textContent='Connecting…';
-      const se=S.settings.aiEndpoint, sm=S.settings.aiModel; S.settings.aiEndpoint=ep; S.settings.aiModel=$('#setModel').value.trim();
       let acc='';
-      try{ await streamAI({messages:[{role:'user',content:'Reply with exactly: Symbolic connected.'}], max_tokens:32, onToken:t=>{acc+=t; out.textContent=acc;}});
+      try{ await streamAI({messages:[{role:'user',content:'Reply with exactly: Symbolic connected.'}], max_tokens:32,
+        endpoint:ep, model:$('#setModel').value.trim()||undefined, onToken:t=>{acc+=t; out.textContent=acc;}});
         out.style.color='var(--accent-deep)'; out.textContent='✓ '+(acc.trim()||'connected'); }
       catch(err){ out.style.color='var(--red)'; out.textContent='✗ '+(err.message||'failed'); }
-      finally{ S.settings.aiEndpoint=se; S.settings.aiModel=sm; }
     }});
     form.append(el('div',{class:'row',style:'margin:-6px 0 16px'}, testBtn, out));
     const f1b=el('label',{class:'fld'}); f1b.append(el('span',{class:'lb'},'Model (optional)'), el('span',{class:'hint'},'Blank = the proxy default (claude-opus-4-8).'));
@@ -1822,7 +1833,8 @@ function exportProject(p){
 function scaffoldSpec(p){
   const d=domainOf(p.idea);
   const slug=slugify(p.name);
-  const entities=(p.arch?.schema?.map(s=>s.e).filter(Boolean).length?p.arch.schema.map(s=>s.e):d.entities);
+  const ents=(p.arch?.schema||[]).map(s=>s.e).filter(Boolean);
+  const entities=ents.length?ents:d.entities;
   const noun=(d.noun||'item').replace(/\s+/g,'-').toLowerCase();
   const feats=(p.pm?.brief?.features||d.features.map(f=>({name:f,mvp:true}))).map(f=>({name:f.name||f,mvp:f.mvp!==false}));
   const files=[];
@@ -1939,7 +1951,7 @@ function boot(){
     ];
     // advance the demo so the workspace looks alive
     genBrief(demo); genArch(demo); genUX(demo); genEng(demo); genAudit(demo);
-    demo.stage='engineering'; S.activeProjectId=demo.id; save();
+    demo.stage='engineering'; demo.stageMax=5; demo.demo=true; S.activeProjectId=demo.id; save();
   }
   if(!location.hash) location.hash='#/workspace';
   render();
