@@ -5,6 +5,7 @@ import csv
 from typing import List
 
 from openpyxl import Workbook
+from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
@@ -101,30 +102,51 @@ def _pricing_sheet(ws):
 
 def _ranking_sheet(ws, city_rows, disclaimer: str):
     ws.cell(row=1, column=1, value="US Cities Ranked by Billboard Market Size & Ad Rates").font = _TITLE_FONT
-    ws.merge_cells("A1:F1")
+    ws.merge_cells("A1:H1")
     ws.cell(row=2, column=1, value=disclaimer).font = _SUB_FONT
-    ws.merge_cells("A2:F2")
+    ws.merge_cells("A2:H2")
     ws.cell(row=2, column=1).alignment = Alignment(wrap_text=True, vertical="top")
     ws.row_dimensions[2].height = 46
 
-    headers = ["Rank", "City", "State", "Market Tier", "Typical Monthly Rate", "Premium / Notes"]
+    headers = ["Rank", "City", "State", "Market Tier", "Typical Rate",
+               "Low $/mo (est.)", "High $/mo (est.)", "Premium / Notes"]
     for i, h in enumerate(headers, start=1):
         ws.cell(row=4, column=i, value=h)
     _style_header(ws, len(headers), row=4)
 
-    for r, (rank, city, state, tier, rate, note) in enumerate(city_rows, start=5):
-        for i, val in enumerate([rank, city, state, tier, rate, note], start=1):
+    hdr_row = 4
+    for r, (rank, city, state, tier, low, high, note) in enumerate(city_rows, start=5):
+        rate_str = f"${low:,}–${high:,}/mo"
+        values = [rank, city, state, tier, rate_str, low, high, note]
+        for i, val in enumerate(values, start=1):
             cell = ws.cell(row=r, column=i, value=val)
             cell.alignment = Alignment(vertical="top", wrap_text=True)
             cell.border = _BORDER
-        # shade the top-3 (Tier 1) rows
-        if rank <= 3:
+        ws.cell(row=r, column=6).number_format = "$#,##0"
+        ws.cell(row=r, column=7).number_format = "$#,##0"
+        if rank <= 3:  # shade Tier-1 rows
             for i in range(1, len(headers) + 1):
                 ws.cell(row=r, column=i).fill = _PB_FILL
 
-    for i, w in enumerate([7, 16, 7, 30, 24, 62], start=1):
+    for i, w in enumerate([7, 15, 7, 28, 20, 15, 16, 58], start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A5"
+
+    # Bar chart: typical monthly rate band (low & high) by city.
+    last = hdr_row + len(city_rows)
+    chart = BarChart()
+    chart.type = "col"
+    chart.title = "Typical Monthly Billboard Rate by City (standard boards)"
+    chart.y_axis.title = "USD / month"
+    chart.x_axis.title = "City (ranked by market size)"
+    chart.height = 9
+    chart.width = 26
+    data = Reference(ws, min_col=6, max_col=7, min_row=hdr_row, max_row=last)
+    cats = Reference(ws, min_col=2, max_col=2, min_row=hdr_row + 1, max_row=last)
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(cats)
+    chart.gapWidth = 60
+    ws.add_chart(chart, f"A{last + 2}")
 
 
 def _about_sheet(ws, notes: List[str]):

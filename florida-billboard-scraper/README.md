@@ -79,25 +79,36 @@ python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**31 companies.** The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
+**42 companies.** The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
-New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital Outdoor Advertising),
-national brokers (AdQuick, Blue Line Media, BillboardsIn) and market-specific
-operators (SignAd/Texas, Gilbreath/Houston, Becker Boards/Phoenix, American
-Outdoor/San Diego, plus a deep NYC roster: Neutron, Heritage, Pearl, TSX Broadway,
-Rolling Adz, Adams). Source: `fbscraper/national.py`.
+Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
+Outdoor Advertising), national brokers/agencies (AdQuick, Blue Line Media,
+BillboardsIn, Billups) and market-specific operators (SignAd/Texas,
+Gilbreath/Houston, Becker Boards/Phoenix, American Outdoor/San Diego). NYC has a
+**genuinely deep 29-company roster** — spectacular specialists (SILVERCAST,
+Branded Cities, TSX Broadway, Heritage, Big Outdoor), hand-painted walls
+(Colossal Media), top-5-by-spot-count owners (Intersection, PMD Media, OUTFRONT,
+JCDecaux, InSite Street Media), wildposting (GSB Digital), and DOB-registry firms
+(Seen Outdoor, Red Rock). Source: `fbscraper/national.py`.
 
 The national workbook has **14 tabs**:
 
 - **All Companies** — every company, national operators first, with a "Top-10
   Cities Served" column.
 - **City Market Ranking** — the 10 cities ranked by billboard market size and
-  typical ad rates (NYC #1 → Jacksonville #10), with per-city rate bands and
-  premium notes (e.g. Times Square $10k–$1M+/mo).
+  typical ad rates (NYC #1 → Jacksonville #10), with numeric low/high rate columns,
+  premium notes (e.g. Times Square $10k–$1M+/mo), and an **embedded bar chart** of
+  the monthly rate band per city.
 - **One tab per city** (New York, Los Angeles, … Jacksonville) — just the
-  companies serving that market. NYC has the deepest roster (18), then Chicago/
-  Houston (13 each).
+  companies serving that market. NYC is deepest (29), then Chicago (16), LA/
+  Houston (14 each).
 - **Pricing Reference** and **About**.
+
+> For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
+> of Buildings "Active Outdoor Advertising Companies (OAC)" registry**
+> (nyc.gov/assets/buildings/pdf/active-OAC-list.pdf) — the NYC analog of Florida's
+> FDOT list. It's WAF-protected (blocked from this sandbox); download it directly
+> to append every registered NYC firm.
 
 > Note: unlike Florida (FDOT licensee database), there is **no single national
 > permit registry**, so local operators are gathered market by market — the list
