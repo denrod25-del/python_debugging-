@@ -79,7 +79,8 @@ python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**59 companies.** The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
+**64 companies across all 10 cities** (every market now has local operators, not
+just the nationals). The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
 Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
 Outdoor Advertising), national brokers/agencies (AdQuick, Blue Line Media,
@@ -100,6 +101,12 @@ independent), Ralston, Albert, Dallas Billboards LLC; **Houston (16)** — SignA
 (largest independent in TX), Gilbreath, Avail Media, Inspiria, MH Outdoor;
 **San Antonio (14)** — plus True Impact Media, BM Outdoor, Lux Media.
 
+The four smaller markets have their locals too: **Philadelphia (13)** — Catalyst
+Outdoor, Keystone Outdoor, Big Outdoor; **Jacksonville (12)** — Daily Billboards,
+American Mobile Ads, Fisher Design; **Phoenix (11)** — Becker Boards, Arizona
+Billboard Co., American Outdoor; **San Diego (10)** — American Outdoor, Bray
+Outdoor, Capitol Outdoor.
+
 Source: `fbscraper/national.py`.
 
 The national workbook has **14 tabs**:
@@ -111,8 +118,9 @@ The national workbook has **14 tabs**:
   premium notes (e.g. Times Square $10k–$1M+/mo), and an **embedded bar chart** of
   the monthly rate band per city.
 - **One tab per city** (New York, Los Angeles, … Jacksonville) — just the
-  companies serving that market. NYC is deepest (29), then Chicago (22), LA (18),
-  Dallas/Houston (16 each), San Antonio (14).
+  companies serving that market. Depth: NYC 30 · Chicago 22 · LA 18 · Dallas 16 ·
+  Houston 16 · San Antonio 14 · Philadelphia 13 · Jacksonville 12 · Phoenix 11 ·
+  San Diego 10.
 - **Pricing Reference** and **About**.
 
 > For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
