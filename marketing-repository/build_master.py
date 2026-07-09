@@ -18,6 +18,12 @@ from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
 import expansion_data as X
+try:
+    import metro_reference as M
+    HAVE_METRO = True
+except Exception as _e:  # billboard dataset not importable -> skip metro tabs
+    HAVE_METRO = False
+    _METRO_ERR = _e
 
 SRC = "data/BSymbolic_Marketing_Repository_ORIGINAL.xlsx"
 OUT = "data/BSymbolic_Marketing_Master_Expanded.xlsx"
@@ -177,6 +183,51 @@ def copy_plain_sheet(wb, src_ws, title):
     return ws
 
 
+def write_metro_reference(wb):
+    rows = M.metro_reference_rows()
+    ws = wb.create_sheet("US Metro Reference")
+    headers = ["Rank", "Metro", "State", "DMA Rank (approx)", "Metro Pop",
+               "OOH Rate ($/mo)", "OOH Ops (#)", "Major Newspaper",
+               "Business Journal", "Market Notes"]
+    style_title(ws, "US METRO MARKETING REFERENCE - 42 MARKETS", len(headers))
+    style_header(ws, headers)
+    for n, d in enumerate(rows, 1):
+        r = n + 2
+        vals = [d["rank"], d["metro"], d["state"], d["dma"], d["pop"], d["rate"],
+                d["ops"], d["paper"], d["bizj"], d["note"]]
+        for i, v in enumerate(vals, 1):
+            cell = ws.cell(r, i, v)
+            cell.alignment = CENTER if i in (1, 3, 4, 5, 6, 7) else LEFT
+            cell.border = BORDER
+    for i, w in enumerate([6, 15, 7, 10, 16, 15, 9, 30, 30, 55], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+    ws.auto_filter.ref = f"A2:J{len(rows) + 2}"
+    return ws
+
+
+def write_metro_companies(wb):
+    rows = M.metro_company_rows()
+    ws = wb.create_sheet("Metro OOH Companies")
+    headers = ["#", "Company", "Type", "Metros Served", "HQ", "Website",
+               "Pricing (availability)", "Confidence"]
+    style_title(ws, "METRO OOH / BILLBOARD COMPANIES - 42 MARKETS", len(headers))
+    style_header(ws, headers)
+    for n, d in enumerate(rows, 1):
+        r = n + 2
+        vals = [n, d["company"], d["type"], d["metros"], d["hq"], d["website"],
+                d["pricing"], d["confidence"]]
+        for i, v in enumerate(vals, 1):
+            cell = ws.cell(r, i, v)
+            cell.alignment = CENTER if i in (1, 8) else LEFT
+            cell.border = BORDER
+    for i, w in enumerate([5, 34, 26, 40, 22, 40, 34, 11], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+    ws.auto_filter.ref = f"A2:H{len(rows) + 2}"
+    return ws
+
+
 def main():
     src = openpyxl.load_workbook(SRC, data_only=True)
     existing = extract_existing(src)
@@ -210,6 +261,15 @@ def main():
                 "Sales Enablement, Analytics/MarTech, Branding, B2B/ABM and Cause/CSR. "
                 "Trades Relevance ratings keep the Palm Beach home-services lens.")
     legend.cell(nr, 2).alignment = LEFT
+    if HAVE_METRO:
+        nr2 = legend.max_row + 1
+        legend.cell(nr2, 1, "US Metros").font = Font(bold=True)
+        legend.cell(nr2, 2,
+                    "US Metro Reference = 42 largest markets with DMA rank, population, "
+                    "OOH rate band, # billboard operators, dominant newspaper & business "
+                    "journal. Metro OOH Companies = 110 scraped billboard/OOH operators by "
+                    "metro. Turns the tactic menu into a US market reference.")
+        legend.cell(nr2, 2).alignment = LEFT
 
     # 2) Master List (aggregate of every category)
     master_rows = []
@@ -222,7 +282,12 @@ def main():
     for master, band, out_tab, rows in categories:
         write_category_sheet(wb, band, out_tab, rows)
 
-    # 4) PBC Priority Playbook (preserved)
+    # 4) US Metro marketing reference (ties the tactics to real markets)
+    if HAVE_METRO:
+        write_metro_reference(wb)
+        write_metro_companies(wb)
+
+    # 5) PBC Priority Playbook (preserved)
     if "PBC Priority Playbook" in src.sheetnames:
         copy_plain_sheet(wb, src["PBC Priority Playbook"], "PBC Priority Playbook")
 

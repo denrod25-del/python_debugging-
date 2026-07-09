@@ -1,17 +1,28 @@
-# B. Symbolic — Marketing Master Repository (Expanded)
+# B. Symbolic — US Marketing Master Reference (Expanded)
 
 Expands the original **B. Symbolic Marketing Repository** (792 tactics, 13
-categories — heavily OOH/local) into a near-complete marketing master list:
-**1,116 tactics across 25 categories** (+324 new), same schema and styling.
+categories — heavily OOH/local) into a near-complete marketing master list AND a
+US market reference: **1,116 tactics across 25 categories** (+324 new) **plus a
+42-metro market reference** — same schema and styling.
 
 ## Output
 
-`data/BSymbolic_Marketing_Master_Expanded.xlsx` — 28 sheets:
+`data/BSymbolic_Marketing_Master_Expanded.xlsx` — 30 sheets:
 
-- **Legend** — how to use it (updated counts + expansion note)
+- **Legend** — how to use it (updated counts + notes)
 - **Master List** — all 1,116 tactics, filterable by Cost / Trades Relevance / In-House?
 - **25 category tabs** — one per category
+- **US Metro Reference** — the 42 largest US markets: market-size rank, Nielsen
+  DMA rank (approx), metro population, OOH rate band ($/mo), # billboard operators,
+  dominant daily newspaper, city business journal, and market notes.
+- **Metro OOH Companies** — 110 scraped billboard/OOH operators mapped to the
+  metros they serve (type, HQ, website, pricing channel, confidence).
 - **PBC Priority Playbook** — the original curated shortlist, preserved
+
+The metro data is imported live from the sibling billboard project
+(`../florida-billboard-scraper/fbscraper/national.py`) so the OOH companies and
+rate bands stay in sync with that dataset. DMA ranks and populations are stable
+public reference figures (Nielsen 2024-25; Census MSA 2024) marked approximate.
 
 Every original tactic, the Legend, and the Playbook are preserved verbatim. The
 schema is unchanged: **Cost** ($/$$/$$$), **Trades Relevance** (High/Med/Low,
