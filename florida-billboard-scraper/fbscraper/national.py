@@ -1,9 +1,10 @@
-"""National seed dataset: billboard / OOH companies across 26 major US metros.
+"""National seed dataset: billboard / OOH companies across 34 major US metros.
 
 Markets (market-size rank order): New York, Los Angeles, Chicago, San Francisco,
 Atlanta, Washington DC, Boston, Dallas, Houston, Miami, Philadelphia, Detroit,
-Seattle, Minneapolis, Phoenix, Tampa, Denver, Orlando, San Diego, Las Vegas,
-San Antonio, Portland, Charlotte, Nashville, Austin, Jacksonville.
+Seattle, Minneapolis, Phoenix, Tampa, Denver, Sacramento, Orlando, St. Louis,
+Pittsburgh, San Diego, Baltimore, Charlotte, Indianapolis, Las Vegas, San Antonio,
+Portland, Columbus, Kansas City, Nashville, Salt Lake City, Austin, Jacksonville.
 
 Compiled from public web sources on 2026-07-08 (company sites, market listings,
 industry directories). Same caveat as the Florida seed: this is a real, usable
@@ -30,14 +31,15 @@ from .models import (
     TYPE_BROKER,
 )
 
-# 26 major US OOH markets, listed in market-size rank order (see CITY_MARKET).
+# 34 major US OOH markets, listed in market-size rank order (see CITY_MARKET).
 TOP_CITIES = [
     "New York", "Los Angeles", "Chicago", "San Francisco", "Atlanta",
     "Washington DC", "Boston", "Dallas", "Houston", "Miami",
     "Philadelphia", "Detroit", "Seattle", "Minneapolis", "Phoenix",
-    "Tampa", "Denver", "Orlando", "San Diego", "Las Vegas",
-    "San Antonio", "Portland", "Charlotte", "Nashville", "Austin",
-    "Jacksonville",
+    "Tampa", "Denver", "Sacramento", "Orlando", "St. Louis",
+    "Pittsburgh", "San Diego", "Baltimore", "Charlotte", "Indianapolis",
+    "Las Vegas", "San Antonio", "Portland", "Columbus", "Kansas City",
+    "Nashville", "Salt Lake City", "Austin", "Jacksonville",
 ]
 
 _REF = "Static ~$1k–$25k+/4wk; premium/spectacular boards much higher (market avg)"
@@ -119,8 +121,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="Capitol Outdoor",
         company_type=TYPE_NATIONAL,
-        primary_market="Chicago; Los Angeles; Manhattan; Philadelphia; San Diego; Miami; Washington DC",
-        counties_served="New York; Los Angeles; Chicago; Philadelphia; San Diego; Miami; Washington DC",
+        primary_market="Chicago; LA; Manhattan; Philadelphia; San Diego; Miami; Washington DC; Sacramento",
+        counties_served="New York; Los Angeles; Chicago; Philadelphia; San Diego; Miami; Washington DC; Sacramento",
         serves_palm_beach="Yes",
         website="https://capitoloutdoor.com/",
         pricing_reference=_REF,
@@ -201,8 +203,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="BM Outdoor Media",
         company_type=TYPE_REGIONAL,
-        primary_market="44 Texas cities + Phoenix, Austin, Seattle, San Diego, Jacksonville, Detroit, Minneapolis, Charlotte, Tampa",
-        counties_served="Houston; Dallas; San Antonio; Phoenix; Austin; Seattle; San Diego; Jacksonville; Detroit; Minneapolis; Charlotte; Tampa",
+        primary_market="44 Texas cities + many US metros (billboard, digital, transit, street furniture)",
+        counties_served="Houston; Dallas; San Antonio; Phoenix; Austin; Seattle; San Diego; Jacksonville; Detroit; Minneapolis; Charlotte; Tampa; Sacramento; Indianapolis; Columbus; Kansas City; St. Louis; Baltimore",
         serves_palm_beach="No",
         website="https://bmoutdoor.com/",
         pricing_reference=_REF,
@@ -1133,16 +1135,17 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="Reagan Outdoor Advertising",
         company_type=TYPE_REGIONAL,
-        primary_market="Austin (densest local footprint)",
-        counties_served="Austin",
+        primary_market="Salt Lake City (HQ); Austin; Indianapolis; Las Vegas",
+        counties_served="Salt Lake City; Austin; Indianapolis; Las Vegas",
         serves_palm_beach="No",
-        city="Austin",
-        state="TX",
-        website="https://www.reaganoutdoor.com/austin/",
+        city="Salt Lake City",
+        state="UT",
+        website="https://www.reaganoutdoor.com/",
         pricing_reference=_REF,
-        notes="Austin-headquartered; the largest local billboard operator in the Austin market.",
-        source="reaganoutdoor.com; WebSearch 2026-07-08",
-        confidence="Medium",
+        notes="Founded 1965 (William Reagan); privately held ~4,000-face plant across Utah, "
+              "Texas & Nevada. Dominant local operator in SLC, Austin and Indianapolis.",
+        source="reaganoutdoor.com; Billboard Insider; WebSearch 2026-07-08",
+        confidence="High",
     ),
     Company(
         company_name="MediaChoice",
@@ -1344,6 +1347,210 @@ NATIONAL_SEED: List[Company] = [
     ),
 
     # ================================================================== #
+    # ST. LOUIS
+    # ================================================================== #
+    Company(
+        company_name="DDI Media",
+        company_type=TYPE_REGIONAL,
+        primary_market="St. Louis bi-state metro",
+        counties_served="St. Louis",
+        serves_palm_beach="No",
+        state="MO",
+        website="https://www.ddimedia.net/our-markets/missouri/st-louis-area",
+        pricing_reference=_REF,
+        notes="Dominant St. Louis regional independent, esp. along I-70 and the Illinois side.",
+        source="ddimedia.net; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Robinson Outdoor",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="St. Louis south county / Jefferson County",
+        counties_served="St. Louis",
+        serves_palm_beach="No",
+        state="MO",
+        website="https://robinsonoutdoorllc.com/locations/st-louis-imperial/",
+        pricing_reference=_REF,
+        notes="Covers south St. Louis county and Jefferson County.",
+        source="robinsonoutdoorllc.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # PITTSBURGH
+    # ================================================================== #
+    Company(
+        company_name="TM Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="SW Pennsylvania (Pittsburgh) + WV/OH/KY/MD",
+        counties_served="Pittsburgh",
+        serves_palm_beach="No",
+        state="PA",
+        website="https://tmbillboard.com/",
+        pricing_reference=_REF,
+        notes="Est. 2001 (84 Lumber subsidiary); 300+ static + 9 digital boards across PA/WV/OH/KY/MD.",
+        source="tmbillboard.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Penneco Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Greater Pittsburgh (Westmoreland + 4 counties)",
+        counties_served="Pittsburgh",
+        serves_palm_beach="No",
+        state="PA",
+        website="https://pennecooutdoor.com/",
+        pricing_reference=_REF,
+        notes="Largest locally owned Pittsburgh-area operator — 30+ locations, 120+ faces.",
+        source="pennecooutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Steel City Billboards",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Pittsburgh",
+        counties_served="Pittsburgh",
+        serves_palm_beach="No",
+        city="Pittsburgh",
+        state="PA",
+        website="https://steelcitybillboards.com/",
+        pricing_reference=_REF,
+        notes="Family-owned since 2011; member OAAA, Geopath & Independent Billboard Operators of America.",
+        source="steelcitybillboards.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # BALTIMORE
+    # ================================================================== #
+    Company(
+        company_name="Vision Outdoor",
+        company_type=TYPE_REGIONAL,
+        primary_market="Baltimore / Mid-Atlantic (+ Pittsburgh)",
+        counties_served="Baltimore; Pittsburgh",
+        serves_palm_beach="No",
+        city="Baltimore",
+        state="MD",
+        website="https://visionoutdoormd.com/",
+        pricing_reference=_REF,
+        notes="Independent, locally owned; the Mid-Atlantic's only independent digital billboard operator.",
+        source="visionoutdoormd.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # KANSAS CITY
+    # ================================================================== #
+    Company(
+        company_name="Ad-Trend",
+        company_type=TYPE_REGIONAL,
+        primary_market="Kansas City metro",
+        counties_served="Kansas City",
+        serves_palm_beach="No",
+        city="Kansas City",
+        state="MO",
+        website="http://www.ad-trend.com/",
+        pricing_reference=_REF,
+        notes="Largest locally owned KC outdoor advertising company; continuous operation since 1985.",
+        source="ad-trend.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Midwest Billboards",
+        company_type=TYPE_REGIONAL,
+        primary_market="Kansas & Oklahoma (independent network)",
+        counties_served="Kansas City",
+        serves_palm_beach="No",
+        website="https://midwestbillboards.com/",
+        pricing_reference=_REF,
+        notes="Independent billboard network across Kansas & Oklahoma — 100+ digital & static boards.",
+        source="midwestbillboards.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # INDIANAPOLIS
+    # ================================================================== #
+    Company(
+        company_name="Keyes Outdoor Advertising",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Indianapolis + surrounding Indiana",
+        counties_served="Indianapolis",
+        serves_palm_beach="No",
+        city="Indianapolis",
+        state="IN",
+        website="http://www.keyesoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Local Indianapolis OOH operator with high-traffic locations.",
+        source="keyesoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # COLUMBUS
+    # ================================================================== #
+    Company(
+        company_name="American Outdoor Advertising (Columbus)",
+        company_type=TYPE_REGIONAL,
+        primary_market="Columbus, OH (+ OH/IN/FL/NY/PA/WV/KY)",
+        counties_served="Columbus",
+        serves_palm_beach="No",
+        city="Columbus",
+        state="OH",
+        website="http://www.americanoutdooradvertising.net/",
+        pricing_reference=_REF,
+        notes="Long-established Columbus-based independent; boards across OH, IN, FL, NY, PA, WV, KY. "
+              "(Distinct from the San Diego/Phoenix 'American Outdoor Advertising'.)",
+        source="americanoutdooradvertising.net; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Key-Ads, Inc.",
+        company_type=TYPE_REGIONAL,
+        primary_market="Columbus; Dayton; Cincinnati; Toledo",
+        counties_served="Columbus",
+        serves_palm_beach="No",
+        state="OH",
+        website="https://www.key-ads.com/",
+        pricing_reference=_REF,
+        notes="Family-owned Ohio outdoor advertising company across the state's major metros.",
+        source="key-ads.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Kenjoh Outdoor",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Columbus, OH",
+        counties_served="Columbus",
+        serves_palm_beach="No",
+        state="OH",
+        pricing_reference=_REF,
+        notes="Columbus operator with strong US-33 and I-270 inventory.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # SALT LAKE CITY
+    # ================================================================== #
+    Company(
+        company_name="YESCO Outdoor Media",
+        company_type=TYPE_REGIONAL,
+        primary_market="Salt Lake City + 7 western states",
+        counties_served="Salt Lake City",
+        serves_palm_beach="No",
+        address="2401 Foothill Dr",
+        city="Salt Lake City",
+        state="UT",
+        zip_code="84109",
+        website="https://www.yesco.com/saltlakecity/outdoor-advertising/",
+        pricing_reference=_REF,
+        notes="2,105 faces across OR/MT/ID/NV/UT/WY/AZ; SLC inventory focused on the I-15 corridor.",
+        source="yesco.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
     # NATIONAL BROKERS / MARKETPLACES (book inventory across all listed metros)
     # ================================================================== #
     Company(
@@ -1459,23 +1666,39 @@ CITY_MARKET = [
      "Tampa Bay (Hillsborough/Pinellas); I-4 / I-275 / Veterans Expwy corridors."),
     (17, "Denver", "CO", "Tier 3", 1200, 11000,
      "I-25 / I-70 corridors; Mile High Outdoor runs 400+ metro displays."),
-    (18, "Orlando", "FL", "Tier 3 — tourism", 1200, 12000,
+    (18, "Sacramento", "CA", "Tier 3 — CA capital", 1200, 11000,
+     "Sacramento/Stockton/Modesto DMA; Clear Channel runs 1,280+ displays across 5 counties."),
+    (19, "Orlando", "FL", "Tier 3 — tourism", 1200, 12000,
      "I-4 / theme-park & tourist corridors carry premiums; strong visitor reach."),
-    (19, "San Diego", "CA", "Tier 3", 1500, 10000,
+    (20, "St. Louis", "MO", "Tier 3 — bi-state metro", 1000, 10000,
+     "Bi-state (MO/IL); DDI Media the dominant independent along I-70 and the Illinois side."),
+    (21, "Pittsburgh", "PA", "Tier 3", 1000, 9000,
+     "Parkway/tunnel approaches; strong independent scene (TM, Penneco, Steel City)."),
+    (22, "San Diego", "CA", "Tier 3", 1500, 10000,
      "I-5 / I-805 / I-15 / Hwy-78 corridors; limited inventory keeps rates firm."),
-    (20, "Las Vegas", "NV", "Tier 3 — Strip premium", 1500, 25000,
-     "The Strip commands outsized rates (spectaculars far higher); OUTFRONT reaches 99.9% weekly."),
-    (21, "San Antonio", "TX", "Tier 3", 1000, 8000,
-     "I-10 / Loop 410 / US-281 the strongest placements."),
-    (22, "Portland", "OR", "Tier 3", 1200, 11000,
-     "Lamar is the largest footprint + sole PDX operator; wallscapes in the Pearl/Downtown."),
-    (23, "Charlotte", "NC", "Tier 3", 1000, 9000,
+    (23, "Baltimore", "MD", "Tier 3", 1200, 11000,
+     "I-95 / I-695 Beltway; Vision Outdoor is the Mid-Atlantic's independent digital operator."),
+    (24, "Charlotte", "NC", "Tier 3", 1000, 9000,
      "I-77 / I-85 / I-485 corridors; Adams Outdoor reaches 1.8M across 22 counties."),
-    (24, "Nashville", "TN", "Tier 3 — fast-growing", 1200, 11000,
+    (25, "Indianapolis", "IN", "Tier 3 — crossroads", 1000, 10000,
+     "'Crossroads of America' — I-65/I-70/I-465; Lamar-dominant plus Keyes & Reagan."),
+    (26, "Las Vegas", "NV", "Tier 3 — Strip premium", 1500, 25000,
+     "The Strip commands outsized rates (spectaculars far higher); OUTFRONT reaches 99.9% weekly."),
+    (27, "San Antonio", "TX", "Tier 3", 1000, 8000,
+     "I-10 / Loop 410 / US-281 the strongest placements."),
+    (28, "Portland", "OR", "Tier 3", 1200, 11000,
+     "Lamar is the largest footprint + sole PDX operator; wallscapes in the Pearl/Downtown."),
+    (29, "Columbus", "OH", "Tier 3 — deep vendor stack", 1000, 9000,
+     "~2,200 boards; one of the Midwest's deepest OOH inventories (OAA of Ohio HQ'd here)."),
+    (30, "Kansas City", "MO", "Tier 3 — bi-state", 1000, 9000,
+     "I-35/I-70; Ad-Trend the largest locally owned operator (since 1985)."),
+    (31, "Nashville", "TN", "Tier 3 — fast-growing", 1200, 11000,
      "I-40 / I-24 / I-65 and Broadway/tourism demand; Allison Outdoor active regionally."),
-    (25, "Austin", "TX", "Tier 3 — fast-growing", 1200, 12000,
+    (32, "Salt Lake City", "UT", "Tier 3 — constrained supply", 1000, 9000,
+     "I-15 corridor; Reagan Outdoor (HQ) & YESCO dominate; billboards politically restricted."),
+    (33, "Austin", "TX", "Tier 3 — fast-growing", 1200, 12000,
      "Reagan Outdoor-dominated; tech-driven demand along I-35 / MoPac / US-183."),
-    (26, "Jacksonville", "FL", "Tier 3", 800, 6000,
+    (34, "Jacksonville", "FL", "Tier 3", 800, 6000,
      "Largest US city by land area; I-95 / I-295 corridors carry the value."),
 ]
 

@@ -68,20 +68,22 @@ python scraper.py --oda-file ODAData.xlsx --out florida.xlsx
 | `--oda-file` | *(none)* | Parse a hand-downloaded FDOT ODA Excel |
 | `--csv` | *(off)* | Also write CSV; bare flag = alongside the `.xlsx`, or give a path |
 
-## National dataset — 26 major US metros
+## National dataset — 34 major US metros
 
 Beyond Florida, the tool ships a national dataset of billboard companies across
-**26 major US OOH markets** (in market-size rank order): New York, Los Angeles,
+**34 major US OOH markets** (in market-size rank order): New York, Los Angeles,
 Chicago, San Francisco, Atlanta, Washington DC, Boston, Dallas, Houston, Miami,
-Philadelphia, Detroit, Seattle, Minneapolis, Phoenix, Tampa, Denver, Orlando,
-San Diego, Las Vegas, San Antonio, Portland, Charlotte, Nashville, Austin, Jacksonville.
+Philadelphia, Detroit, Seattle, Minneapolis, Phoenix, Tampa, Denver, Sacramento,
+Orlando, St. Louis, Pittsburgh, San Diego, Baltimore, Charlotte, Indianapolis,
+Las Vegas, San Antonio, Portland, Columbus, Kansas City, Nashville, Salt Lake City,
+Austin, Jacksonville.
 
 ```bash
 python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**94 companies across all 26 metros** (every market has local operators, not just
+**107 companies across all 34 metros** (every market has local operators, not just
 the nationals). The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
 Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
@@ -106,23 +108,24 @@ every metro tab; each metro also lists its own local operators, e.g.:
   Outdoor, Blue Ox), Tampa (Tampa Outdoor, Signal, Logan), Orlando (Orlando
   Outdoor), Las Vegas (Las Vegas Billboards), Portland (Grapevine, Meadow),
   Charlotte + Nashville (Adams, Allison Outdoor).
+- **Midwest / Mid-Atlantic / Mountain** — Sacramento (Capitol Outdoor), St. Louis
+  (DDI Media, Robinson), Pittsburgh (TM Advertising, Penneco, Steel City),
+  Baltimore (Vision Outdoor), Kansas City (Ad-Trend, Midwest Billboards),
+  Indianapolis (Keyes, Reagan), Columbus (American Outdoor OH, Key-Ads, Kenjoh),
+  Salt Lake City (Reagan HQ ~4,000 faces, YESCO).
 
 Source: `fbscraper/national.py`.
 
-The national workbook has **30 tabs**:
+The national workbook has **38 tabs**:
 
 - **All Companies** — every company, national operators first, with a "Metros
   Served" column.
-- **City Market Ranking** — the 26 metros ranked by billboard market size and
-  typical ad rates (NYC #1 → Jacksonville #26), with numeric low/high rate columns,
+- **City Market Ranking** — the 34 metros ranked by billboard market size and
+  typical ad rates (NYC #1 → Jacksonville #34), with numeric low/high rate columns,
   premium notes (e.g. Times Square $10k–$1M+/mo, Vegas Strip up to $25k+), and an
   **embedded bar chart** of the monthly rate band per metro.
-- **One tab per metro** (26 of them) — just the companies serving that market.
-  Depth: NYC 35 · Chicago 26 · LA 22 · Houston 20 · Dallas 19 · Philadelphia 17 ·
-  San Antonio 17 · Charlotte 15 · Miami 15 · Austin 15 · Jacksonville 15 · SF 14 ·
-  Seattle 14 · Tampa 14 · Phoenix 14 · San Diego 14 · Atlanta 13 · Washington DC
-  13 · Detroit 13 · Minneapolis 13 · Denver 13 · Portland 13 · Boston 11 ·
-  Orlando 11 · Las Vegas 11 · Nashville 11.
+- **One tab per metro** (34 of them) — just the companies serving that market.
+  Every metro has ≥11 companies (NYC 35 → the smallest at 11).
 - **Pricing Reference** and **About**.
 
 > For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
@@ -171,7 +174,7 @@ florida-billboard-scraper/
   fbscraper/
     models.py                Company dataclass, columns, dedupe
     seed.py                  verified FL starter dataset (Palm Beach first)
-    national.py              26 major US metros dataset (--dataset national)
+    national.py              34 major US metros dataset (--dataset national)
     fdot.py                  FDOT ODA licensees + monthly Excel scraper/parser
     foaa.py                  FOAA member-directory scraper
     pricing.py               market-average reference rates + disclaimer
