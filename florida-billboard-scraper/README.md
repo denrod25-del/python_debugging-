@@ -79,17 +79,23 @@ python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**42 companies.** The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
+**52 companies.** The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
 Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
 Outdoor Advertising), national brokers/agencies (AdQuick, Blue Line Media,
-BillboardsIn, Billups) and market-specific operators (SignAd/Texas,
-Gilbreath/Houston, Becker Boards/Phoenix, American Outdoor/San Diego). NYC has a
-**genuinely deep 29-company roster** — spectacular specialists (SILVERCAST,
-Branded Cities, TSX Broadway, Heritage, Big Outdoor), hand-painted walls
-(Colossal Media), top-5-by-spot-count owners (Intersection, PMD Media, OUTFRONT,
-JCDecaux, InSite Street Media), wildposting (GSB Digital), and DOB-registry firms
-(Seen Outdoor, Red Rock). Source: `fbscraper/national.py`.
+BillboardsIn, Billups) and market-specific operators. All three Tier-1 markets
+have **deep local rosters**:
+
+- **New York (29)** — spectacular specialists (SILVERCAST, Branded Cities, TSX
+  Broadway, Heritage, Big Outdoor), hand-painted walls (Colossal Media),
+  top-5-by-spot-count owners (Intersection, PMD Media, OUTFRONT, JCDecaux, InSite
+  Street Media), wildposting (GSB Digital), DOB-registry firms (Seen Outdoor, Red Rock).
+- **Chicago (22)** — Image Media Outdoor, Outdoor Impact, VC Outdoor, GreenSigns,
+  J&B Signs, Red Star Outdoor alongside the nationals.
+- **Los Angeles (18)** — Regency Outdoor (Sunset Strip + LAX, 300+ boards),
+  Bulletin Displays (top-5 freeway operator), Bray Outdoor, O Media Group.
+
+Source: `fbscraper/national.py`.
 
 The national workbook has **14 tabs**:
 
@@ -100,8 +106,8 @@ The national workbook has **14 tabs**:
   premium notes (e.g. Times Square $10k–$1M+/mo), and an **embedded bar chart** of
   the monthly rate band per city.
 - **One tab per city** (New York, Los Angeles, … Jacksonville) — just the
-  companies serving that market. NYC is deepest (29), then Chicago (16), LA/
-  Houston (14 each).
+  companies serving that market. NYC is deepest (29), then Chicago (22), LA (18),
+  Houston (14).
 - **Pricing Reference** and **About**.
 
 > For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
