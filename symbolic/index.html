@@ -340,6 +340,9 @@ html[data-theme="light"] .aistream{background:var(--surface2); color:var(--muted
 .aibadge{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep); border:1px solid color-mix(in srgb,var(--accent) 40%,transparent); border-radius:99px; padding:3px 9px;}
 .aibadge i{width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 0 var(--accent); animation:pulse 1.6s infinite;}
 @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent);}70%{box-shadow:0 0 0 6px transparent;}100%{box-shadow:0 0 0 0 transparent;}}
+/* small inline-icon sizing (badges, gate/challenge rows, lesson heads) */
+.rc svg{width:14px; height:14px; stroke-width:2;}
+.iconbox svg{width:16px; height:16px; stroke-width:1.9;}
 .hidden{display:none!important;}
 </style>
 </head>
@@ -432,6 +435,7 @@ const ICON={
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
   book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 5v14"/>',
+  academy:'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/>',
 };
 
 /* ---------------- STATE ---------------- */
@@ -439,7 +443,7 @@ const KEY='symbolic.workspace.v1';
 let S = load();
 function load(){
   try{const v=JSON.parse(localStorage.getItem(KEY)); if(v&&v.version===1) return v;}catch(e){}
-  return {version:1, settings:{theme:'auto', aiEndpoint:'', aiKey:''}, projects:{}, activeProjectId:null};
+  return {version:1, settings:{theme:'auto', aiEndpoint:'', aiKey:''}, projects:{}, activeProjectId:null, academy:{xp:0,badges:[],lessons:[]}};
 }
 let saveT; function save(){clearTimeout(saveT); saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},120);}
 const P = id => S.projects[id];
@@ -855,9 +859,10 @@ const AI_KINDS={
 const LOCAL_GEN={ brief:genBrief, ux:genUX, arch:genArch, eng:genEng };
 
 // Route a "Generate" action: stream from Claude when configured, else local.
+const GEN_LABEL={brief:'Product brief',ux:'UX foundation',arch:'Architecture',eng:'Engineering plan'};
 function runGen(kind,p){
   if(hasAI()) aiArtifact(kind,p);
-  else { LOCAL_GEN[kind](p); toast(AI_KINDS[kind].done); render(); }
+  else { LOCAL_GEN[kind](p); award(20,GEN_LABEL[kind]); toast(AI_KINDS[kind].done); render(); }
 }
 
 // Stream an artifact into a live modal, parse JSON, apply — or fall back.
@@ -879,7 +884,7 @@ async function aiArtifact(kind,p){
   try{
     await streamAI({ system:cfg.build(p).system, messages:[{role:'user',content:cfg.build(p).user}], max_tokens:cfg.max, onToken });
     const obj=parseJSON(raw);
-    cfg.apply(p,obj); save(); closeModal(); toast(cfg.done); render();
+    cfg.apply(p,obj); save(); closeModal(); award(20,GEN_LABEL[kind]); toast(cfg.done); render();
   }catch(e){
     console.warn('aiArtifact('+kind+') fell back:',e);
     try{ LOCAL_GEN[kind](p); save(); }catch(e2){}
@@ -935,6 +940,7 @@ const TEAM=[
    ============================================================ */
 const NAV=[
   {id:'workspace',label:'Workspace',icon:ICON.workspace},
+  {id:'academy',label:'Academy',icon:ICON.academy},
   {id:'team',label:'AI Team',icon:ICON.team},
   {id:'system',label:'Design System',icon:ICON.system},
 ];
@@ -952,7 +958,8 @@ const PROJ_TABS=[
 ];
 function buildSidebar(){
   const nav=$('#mainNav'); nav.innerHTML='';
-  NAV.forEach(n=>nav.append(el('a',{href:'#/'+n.id,'data-nav':n.id,html:icon(n.icon)+`<span>${n.label}</span>`})));
+  NAV.forEach(n=>{ const extra=n.id==='academy'?`<span class="ct">Lv ${level(AC().xp)}</span>`:'';
+    nav.append(el('a',{href:'#/'+n.id,'data-nav':n.id,html:icon(n.icon)+`<span>${n.label}</span>`+extra})); });
   // projects list
   const ids=Object.keys(S.projects);
   if(ids.length){
@@ -984,6 +991,7 @@ function render(){
   buildSidebar(); setActiveNav(route); crumb(route);
   $('.scroll').scrollTop=0;
   if(route.view==='project'){ const p=P(route.pid); if(!p){location.hash='#/workspace'; return;} viewProject(v,p,route.tab); }
+  else if(route.view==='academy') viewAcademy(v);
   else if(route.view==='team') viewTeam(v);
   else if(route.view==='system') viewSystem(v);
   else viewWorkspace(v);
@@ -1000,7 +1008,7 @@ function viewWorkspace(v){
     <div class="eyebrow"><span class="d">◆</span> AI Product Operating System</div>
     <div class="h1" style="margin-top:10px">The operating system that <span class="d">builds software companies.</span></div>
     <p class="lede">Type an idea. Symbolic guides you from idea → research → validation → requirements → design → engineering → testing → launch. One calm, intelligent workspace.</p>`;
-  const launch=el('form',{class:'launcher', onsubmit:e=>{e.preventDefault(); const val=$('#ideaInput').value.trim(); if(val.length<3){toast('Tell me a little more about the idea',false);return;} const pr=newProject(val); location.hash='#/p/'+pr.id+'/pm';}});
+  const launch=el('form',{class:'launcher', onsubmit:e=>{e.preventDefault(); const val=$('#ideaInput').value.trim(); if(val.length<3){toast('Tell me a little more about the idea',false);return;} const pr=newProject(val); award(25,'New product'); location.hash='#/p/'+pr.id+'/pm';}});
   launch.append(el('input',{type:'text',id:'ideaInput',placeholder:'I want to build a plumbing inventory app…','aria-label':'Describe your product idea'}),
     el('button',{class:'btn primary',type:'submit',html:icon(ICON.spark)+'Start building'}));
   hero.append(launch);
@@ -1103,7 +1111,7 @@ function tabPM(v,p){
   if(q) log.append(msg('ai',esc(q)));
   chat.append(log);
   if(q){
-    const form=el('form',{class:'row',style:'margin-top:6px', onsubmit:e=>{e.preventDefault(); const val=$('#ansInput').value.trim(); if(!val)return; p.pm.interview.push({q, a:val}); save(); render();}});
+    const form=el('form',{class:'row',style:'margin-top:6px', onsubmit:e=>{e.preventDefault(); const val=$('#ansInput').value.trim(); if(!val)return; p.pm.interview.push({q, a:val}); save(); award(8,'Interview answer'); render();}});
     const inp=el('input',{type:'text',id:'ansInput',placeholder:'Your answer…','aria-label':'Answer'});
     form.append(inp, el('button',{class:'btn primary',type:'submit',html:icon(ICON.send)}));
     chat.append(form);
@@ -1175,7 +1183,7 @@ function tabPMAI(v,p){
     foot.innerHTML='';
     const form=el('form',{class:'row',style:'margin-top:6px', onsubmit:e=>{e.preventDefault();
       const val=$('#ansInput').value.trim(); if(!val)return;
-      const cur=p.pm.interview[p.pm.interview.length-1]; if(cur) cur.a=val; save();
+      const cur=p.pm.interview[p.pm.interview.length-1]; if(cur) cur.a=val; save(); award(8,'Interview answer');
       log.append(msg('me',esc(val))); foot.innerHTML=''; ask(); }});
     const inp=el('input',{type:'text',id:'ansInput',placeholder:'Your answer…','aria-label':'Answer'});
     form.append(inp, el('button',{class:'btn primary',type:'submit',html:icon(ICON.send)}));
@@ -1269,8 +1277,8 @@ function tabEng(v,p){
 /* ---- AUDIT ---- */
 function tabAudit(v,p){
   v.append(tabHead('AI Quality Auditor','An honest score across 11 categories — with actionable fixes, not just numbers.',
-    [ genBtn(p.audit.scores?'Re-run audit':'Run audit',()=>{genAudit(p); toast('Audit complete'); render();}) ]));
-  if(!p.audit.scores){ v.append(promperCard('Score this product','11 categories, weighted by how much foundation exists.',()=>{genAudit(p); render();})); return; }
+    [ genBtn(p.audit.scores?'Re-run audit':'Run audit',()=>{genAudit(p); award(15,'Quality audit'); toast('Audit complete'); render();}) ]));
+  if(!p.audit.scores){ v.append(promperCard('Score this product','11 categories, weighted by how much foundation exists.',()=>{genAudit(p); award(15,'Quality audit'); render();})); return; }
   const sc=p.audit.scores; const ov=overall(sc);
   const top=el('div',{class:'card'}); const wrap=el('div',{class:'scorewrap'});
   const color=n=>n>=75?'var(--accent)':n>=55?'var(--amber)':'var(--red)';
@@ -1384,7 +1392,7 @@ function tabRoadmap(v,p){
       const ctl=el('div',{class:'row',style:'margin-top:12px'});
       if(met){
         ctl.append(el('button',{class:'btn primary sm',html:icon(ICON.check)+'Approve & advance → '+next,
-          onclick:()=>{ p.stage=next; save(); logDecision(p,'Stage approved: '+s+' → '+next,`The <b>${s}</b> gate was met and approved; the project advanced to <b>${next}</b>.`,'CEO AI'); render(); }}));
+          onclick:()=>{ p.stage=next; save(); logDecision(p,'Stage approved: '+s+' → '+next,`The <b>${s}</b> gate was met and approved; the project advanced to <b>${next}</b>.`,'CEO AI'); award(12,'Gate: '+next); render(); }}));
       } else {
         ctl.append(el('span',{class:'badge warn'},'Gate not met'),
           tab?el('a',{class:'btn ghost sm',href:'#/p/'+p.id+'/'+tab,html:icon(ICON.spark)+'Complete in '+PROJ_TABS.find(t=>t.id===tab).label}):el('span',{class:'muted',style:'font-size:12.5px'},g.items[0]));
@@ -1448,7 +1456,7 @@ function downloadKit(p){
   downloadBlob(makeZip(all), slug+'-handoff.zip');
   if(!p.exported){ p.exported=true;
     logDecision(p,'Handoff kit exported','Symbolic packaged a Next.js scaffold, a SQL schema, and '+issues.length+' GitHub-ready issues into a downloadable kit — satisfying the launch gate.','Documentation Writer AI');
-    save(); render(); }
+    save(); award(30,'Handoff shipped'); render(); }
   toast('Handoff kit downloaded');
 }
 
@@ -1457,6 +1465,120 @@ function gate(p,title,sub,tab,cta){ return el('div',{class:'card'}, emptyStateNo
 function promperCard(title,sub,fn){ return el('div',{class:'card'}, emptyStateNode(title,sub, el('button',{class:'btn primary',html:icon(ICON.spark)+'Generate',onclick:fn}))); }
 function emptyState(title,sub){ return el('div',{class:'card'}, emptyStateNode(title,sub,null)); }
 function emptyStateNode(title,sub,action){ const e=el('div',{class:'empty'}); e.append(el('div',{class:'ei',html:icon(ICON.spark)}), el('div',{class:'h2',style:'font-size:17px'},title), el('p',{class:'muted',style:'margin:6px auto 0;max-width:44ch;font-size:13.5px'},sub)); if(action){const w=el('div',{style:'margin-top:16px'}); w.append(action); e.append(w);} return e; }
+
+/* ============================================================
+   SYMBOLIC ACADEMY  (Milestone 4) — every action teaches
+   XP / achievements / lessons all track the real work you do.
+   ============================================================ */
+function AC(){ if(!S.academy||typeof S.academy!=='object') S.academy={xp:0,badges:[],lessons:[]};
+  S.academy.badges=S.academy.badges||[]; S.academy.lessons=S.academy.lessons||[]; S.academy.xp=S.academy.xp||0; return S.academy; }
+function level(xp){ return 1+Math.floor((xp||0)/100); }
+function updateAcademyNav(){ const c=document.querySelector('[data-nav="academy"] .ct'); if(c) c.textContent='Lv '+level(AC().xp); }
+function award(xp,label){ const a=AC(); const b=level(a.xp); a.xp+=xp; const af=level(a.xp); save();
+  toast('+'+xp+' XP · '+label); if(af>b) setTimeout(()=>toast('Level '+af+' reached ✦'),320);
+  checkBadges(); updateAcademyNav(); }
+
+const anyProj=fn=>Object.values(S.projects).some(fn);
+const ACH=[
+  {id:'first-product',n:'First Product',d:'Start your first product in the workspace.',hue:150,ok:()=>Object.keys(S.projects).length>0},
+  {id:'curious',n:'The Curious Founder',d:'Answer 3 interview questions.',hue:205,ok:()=>anyProj(p=>p.pm.interview.filter(q=>q.a).length>=3)},
+  {id:'pm',n:'Product Mind',d:'Generate a product brief.',hue:150,ok:()=>anyProj(p=>p.pm.brief)},
+  {id:'designer',n:'Experience Designer',d:'Design the UX foundation.',hue:265,ok:()=>anyProj(p=>p.ux)},
+  {id:'architect',n:'System Architect',d:'Design the architecture.',hue:28,ok:()=>anyProj(p=>p.arch)},
+  {id:'planner',n:'The Planner',d:'Break the work into a plan.',hue:190,ok:()=>anyProj(p=>p.eng)},
+  {id:'auditor',n:'Quality Guardian',d:'Run a quality audit.',hue:150,ok:()=>anyProj(p=>p.audit.scores)},
+  {id:'ace',n:'Excellence',d:'Reach an audit score of 85+.',hue:38,ok:()=>anyProj(p=>p.audit.scores&&overall(p.audit.scores)>=85)},
+  {id:'shipped',n:'Shipped It',d:'Export a handoff kit.',hue:150,ok:()=>anyProj(p=>p.exported)},
+  {id:'operator',n:'The Operator',d:'Take one product through every specialist.',hue:320,ok:()=>anyProj(p=>p.pm.brief&&p.ux&&p.arch&&p.eng&&p.audit.scores)},
+  {id:'scholar',n:'Scholar',d:'Complete every lesson.',hue:205,ok:()=>AC().lessons.length>=LESSONS.length},
+  {id:'adept',n:'Adept',d:'Reach level 5.',hue:38,ok:()=>level(AC().xp)>=5},
+];
+function checkBadges(silent){ const a=AC(); ACH.forEach(x=>{ if(!a.badges.includes(x.id) && x.ok()){ a.badges.push(x.id); save();
+  if(!silent) setTimeout(()=>toast('Achievement · '+x.n),160); } }); updateAcademyNav(); }
+
+const LESSONS=[
+  {id:'wedge',t:'Start with one wedge',icon:ICON.spark,
+   why:'Startups die of indigestion, not starvation. A product that does one job superbly beats one that does ten jobs adequately.',
+   body:'Symbolic makes you name a single wedge feature in the brief. Everything past it waits until that one job is loved — the MVP definition and the audit both hold you to it.'},
+  {id:'interview',t:'Interview before you build',icon:ICON.pm,
+   why:'The riskiest assumption is usually about the user, not the tech. Talking first turns guesses into evidence.',
+   body:'The AI Product Manager interviews you one sharp question at a time — who feels the pain, what they do today, the riskiest assumption. Those answers feed every downstream specialist, so a thin interview makes a thin product.'},
+  {id:'states',t:'States are the product',icon:ICON.ux,
+   why:'Users spend most of their time in empty, loading, and error states — not the happy path. Neglecting them is what makes software feel unfinished.',
+   body:'The UX Designer generates an explicit empty / loading / error / success state for the core loop. A warm empty state with one action beats a blank screen; a plain-language error beats a stack trace.'},
+  {id:'rls',t:'Never trust the client',icon:ICON.arch,
+   why:'Authorization enforced in the browser is not authorization — anyone can open dev tools.',
+   body:'The Architect defaults to row-level security in the database, so access rules hold even if the API is bypassed. Secrets stay server-side — which is exactly why the AI proxy keeps your key out of the browser.'},
+  {id:'memory',t:'Decisions must be traceable',icon:ICON.memory,
+   why:'Six months later, “why did we do this?” is the most expensive question in software. Undocumented decisions get re-litigated forever.',
+   body:'Every artifact Symbolic generates writes an append-only Product Memory entry — what was decided, why, and who. You can always trace a recommendation back to its origin.'},
+  {id:'audit',t:'Score what you ship',icon:ICON.audit,
+   why:'“Looks good” is not a quality bar. Eleven explicit dimensions catch the gaps a single gut-check misses.',
+   body:'The Quality Auditor scores Visual, UX, Accessibility, Performance, Security, AI Explainability, Strategy, Conversion, Mobile, Engineering, and Production Readiness — with actionable fixes, not just numbers. The launch gate holds you to 70+.'},
+];
+
+function viewAcademy(v){
+  const a=AC(); checkBadges(true); // reconcile badges with real progress, silently
+  const xp=a.xp, lvl=level(xp), inLvl=xp%100;
+  v.append(el('div',{class:'eyebrow'},'Symbolic Academy'),
+    el('div',{class:'h1',style:'margin:8px 0 4px'},'Every action <span class="d">teaches.</span>'),
+    el('p',{class:'lede'},'You don\'t study Symbolic — you learn by building in it. XP, achievements, and lessons all track the real work you do across your products.'));
+  // level
+  const top=el('div',{class:'card',style:'margin-top:22px'}); const wrap=el('div',{class:'scorewrap'});
+  wrap.append(el('div',{class:'bigring','data-n':lvl,style:`--v:${inLvl};--c:var(--accent)`}));
+  const meta=el('div',{style:'flex:1;min-width:220px'});
+  meta.append(el('div',{class:'h2'},'Level '+lvl),
+    el('p',{class:'muted',style:'font-size:13.5px;margin:4px 0 12px'},xp+' XP · '+(100-inLvl)+' to level '+(lvl+1)),
+    el('div',{class:'prog'},el('i',{style:'width:'+inLvl+'%'})),
+    el('div',{class:'row',style:'margin-top:14px;gap:8px'}, el('span',{class:'badge ok dot'},a.badges.length+' / '+ACH.length+' achievements'),
+      el('span',{class:'badge'},a.lessons.length+' / '+LESSONS.length+' lessons')));
+  wrap.append(meta); top.append(wrap); v.append(top);
+  // learning path
+  v.append(el('div',{class:'h2',style:'margin:26px 0 12px'},'Learning path'));
+  const lc=el('div',{class:'stack'});
+  LESSONS.forEach(les=>{ const done=a.lessons.includes(les.id);
+    const card=el('div',{class:'card flat',style:'padding:0;overflow:hidden'});
+    const head=el('button',{class:'between',style:'width:100%;text-align:left;padding:15px 16px;cursor:pointer',
+      onclick:()=>{ card.querySelector('.lbody').classList.toggle('hidden'); }});
+    head.append(el('div',{class:'row iconbox',style:'gap:11px'},
+      el('span',{class:'iconbox',style:'width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-deep)',html:icon(les.icon)}),
+      el('div',{class:'h2',style:'font-size:15.5px'},les.t)),
+      done?el('span',{class:'badge ok dot'},'done'):el('span',{class:'badge'},'+10 XP'));
+    const body=el('div',{class:'lbody hidden',style:'padding:0 16px 16px'});
+    body.append(el('div',{style:'font-family:var(--serif);font-style:italic;color:var(--ink);border-left:2px solid var(--accent);padding-left:12px;margin-bottom:10px;font-size:14px;line-height:1.5'},les.why),
+      el('p',{class:'muted',style:'font-size:13.8px;line-height:1.62'},les.body));
+    if(!done) body.append(el('button',{class:'btn primary sm',style:'margin-top:14px',html:icon(ICON.check)+'Mark complete · +10 XP',
+      onclick:()=>{ if(!AC().lessons.includes(les.id)){ AC().lessons.push(les.id); award(10,'Lesson: '+les.t); render(); } }}));
+    card.append(head,body); lc.append(card);
+  });
+  v.append(lc);
+  // achievements
+  v.append(el('div',{class:'h2',style:'margin:26px 0 12px'},'Achievements'));
+  const ag=el('div',{class:'teamgrid'});
+  ACH.forEach(x=>{ const got=a.badges.includes(x.id);
+    const s=el('div',{class:'spec',style:got?'':'opacity:.5'});
+    s.innerHTML=`<div class="sh"><span class="sav" style="background:${got?`hsl(${x.hue} 70% 60%)`:'var(--surface2)'};color:${got?'#08130c':'var(--muted)'}">${got?'★':'?'}</span>
+      <span><div class="sn">${esc(x.n)}</div><div class="sr">${got?'unlocked':'locked'}</div></span></div><div class="sm">${esc(x.d)}</div>`;
+    ag.append(s); });
+  v.append(ag);
+  // challenges (live checklist)
+  v.append(el('div',{class:'h2',style:'margin:26px 0 12px'},'Challenges'));
+  const chs=[
+    ['Create your first product',()=>Object.keys(S.projects).length>0],
+    ['Answer 3 interview questions',()=>anyProj(p=>p.pm.interview.filter(q=>q.a).length>=3)],
+    ['Generate a product brief',()=>anyProj(p=>p.pm.brief)],
+    ['Design the architecture',()=>anyProj(p=>p.arch)],
+    ['Reach an audit score of 75+',()=>anyProj(p=>p.audit.scores&&overall(p.audit.scores)>=75)],
+    ['Export a handoff kit',()=>anyProj(p=>p.exported)],
+  ];
+  const cc=el('div',{class:'card'});
+  chs.forEach(([t,fn])=>{ const done=fn();
+    cc.append(el('div',{class:'catrow'},
+      el('span',{class:'rc '+(done?'lo':''),style:`width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex:none;background:${done?'color-mix(in srgb,var(--accent) 18%,transparent)':'var(--surface2)'};color:${done?'var(--accent-deep)':'var(--muted)'}`,html:done?icon(ICON.check):'○'}),
+      el('span',{class:'cn',style:'width:auto;flex:1;'+(done?'':'color:var(--muted)')},t),
+      done?el('span',{class:'badge ok'},'done'):el('span',{class:'badge'},'to do'))); });
+  v.append(cc);
+}
 
 /* ---- TEAM ---- */
 function viewTeam(v){

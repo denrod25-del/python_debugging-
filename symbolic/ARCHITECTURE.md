@@ -211,8 +211,9 @@ A streaming Edge Function at `/api/ai` forwards to the Anthropic Messages API (k
 The pipeline is now **gated**: each stage has exit criteria derived from the artifacts (interview depth, brief, UX, architecture + plan, audit ≥ 70, exported kit), and you *approve* a gate to advance. The **Handoff** tab packages the accumulated work into a downloadable, dependency-free **`.zip`** — a Next.js scaffold (README, `package.json`, `.env.example`, `db/schema.sql`, domain-aware API + page stubs, feature list), plus **GitHub-ready `issues.json` + `ISSUES.md`** generated from the epics/stories/milestones, and the project JSON. Exporting satisfies the launch gate.
 *Still ahead:* one-click GitHub issue/repo sync, artifact diffing, richer AI-generated starter code.
 
-**Milestone 4 — Academy.**
-Lessons, interactive walkthroughs, challenges, XP, achievements, learning paths — every action teaches *why*.
+**Milestone 4 — Academy.** ✅ (shipping in the Academy view)
+"Every action teaches" — XP, levels, achievements, and a live challenge checklist all track the *real* work you do (start a product, answer interview questions, generate each artifact, run an audit, approve a gate, export a kit). A six-lesson learning path explains the *why* behind the method (start with one wedge · interview first · states are the product · never trust the client · traceable decisions · score what you ship). Achievements reconcile with real progress; XP surfaces as your level in the sidebar.
+*Still ahead:* interactive in-context walkthroughs, per-lesson challenges with checks, streaks.
 
 **Milestone 5 — Marketplace.**
 Plugins, AI agents, templates, component packs, workflow packs, design systems, prompt libraries, automation recipes.
