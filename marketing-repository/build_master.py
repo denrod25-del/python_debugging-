@@ -261,6 +261,30 @@ def write_metro_companies(wb):
     return ws
 
 
+def write_category_contacts(wb):
+    rows = M.category_contacts_rows()
+    ws = wb.create_sheet("Metro Category Contacts")
+    headers = ["Rank", "Metro", "Category", "Scope", "Points of Contact / Where to Buy"]
+    style_title(ws, "METRO x CATEGORY CONTACTS - ALL 13 CATEGORIES IN EVERY MARKET", len(headers))
+    style_header(ws, headers)
+    scope_fill = {"Metro": REL_FILL["High"], "Mixed": REL_FILL["Med"],
+                  "Universal": REL_FILL["Low"]}
+    for n, d in enumerate(rows, 1):
+        r = n + 2
+        vals = [d["rank"], d["metro"], d["category"], d["scope"], d["contacts"]]
+        for i, v in enumerate(vals, 1):
+            cell = ws.cell(r, i, v)
+            cell.alignment = CENTER if i in (1, 4) else LEFT
+            cell.border = BORDER
+        if d["scope"] in scope_fill:
+            ws.cell(r, 4).fill = scope_fill[d["scope"]]
+    for i, w in enumerate([6, 15, 24, 10, 110], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+    ws.auto_filter.ref = f"A2:E{len(rows) + 2}"
+    return ws
+
+
 def main():
     src = openpyxl.load_workbook(SRC, data_only=True)
     existing = extract_existing(src)
@@ -304,7 +328,11 @@ def main():
                     "Metro OOH Companies = 110 scraped billboard/OOH operators by metro. "
                     "Quick-Start by Metro = who to call in each market (top local OOH "
                     "operators, TV/radio/paper, agencies) + the universal foundation steps. "
-                    "TV/radio/agency data is reference-level - verify before buying.")
+                    "Metro Category Contacts = all 13 original categories x every metro "
+                    "(546 rows): filter column B to any city to see its full contact card. "
+                    "Scope column: Metro (green) = market-specific vendor; Universal (grey) "
+                    "= same self-serve platform everywhere, just geo-target it. "
+                    "TV/radio/agency/event data is reference-level - verify before buying.")
         legend.cell(nr2, 2).alignment = LEFT
 
     # 2) Master List (aggregate of every category)
@@ -323,6 +351,7 @@ def main():
         write_metro_reference(wb)
         write_metro_companies(wb)
         write_quick_start(wb)
+        write_category_contacts(wb)
 
     # 5) PBC Priority Playbook (preserved)
     if "PBC Priority Playbook" in src.sheetnames:

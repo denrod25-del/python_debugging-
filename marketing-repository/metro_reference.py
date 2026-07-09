@@ -230,6 +230,54 @@ def metro_reference_rows():
     return rows
 
 
+# Metro -> (marquee events/fairs/sports sponsorship properties, chamber of commerce)
+# Stable public reference facts; verify current sponsorship contacts before buying.
+METRO_CIVIC = {
+    "New York":       ("Yankees/Mets/Knicks/Giants + US Open; marquee street-fair circuit", "Partnership for New York City"),
+    "Los Angeles":    ("Dodgers/Lakers/Rams; LA County Fair (Pomona); LA Auto Show", "Los Angeles Area Chamber"),
+    "Chicago":        ("Cubs/White Sox/Bulls/Bears; Taste of Chicago; McCormick Place shows", "Chicagoland Chamber"),
+    "San Francisco":  ("Giants/Warriors/49ers; Bay to Breakers; Moscone trade shows", "SF Chamber of Commerce"),
+    "Atlanta":        ("Braves/Falcons/Hawks; Atlanta Home Show", "Metro Atlanta Chamber"),
+    "Washington DC":  ("Commanders/Nationals/Capitals/Wizards", "DC Chamber of Commerce"),
+    "Boston":         ("Red Sox/Celtics/Bruins/Patriots; Boston Marathon", "Greater Boston Chamber"),
+    "Dallas":         ("Cowboys/Mavericks/Rangers/Stars; State Fair of Texas (largest US fair)", "Dallas Regional Chamber"),
+    "Houston":        ("Texans/Astros/Rockets; Houston Livestock Show & Rodeo (massive)", "Greater Houston Partnership"),
+    "Miami":          ("Dolphins/Heat/Marlins; Miami-Dade Youth Fair; Miami Home Design & Remodeling Show; Art Basel", "Greater Miami Chamber"),
+    "Philadelphia":   ("Eagles/Phillies/76ers/Flyers; Philly Home + Garden Show", "Chamber of Commerce for Greater Philadelphia"),
+    "Detroit":        ("Lions/Tigers/Pistons/Red Wings; Detroit Auto Show", "Detroit Regional Chamber"),
+    "Seattle":        ("Seahawks/Mariners/Kraken; Washington State Fair (Puyallup); Seattle Home & Garden Show", "Seattle Metro Chamber"),
+    "Minneapolis":    ("Vikings/Twins/Timberwolves/Wild; Minnesota State Fair (top US daily attendance)", "Minneapolis Regional Chamber"),
+    "Phoenix":        ("Cardinals/Suns/Diamondbacks; Arizona State Fair; WM Phoenix Open; Barrett-Jackson", "Greater Phoenix Chamber"),
+    "Tampa":          ("Buccaneers/Lightning/Rays; Florida State Fair; Gasparilla", "Tampa Bay Chamber"),
+    "Denver":         ("Broncos/Nuggets/Rockies/Avalanche; National Western Stock Show; Colorado Garden & Home Show", "Denver Metro Chamber"),
+    "Cleveland":      ("Browns/Guardians/Cavaliers; Great Big Home + Garden Show (IX Center)", "Greater Cleveland Partnership"),
+    "Sacramento":     ("Kings; California State Fair (Cal Expo)", "Sacramento Metro Chamber"),
+    "Orlando":        ("Magic/Orlando City; Central Florida Fair; theme-park co-marketing", "Orlando Economic Partnership"),
+    "St. Louis":      ("Cardinals/Blues; St. Louis Home + Garden Show", "Greater St. Louis Inc."),
+    "Pittsburgh":     ("Steelers/Penguins/Pirates; Duquesne Light Home & Garden Show", "Allegheny Conference / Pittsburgh Chamber"),
+    "San Diego":      ("Padres; San Diego County Fair (Del Mar); Comic-Con", "San Diego Regional Chamber"),
+    "Baltimore":      ("Ravens/Orioles; Maryland State Fair (Timonium); Preakness Stakes", "Greater Baltimore Committee"),
+    "Charlotte":      ("Panthers/Hornets; Charlotte Motor Speedway (NASCAR); Southern Spring Home & Garden Show", "Charlotte Regional Business Alliance"),
+    "Raleigh":        ("Hurricanes; NC State Fair (huge); Southern Ideal Home Show", "Raleigh Chamber"),
+    "Indianapolis":   ("Colts/Pacers; Indy 500; Indiana State Fair; Indianapolis Home Show", "Indy Chamber"),
+    "Cincinnati":     ("Bengals/Reds; Cincinnati Home & Garden Show; Oktoberfest Zinzinnati", "Cincinnati USA Regional Chamber"),
+    "Las Vegas":      ("Raiders/Golden Knights/Aces; CES + trade-show circuit; F1 Las Vegas GP", "Vegas Chamber"),
+    "San Antonio":    ("Spurs; Fiesta San Antonio; SA Stock Show & Rodeo", "San Antonio Chamber"),
+    "Portland":       ("Trail Blazers/Timbers; Portland Rose Festival; Portland Spring Home & Garden Show", "Portland Metro Chamber"),
+    "Milwaukee":      ("Bucks/Brewers; Summerfest (world's largest music fest); Wisconsin State Fair", "Metropolitan Milwaukee Assoc. of Commerce"),
+    "Columbus":       ("Blue Jackets/Crew + Ohio State athletics; Ohio State Fair; Dispatch Home & Garden Show", "Columbus Chamber"),
+    "Kansas City":    ("Chiefs/Royals; American Royal; Johnson County Home + Garden Show", "KC Chamber"),
+    "Nashville":      ("Titans/Predators; CMA Fest; Nashville Home + Remodeling Expo", "Nashville Area Chamber"),
+    "Salt Lake City": ("Jazz; Utah State Fair; Silicon Slopes events", "Salt Lake Chamber"),
+    "New Orleans":    ("Saints/Pelicans; Mardi Gras + Jazz Fest sponsorships", "New Orleans Chamber"),
+    "Oklahoma City":  ("Thunder; Oklahoma State Fair", "Greater OKC Chamber"),
+    "Memphis":        ("Grizzlies; Memphis in May / Beale Street Music Festival", "Greater Memphis Chamber"),
+    "Richmond":       ("Richmond Raceway (NASCAR); State Fair of Virginia (Doswell)", "ChamberRVA"),
+    "Austin":         ("SXSW + ACL Fest; F1 at COTA; UT athletics", "Austin Chamber"),
+    "Jacksonville":   ("Jaguars; Greater Jacksonville Agricultural Fair; THE PLAYERS (TPC Sawgrass)", "JAX Chamber"),
+}
+
+
 # Universal first moves — same playbook everywhere; the metro rows carry the
 # market-specific media to plug into steps 3-4.
 QUICK_START_FOUNDATION = (
@@ -238,6 +286,60 @@ QUICK_START_FOUNDATION = (
     "3) Geofenced social + search ads + retargeting  "
     "4) Then buy local media below."
 )
+
+
+def category_contacts_rows():
+    """13 rows per metro — the original 13 tactic categories, each with points of
+    contact. Metro-specific where the channel is location-bound; universal
+    self-serve platforms otherwise (marked 'Universal')."""
+    comps = nat.load_national()
+    conf_rank = {"High": 0, "Medium": 1, "Low": 2}
+
+    def top_local_ops(city):
+        serving = [c for c in comps if city in nat.cities_for(c)]
+        locals_ = [c for c in serving
+                   if len(nat.cities_for(c)) <= 8 and "Broker" not in c.company_type]
+        locals_.sort(key=lambda c: (conf_rank.get(c.confidence, 3), c.company_name.lower()))
+        names = [c.company_name for c in locals_[:3]]
+        return ", ".join(names) if names else "Lamar / Clear Channel / OUTFRONT"
+
+    rows = []
+    for i, city in enumerate(nat.TOP_CITIES, 1):
+        _dma, _pop, paper, bizj = METRO_MEDIA.get(city, ("-", "-", "-", "-"))
+        tv, radio, agencies = METRO_BROADCAST.get(city, ("-", "-", "-"))
+        events, chamber = METRO_CIVIC.get(city, ("-", "-"))
+        cats = [
+            ("Outdoor / OOH", "Metro",
+             f"{top_local_ops(city)} — full roster on the Metro OOH Companies tab; brokers: AdQuick, Blue Line Media"),
+            ("Local & Direct", "Mixed",
+             f"USPS EDDM (usps.com/eddm) · Valpak / Money Mailer / Clipp local franchise · Nextdoor geo-ads · {chamber}"),
+            ("Print", "Metro",
+             f"{paper} (ad desk) · {bizj}"),
+            ("Broadcast", "Metro",
+             f"{tv} · local cable via Spectrum Reach / Comcast Effectv (zoned to metro)"),
+            ("Digital - Social Media", "Universal",
+             "Self-serve, geo-targeted to metro: Meta Ads Manager, TikTok Ads, Nextdoor, LinkedIn"),
+            ("Digital - Content & Owned", "Universal",
+             "Your own site/CMS + AI content stack — no local vendor; target metro via city landing pages"),
+            ("Digital - Search & Display", "Universal",
+             "Google Ads + Local Services Ads (geo to metro), Microsoft/Bing Ads, GDN/programmatic"),
+            ("Digital - Other", "Universal",
+             "Angi / Thumbtack / Yelp Ads / Houzz — set service area to metro; retargeting via Meta/Google"),
+            ("Experiential & Event", "Metro",
+             f"{events}"),
+            ("Promotional & Tangible", "Universal",
+             "4imprint, Vistaprint, sticker/print vendors — or in-house printers/heat press; ships anywhere"),
+            ("PR & Earned", "Metro",
+             f"Pitch: {paper} newsroom · big-4 TV news desks ({tv.split('·')[0].strip()} etc.) · {bizj} · local podcasts"),
+            ("Partnership & Channel", "Metro",
+             f"{chamber} · BNI local chapters · BBB · complementary trades in metro"),
+            ("Emerging / Niche", "Universal",
+             "AI/AEO/chatbot stack (build in-house) · programmatic DOOH via Vistar/AdQuick geo to metro"),
+        ]
+        for cat, scope, contacts in cats:
+            rows.append({"rank": i, "metro": city, "category": cat,
+                         "scope": scope, "contacts": contacts})
+    return rows
 
 
 def quick_start_rows():

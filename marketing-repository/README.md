@@ -22,10 +22,18 @@ US market reference: **1,116 tactics across 25 categories** (+324 new) **plus a
   OOH operators (auto-selected from the scraped dataset), Big-4 TV, radio groups,
   newspaper, and agencies to call — plus the universal foundation steps (GBP +
   LSA + reviews → city pages/SEO → geofenced paid → local media).
+- **Metro Category Contacts** — the searchable matrix: **all 13 original tactic
+  categories × every metro = 546 rows**. Filter the Metro column to any city and
+  you get its full contact card — local OOH operators, newspaper ad desk, big-4
+  TV + cable ad sales, events/fairs/sports sponsorships, chamber of commerce,
+  PR pitch targets. The Scope column marks each row **Metro** (green —
+  market-specific vendor), **Mixed**, or **Universal** (grey — same self-serve
+  platform everywhere, e.g. Google/Meta; you just geo-target it).
 - **PBC Priority Playbook** — the original curated shortlist, preserved
 
-> TV call signs are stable; radio is listed at ownership-group level and agency
-> lists are flagship shops per market — all reference-level, verify before buying.
+> TV call signs are stable; radio is listed at ownership-group level; agency,
+> event and chamber lists are flagship names per market — all reference-level,
+> verify before buying.
 
 The metro data is imported live from the sibling billboard project
 (`../florida-billboard-scraper/fbscraper/national.py`) so the OOH companies and
