@@ -139,8 +139,8 @@ def _ranking_sheet(ws, city_rows, disclaimer: str):
     chart.title = "Typical Monthly Billboard Rate by City (standard boards)"
     chart.y_axis.title = "USD / month"
     chart.x_axis.title = "City (ranked by market size)"
-    chart.height = 9
-    chart.width = 26
+    chart.height = 10
+    chart.width = 34
     data = Reference(ws, min_col=6, max_col=7, min_row=hdr_row, max_row=last)
     cats = Reference(ws, min_col=2, max_col=2, min_row=hdr_row + 1, max_row=last)
     chart.add_data(data, titles_from_data=True)

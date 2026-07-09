@@ -1,7 +1,8 @@
-"""National seed dataset: billboard / OOH companies across the top-10 US cities.
+"""National seed dataset: billboard / OOH companies across 18 major US metros.
 
-Top-10 US cities by population (city proper): New York, Los Angeles, Chicago,
-Houston, Phoenix, Philadelphia, San Antonio, San Diego, Dallas, Jacksonville.
+Markets (market-size rank order): New York, Los Angeles, Chicago, San Francisco,
+Atlanta, Washington DC, Boston, Dallas, Houston, Miami, Philadelphia, Seattle,
+Phoenix, Denver, San Diego, San Antonio, Austin, Jacksonville.
 
 Compiled from public web sources on 2026-07-08 (company sites, market listings,
 industry directories). Same caveat as the Florida seed: this is a real, usable
@@ -10,10 +11,10 @@ national equivalent of Florida's FDOT licensee database, so local operators are
 gathered market by market.
 
 For the national workbook the Company fields are repurposed:
-  * counties_served     -> which of the top-10 cities the company serves
+  * counties_served     -> which metros the company serves ("nationwide" = all)
   * serves_palm_beach   -> "Yes" = national / multi-market operator (highlighted)
   * city / state        -> the company's HQ / main office
-Header labels are overridden accordingly in build_national().
+Header labels are overridden accordingly (HEADER_OVERRIDES).
 """
 from __future__ import annotations
 
@@ -28,16 +29,19 @@ from .models import (
     TYPE_BROKER,
 )
 
+# 18 major US OOH markets, listed in market-size rank order (see CITY_MARKET).
 TOP_CITIES = [
-    "New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
-    "Philadelphia", "San Antonio", "San Diego", "Dallas", "Jacksonville",
+    "New York", "Los Angeles", "Chicago", "San Francisco", "Atlanta",
+    "Washington DC", "Boston", "Dallas", "Houston", "Miami",
+    "Philadelphia", "Seattle", "Phoenix", "Denver", "San Diego",
+    "San Antonio", "Austin", "Jacksonville",
 ]
 
 _REF = "Static ~$1k–$25k+/4wk; premium/spectacular boards much higher (market avg)"
 
 # Header overrides so the repurposed columns read correctly in the workbook/CSV.
 HEADER_OVERRIDES = {
-    "counties_served": "Top-10 Cities Served",
+    "counties_served": "Metros Served",
     "serves_palm_beach": "National / multi-market",
     "city": "HQ City",
     "state": "HQ State",
@@ -53,7 +57,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Lamar Advertising",
         company_type=TYPE_NATIONAL,
         primary_market="Nationwide (largest US billboard network)",
-        counties_served="Los Angeles; Houston; Phoenix; San Antonio; San Diego; Dallas; Jacksonville (+ most US metros)",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         city="Baton Rouge",
         state="LA",
@@ -67,7 +71,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Clear Channel Outdoor",
         company_type=TYPE_NATIONAL,
         primary_market="Nationwide (top-3 US operator)",
-        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         city="San Antonio",
         state="TX",
@@ -81,7 +85,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="OUTFRONT Media",
         company_type=TYPE_NATIONAL,
         primary_market="Nationwide (top-3 US operator; major transit)",
-        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         city="New York",
         state="NY",
@@ -112,8 +116,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="Capitol Outdoor",
         company_type=TYPE_NATIONAL,
-        primary_market="Chicago; Los Angeles; Manhattan; Philadelphia; San Diego; Miami",
-        counties_served="New York; Los Angeles; Chicago; Philadelphia; San Diego",
+        primary_market="Chicago; Los Angeles; Manhattan; Philadelphia; San Diego; Miami; Washington DC",
+        counties_served="New York; Los Angeles; Chicago; Philadelphia; San Diego; Miami; Washington DC",
         serves_palm_beach="Yes",
         website="https://capitoloutdoor.com/",
         pricing_reference=_REF,
@@ -139,7 +143,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Digital Outdoor Advertising, LLC",
         company_type=TYPE_NATIONAL,
         primary_market="Coast-to-coast digital network (200+ markets)",
-        counties_served="Philadelphia; Jacksonville (+ 200 US markets)",
+        counties_served="New York; Philadelphia; Boston; Washington DC; Jacksonville",
         serves_palm_beach="Yes",
         website="https://digitaloutdooradvertising.com/",
         pricing_reference=_REF,
@@ -151,7 +155,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Becker Boards",
         company_type=TYPE_REGIONAL,
         primary_market="Phoenix (+ SF, Miami, Ft. Lauderdale, Orlando, Chicago)",
-        counties_served="Phoenix; Chicago",
+        counties_served="Phoenix; Chicago; San Francisco; Miami",
         serves_palm_beach="Yes",
         city="Phoenix",
         state="AZ",
@@ -194,8 +198,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="BM Outdoor Media",
         company_type=TYPE_REGIONAL,
-        primary_market="44 Texas cities + Phoenix",
-        counties_served="Houston; Dallas; San Antonio; Phoenix",
+        primary_market="44 Texas cities + Phoenix, Austin, Seattle, San Diego, Jacksonville",
+        counties_served="Houston; Dallas; San Antonio; Phoenix; Austin; Seattle; San Diego; Jacksonville",
         serves_palm_beach="No",
         website="https://bmoutdoor.com/",
         pricing_reference=_REF,
@@ -207,7 +211,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Lux Media",
         company_type=TYPE_MOBILE,
         primary_market="Dallas; Houston; Austin; San Antonio",
-        counties_served="Houston; San Antonio; Dallas",
+        counties_served="Houston; San Antonio; Dallas; Austin",
         serves_palm_beach="No",
         website="https://www.luxmediaads.com/",
         pricing_reference="Mobile LED truck — day/route rate, quote only",
@@ -280,14 +284,15 @@ NATIONAL_SEED: List[Company] = [
     # JACKSONVILLE
     # ------------------------------------------------------------------ #
     Company(
-        company_name="MediaLease OOH — Jacksonville",
-        company_type=TYPE_REGIONAL,
-        primary_market="Jacksonville",
-        counties_served="Jacksonville",
-        serves_palm_beach="No",
-        website="https://www.medialeaseooh.com/jacksonville-fl/",
+        company_name="MediaLease OOH",
+        company_type=TYPE_BROKER,
+        primary_market="National one-stop OOH (est. early 1980s)",
+        counties_served="All listed metros (nationwide)",
+        serves_palm_beach="Yes",
+        website="https://www.medialeaseooh.com/",
         pricing_reference=_REF,
-        notes="Digital LED + traditional billboards, bus, rail, shelter ads in Jacksonville.",
+        notes="One-stop OOH rep in most US metros (Atlanta, Miami, Seattle, Phoenix, "
+              "San Diego, San Antonio, LA, Jacksonville…): billboards, rail/bus, shelters, digital.",
         source="medialeaseooh.com; WebSearch 2026-07-08",
         confidence="Medium",
     ),
@@ -391,11 +396,11 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="Adams Outdoor Advertising",
         company_type=TYPE_REGIONAL,
-        primary_market="New York DMA + mid-size US markets",
-        counties_served="New York",
+        primary_market="Mid-size US markets (13 states) + Atlanta",
+        counties_served="New York; Atlanta",
         serves_palm_beach="No",
         pricing_reference=_REF,
-        notes="Traditional + digital billboards in high-visibility locations.",
+        notes="One of the largest US OOH firms — 11,000+ units across 13 states; traditional + digital.",
         source="WebSearch 2026-07-08",
         confidence="Low",
     ),
@@ -554,7 +559,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Billups",
         company_type=TYPE_BROKER,
         primary_market="National OOH agency / managed services",
-        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         website="https://www.billups.com/",
         pricing_reference="Managed-service buying across operators — quote only",
@@ -684,8 +689,8 @@ NATIONAL_SEED: List[Company] = [
     Company(
         company_name="True Impact Media",
         company_type=TYPE_BROKER,
-        primary_market="San Antonio (+ national mobile)",
-        counties_served="San Antonio",
+        primary_market="San Antonio; San Francisco (+ national mobile)",
+        counties_served="San Antonio; San Francisco",
         serves_palm_beach="No",
         website="https://trueimpactmedia.com/billboard-advertising-in-san-antonio/",
         pricing_reference="Billboards + mobile — quote only",
@@ -915,13 +920,288 @@ NATIONAL_SEED: List[Company] = [
     ),
 
     # ================================================================== #
-    # NATIONAL BROKERS / MARKETPLACES (book inventory across all 10 cities)
+    # ATLANTA
+    # ================================================================== #
+    Company(
+        company_name="Billboard Company Atlanta",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Atlanta metro",
+        counties_served="Atlanta",
+        serves_palm_beach="No",
+        city="Atlanta",
+        state="GA",
+        website="https://billboardcompanyatlanta.com/",
+        pricing_reference=_REF,
+        notes="Atlanta-area billboard advertising operator.",
+        source="billboardcompanyatlanta.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Trailhead Media",
+        company_type=TYPE_REGIONAL,
+        primary_market="Atlanta / Southeast (digital OOH)",
+        counties_served="Atlanta",
+        serves_palm_beach="No",
+        state="GA",
+        website="https://trailheadmedia.com/",
+        pricing_reference=_REF,
+        notes="Digital billboard & outdoor advertising company.",
+        source="trailheadmedia.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # MIAMI
+    # ================================================================== #
+    Company(
+        company_name="SDE Media",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Greater Miami",
+        counties_served="Miami",
+        serves_palm_beach="No",
+        city="Miami",
+        state="FL",
+        website="https://sde-media.com/",
+        pricing_reference=_REF,
+        notes="Boutique independent; static + digital on Palmetto (SR 826), Dolphin (SR 836) "
+              "& Florida's Turnpike. FL Certified Minority Business; Miami-Dade Asset Pool.",
+        source="sde-media.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Carter Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="South Florida (Miami / Ft. Lauderdale)",
+        counties_served="Miami",
+        serves_palm_beach="No",
+        website="https://www.carteroutdoor.com/",
+        pricing_reference=_REF,
+        notes="Family-owned, serving South Florida since 1956.",
+        source="carteroutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Plug Talk Media",
+        company_type=TYPE_BROKER,
+        primary_market="Miami (billboard, DOOH, pDOOH)",
+        counties_served="Miami",
+        serves_palm_beach="No",
+        website="https://www.plugtalk.media/our-markets/miami",
+        pricing_reference="Programmatic/DOOH — dynamic",
+        notes="Billboard, DOOH and programmatic DOOH campaigns across Miami.",
+        source="plugtalk.media; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # WASHINGTON DC
+    # ================================================================== #
+    Company(
+        company_name="Digital Outdoor Advertising — DC",
+        company_type=TYPE_REGIONAL,
+        primary_market="Washington DC (National Mall, Capitol Hill approaches)",
+        counties_served="Washington DC",
+        serves_palm_beach="No",
+        state="DC",
+        website="https://digitaloutdooradvertising.com/",
+        pricing_reference=_REF,
+        notes="DC-area billboard coverage; supply tightly restricted in the District proper.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # SAN FRANCISCO / BAY AREA
+    # ================================================================== #
+    Company(
+        company_name="Billboard Source",
+        company_type=TYPE_BROKER,
+        primary_market="San Francisco Bay Area; Los Angeles",
+        counties_served="San Francisco; Los Angeles",
+        serves_palm_beach="No",
+        website="https://www.billboardsource.com/billboard-advertising-in-san-francisco-ca",
+        pricing_reference=_REF,
+        notes="Outdoor advertising broker for SF/Bay Area and SoCal; works with agencies & individuals.",
+        source="billboardsource.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Can't Miss US",
+        company_type=TYPE_MOBILE,
+        primary_market="National mobile (largest digital-truck fleet)",
+        counties_served="San Francisco; Houston",
+        serves_palm_beach="No",
+        website="https://cantmiss.us/",
+        pricing_reference="Mobile digital billboard truck — quote only",
+        notes="Operates one of the largest fleets of digital billboard trucks in the US.",
+        source="cantmiss.us; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # SEATTLE
+    # ================================================================== #
+    Company(
+        company_name="Pacific Outdoor Advertising",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Seattle / Western Washington",
+        counties_served="Seattle",
+        serves_palm_beach="No",
+        state="WA",
+        website="https://www.pacificoutdooradvertising.com/",
+        pricing_reference=_REF,
+        notes="Local, boutique Seattle-area billboard company; personalized campaigns.",
+        source="pacificoutdooradvertising.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Parker Outdoor Inc.",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Seattle metro (Woodinville, Everett)",
+        counties_served="Seattle",
+        serves_palm_beach="No",
+        state="WA",
+        website="https://www.parkeroutdoorinc.com/billboards/western-washington/seattle",
+        pricing_reference=_REF,
+        notes="High-traffic static + digital billboards in Woodinville and Everett.",
+        source="parkeroutdoorinc.com; WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Summus Outdoor",
+        company_type=TYPE_REGIONAL,
+        primary_market="Seattle / Pacific Northwest",
+        counties_served="Seattle",
+        serves_palm_beach="No",
+        state="WA",
+        pricing_reference=_REF,
+        notes="Named among the major Seattle-metro OOH operators.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # DENVER
+    # ================================================================== #
+    Company(
+        company_name="Mile High Outdoor",
+        company_type=TYPE_REGIONAL,
+        primary_market="Denver metro + Colorado",
+        counties_served="Denver",
+        serves_palm_beach="No",
+        city="Denver",
+        state="CO",
+        website="https://milehighoutdoor.com/",
+        pricing_reference=_REF,
+        notes="Est. 1996; Denver's premier independent OOH firm — 400+ metro displays plus "
+              "highway boards to Ft. Collins, Colorado Springs, Pueblo, Grand Junction.",
+        source="milehighoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Elevation Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Colorado / Wyoming interstates",
+        counties_served="Denver",
+        serves_palm_beach="No",
+        state="CO",
+        pricing_reference=_REF,
+        notes="Founded 2003; interstate-highway billboard coverage across CO and WY.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Outdoor Ads, Inc.",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Denver metro",
+        counties_served="Denver",
+        serves_palm_beach="No",
+        city="Denver",
+        state="CO",
+        pricing_reference=_REF,
+        notes="Billboards, shelters, bus stops and transit displays across the Denver metro.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # AUSTIN
+    # ================================================================== #
+    Company(
+        company_name="Reagan Outdoor Advertising",
+        company_type=TYPE_REGIONAL,
+        primary_market="Austin (densest local footprint)",
+        counties_served="Austin",
+        serves_palm_beach="No",
+        city="Austin",
+        state="TX",
+        website="https://www.reaganoutdoor.com/austin/",
+        pricing_reference=_REF,
+        notes="Austin-headquartered; the largest local billboard operator in the Austin market.",
+        source="reaganoutdoor.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="MediaChoice",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Austin",
+        counties_served="Austin",
+        serves_palm_beach="No",
+        state="TX",
+        pricing_reference=_REF,
+        notes="Significant local Austin OOH operator.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+    Company(
+        company_name="Burkett Media",
+        company_type=TYPE_INDEPENDENT,
+        primary_market="Austin",
+        counties_served="Austin",
+        serves_palm_beach="No",
+        state="TX",
+        pricing_reference=_REF,
+        notes="Local Austin billboard operator.",
+        source="WebSearch 2026-07-08",
+        confidence="Low",
+    ),
+
+    # ================================================================== #
+    # NATIONAL BROKERS / MARKETPLACES (book inventory across all listed metros)
+    # ================================================================== #
+    Company(
+        company_name="Fliphound",
+        company_type=TYPE_BROKER,
+        primary_market="Nationwide self-serve billboard marketplace (600+ markets)",
+        counties_served="All listed metros (nationwide)",
+        serves_palm_beach="Yes",
+        website="https://fliphound.com/",
+        pricing_reference="Self-serve; real-time pricing & package rates",
+        notes="Online marketplace/network — static & digital billboards across 600+ US markets.",
+        source="fliphound.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+    Company(
+        company_name="Billboard Connection",
+        company_type=TYPE_BROKER,
+        primary_market="Nationwide brokerage franchise (since 1997)",
+        counties_served="All listed metros (nationwide)",
+        serves_palm_beach="Yes",
+        website="https://billboardconnection.com/",
+        pricing_reference="Brokerage — designs, launches & manages OOH campaigns",
+        notes="National billboard-advertising franchise; represents outdoor companies in most US markets.",
+        source="billboardconnection.com; WebSearch 2026-07-08",
+        confidence="Medium",
+    ),
+
+    # ================================================================== #
+    # OTHER NATIONAL BROKERS / MARKETPLACES
     # ================================================================== #
     Company(
         company_name="AdQuick",
         company_type=TYPE_BROKER,
         primary_market="Nationwide OOH marketplace",
-        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         website="https://www.adquick.com/",
         pricing_reference="Marketplace booking; publishes 2026 cost/CPM guides",
@@ -933,7 +1213,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="Blue Line Media",
         company_type=TYPE_BROKER,
         primary_market="Nationwide brokerage",
-        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         phone="(800) 807-0360",
         email="Advertise@BlueLineMedia.com",
@@ -947,7 +1227,7 @@ NATIONAL_SEED: List[Company] = [
         company_name="BillboardsIn",
         company_type=TYPE_BROKER,
         primary_market="Nationwide OOH marketplace",
-        counties_served="New York; Los Angeles; Chicago; Houston; Phoenix; Philadelphia; San Antonio; San Diego; Dallas; Jacksonville",
+        counties_served="All listed metros (nationwide)",
         serves_palm_beach="Yes",
         website="https://www.billboardsin.com/",
         pricing_reference="Marketplace booking — dynamic",
@@ -974,19 +1254,35 @@ CITY_MARKET = [
      "Iconic Sunset Strip bulletins command a large multiple of comparable units 30 mi east."),
     (3, "Chicago", "IL", "Tier 1", 2000, 25000,
      "Premium expressway (Kennedy/Dan Ryan) and Loop digital displays at the high end."),
-    (4, "Dallas", "TX", "Tier 2 — large metro (DFW)", 1500, 18000,
+    (4, "San Francisco", "CA", "Tier 1 — high-cost market", 2500, 30000,
+     "Bay Area (SF/Oakland/San Jose); tech-driven demand and scarce inventory keep rates high."),
+    (5, "Atlanta", "GA", "Tier 2 — major OOH market", 1500, 16000,
+     "Connector/I-285 'Perimeter' corridors; large billboard-friendly metro."),
+    (6, "Washington DC", "DC", "Tier 2 — restricted supply", 2000, 20000,
+     "Billboards tightly limited in DC proper; value concentrated on MD/VA approaches & transit."),
+    (7, "Boston", "MA", "Tier 2", 1800, 18000,
+     "OUTFRONT #1 with 675+ digital faces; I-93/Mass Pike and tunnel approaches priced highest."),
+    (8, "Dallas", "TX", "Tier 2 — large metro (DFW)", 1500, 18000,
      "High-traffic corridors (I-35, LBJ, Central Expwy) priced highest."),
-    (5, "Houston", "TX", "Tier 2 — large metro", 1500, 15000,
+    (9, "Houston", "TX", "Tier 2 — large metro", 1500, 15000,
      "Clear Channel alone runs 2,000+ boards across 13 counties (99% of DMA adults)."),
-    (6, "Philadelphia", "PA", "Tier 2", 1500, 12000,
+    (10, "Miami", "FL", "Tier 2 — high-demand/tourism", 1800, 20000,
+     "I-95 / Palmetto / Dolphin Expwy and beach/tourism corridors carry premiums."),
+    (11, "Philadelphia", "PA", "Tier 2", 1500, 12000,
      "I-95 / Schuylkill Expwy and Center City digital at the top of range."),
-    (7, "Phoenix", "AZ", "Tier 2/3", 1200, 10000,
+    (12, "Seattle", "WA", "Tier 2/3", 1500, 14000,
+     "Billboard supply constrained by regulation; I-5/I-405 corridors strongest."),
+    (13, "Phoenix", "AZ", "Tier 2/3", 1200, 10000,
      "Freeway digital (Loop 101/202, I-10); sports-venue-adjacent units premium."),
-    (8, "San Diego", "CA", "Tier 3", 1500, 10000,
+    (14, "Denver", "CO", "Tier 3", 1200, 11000,
+     "I-25 / I-70 corridors; Mile High Outdoor runs 400+ metro displays."),
+    (15, "San Diego", "CA", "Tier 3", 1500, 10000,
      "I-5 / I-805 / I-15 / Hwy-78 corridors; limited inventory keeps rates firm."),
-    (9, "San Antonio", "TX", "Tier 3", 1000, 8000,
+    (16, "San Antonio", "TX", "Tier 3", 1000, 8000,
      "I-10 / Loop 410 / US-281 the strongest placements."),
-    (10, "Jacksonville", "FL", "Tier 3", 800, 6000,
+    (17, "Austin", "TX", "Tier 3 — fast-growing", 1200, 12000,
+     "Reagan Outdoor-dominated; tech-driven demand along I-35 / MoPac / US-183."),
+    (18, "Jacksonville", "FL", "Tier 3", 800, 6000,
      "Largest US city by land area; I-95 / I-295 corridors carry the value."),
 ]
 
@@ -999,8 +1295,12 @@ CITY_RANK_DISCLAIMER = (
 
 
 def cities_for(company: Company) -> List[str]:
-    """Which of the top-10 cities a company serves (from its coverage field)."""
+    """Which of the listed metros a company serves (from its coverage field).
+    A 'nationwide' / 'all listed metros' marker counts as every metro."""
     coverage = (company.counties_served or "")
+    low = coverage.lower()
+    if "nationwide" in low or "all listed metros" in low:
+        return list(TOP_CITIES)
     return [c for c in TOP_CITIES if c in coverage]
 
 

@@ -68,59 +68,54 @@ python scraper.py --oda-file ODAData.xlsx --out florida.xlsx
 | `--oda-file` | *(none)* | Parse a hand-downloaded FDOT ODA Excel |
 | `--csv` | *(off)* | Also write CSV; bare flag = alongside the `.xlsx`, or give a path |
 
-## National dataset — top-10 US cities
+## National dataset — 18 major US metros
 
 Beyond Florida, the tool ships a national dataset of billboard companies across
-the **top-10 US cities by population** (New York, Los Angeles, Chicago, Houston,
-Phoenix, Philadelphia, San Antonio, San Diego, Dallas, Jacksonville):
+**18 major US OOH markets** (in market-size rank order): New York, Los Angeles,
+Chicago, San Francisco, Atlanta, Washington DC, Boston, Dallas, Houston, Miami,
+Philadelphia, Seattle, Phoenix, Denver, San Diego, San Antonio, Austin, Jacksonville.
 
 ```bash
 python scraper.py --dataset national --csv
 # → data/us_top_cities_billboard_companies.xlsx (+ .csv)
 ```
 
-**64 companies across all 10 cities** (every market now has local operators, not
-just the nationals). The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
+**83 companies across all 18 metros** (every market has local operators, not just
+the nationals). The big three (Lamar, Clear Channel, OUTFRONT — highlighted and
 listed first) plus multi-market networks (JCDecaux, Branded Cities, Intersection,
 Van Wagner, Vector Media, New Tradition, Capitol Outdoor, Brooklyn Outdoor, Digital
-Outdoor Advertising), national brokers/agencies (AdQuick, Blue Line Media,
-BillboardsIn, Billups) and market-specific operators. All three Tier-1 markets
-have **deep local rosters**:
+Outdoor Advertising) and nationwide brokers/agencies (AdQuick, Blue Line Media,
+BillboardsIn, Billups, MediaLease OOH, Fliphound, Billboard Connection) appear in
+every metro tab; each metro also lists its own local operators, e.g.:
 
-- **New York (29)** — spectacular specialists (SILVERCAST, Branded Cities, TSX
-  Broadway, Heritage, Big Outdoor), hand-painted walls (Colossal Media),
-  top-5-by-spot-count owners (Intersection, PMD Media, OUTFRONT, JCDecaux, InSite
-  Street Media), wildposting (GSB Digital), DOB-registry firms (Seen Outdoor, Red Rock).
-- **Chicago (22)** — Image Media Outdoor, Outdoor Impact, VC Outdoor, GreenSigns,
-  J&B Signs, Red Star Outdoor alongside the nationals.
-- **Los Angeles (18)** — Regency Outdoor (Sunset Strip + LAX, 300+ boards),
-  Bulletin Displays (top-5 freeway operator), Bray Outdoor, O Media Group.
-
-The Texas trio is also deep: **Dallas (16)** — Arrington (largest DFW
-independent), Ralston, Albert, Dallas Billboards LLC; **Houston (16)** — SignAd
-(largest independent in TX), Gilbreath, Avail Media, Inspiria, MH Outdoor;
-**San Antonio (14)** — plus True Impact Media, BM Outdoor, Lux Media.
-
-The four smaller markets have their locals too: **Philadelphia (13)** — Catalyst
-Outdoor, Keystone Outdoor, Big Outdoor; **Jacksonville (12)** — Daily Billboards,
-American Mobile Ads, Fisher Design; **Phoenix (11)** — Becker Boards, Arizona
-Billboard Co., American Outdoor; **San Diego (10)** — American Outdoor, Bray
-Outdoor, Capitol Outdoor.
+- **New York (35)** — SILVERCAST, Branded Cities, TSX Broadway, Colossal Media
+  (hand-painted walls), Intersection/PMD/InSite (top-5 by spot count), GSB Digital.
+- **Chicago (26)** — Image Media Outdoor, Outdoor Impact, VC Outdoor, GreenSigns,
+  J&B Signs, Red Star Outdoor.
+- **Los Angeles (22)** — Regency Outdoor (Sunset Strip + LAX, 300+ boards),
+  Bulletin Displays, Bray Outdoor, O Media Group.
+- **Texas** — Houston (20): SignAd, Gilbreath, Avail, Inspiria; Dallas (19):
+  Arrington, Ralston, Albert; San Antonio (17); Austin (15): Reagan Outdoor,
+  MediaChoice, Burkett.
+- **New metros** — San Francisco (Billboard Source, Can't Miss US), Atlanta
+  (Trailhead, Billboard Company Atlanta), Boston, Washington DC (Capitol Outdoor),
+  Seattle (Pacific Outdoor, Parker, Summus), Denver (Mile High Outdoor, Elevation,
+  Outdoor Ads Inc.), Miami (SDE Media, Carter Outdoor, Plug Talk).
 
 Source: `fbscraper/national.py`.
 
-The national workbook has **14 tabs**:
+The national workbook has **22 tabs**:
 
-- **All Companies** — every company, national operators first, with a "Top-10
-  Cities Served" column.
-- **City Market Ranking** — the 10 cities ranked by billboard market size and
-  typical ad rates (NYC #1 → Jacksonville #10), with numeric low/high rate columns,
+- **All Companies** — every company, national operators first, with a "Metros
+  Served" column.
+- **City Market Ranking** — the 18 metros ranked by billboard market size and
+  typical ad rates (NYC #1 → Jacksonville #18), with numeric low/high rate columns,
   premium notes (e.g. Times Square $10k–$1M+/mo), and an **embedded bar chart** of
-  the monthly rate band per city.
-- **One tab per city** (New York, Los Angeles, … Jacksonville) — just the
-  companies serving that market. Depth: NYC 30 · Chicago 22 · LA 18 · Dallas 16 ·
-  Houston 16 · San Antonio 14 · Philadelphia 13 · Jacksonville 12 · Phoenix 11 ·
-  San Diego 10.
+  the monthly rate band per metro.
+- **One tab per metro** (18 of them) — just the companies serving that market.
+  Depth: NYC 35 · Chicago 26 · LA 22 · Houston 20 · Dallas 19 · Philadelphia 17 ·
+  San Antonio 17 · Miami 15 · Austin 15 · Jacksonville 15 · SF 14 · Seattle 14 ·
+  Phoenix 14 · San Diego 14 · Atlanta 13 · Washington DC 13 · Denver 13 · Boston 11.
 - **Pricing Reference** and **About**.
 
 > For a *truly* exhaustive NYC list, the authoritative source is the **NYC Dept.
@@ -169,7 +164,7 @@ florida-billboard-scraper/
   fbscraper/
     models.py                Company dataclass, columns, dedupe
     seed.py                  verified FL starter dataset (Palm Beach first)
-    national.py              top-10 US cities dataset (--dataset national)
+    national.py              18 major US metros dataset (--dataset national)
     fdot.py                  FDOT ODA licensees + monthly Excel scraper/parser
     foaa.py                  FOAA member-directory scraper
     pricing.py               market-average reference rates + disclaimer
