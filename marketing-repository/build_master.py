@@ -63,8 +63,90 @@ EXISTING = [
 
 CAT_HDR = ["#", "Channel / Tactic", "Cost", "Trades Relevance", "In-House?", "Notes"]
 CAT_W = [5, 40, 7, 15, 10, 58]
-MASTER_HDR = ["#", "Category", "Channel / Tactic", "Cost", "Trades Relevance", "In-House?", "Notes"]
-MASTER_W = [5, 24, 40, 7, 15, 10, 55]
+MASTER_HDR = ["#", "Category", "Channel / Tactic", "Cost", "Trades Relevance",
+              "In-House?", "Time-to-Impact", "Notes"]
+MASTER_W = [5, 24, 40, 7, 15, 10, 13, 55]
+
+TIME_FILL = {
+    "Fast": REL_FILL["High"],
+    "Medium": REL_FILL["Med"],
+    "Slow": REL_FILL["Low"],
+    "Enabler": PatternFill("solid", fgColor="FFD6E4F0"),  # light blue
+}
+
+
+def derive_time(category, tactic):
+    """Heuristic Time-to-Impact: Fast (days-weeks) / Medium (1-3 months) /
+    Slow (3+ months, compounds) / Enabler (infrastructure that powers the rest)."""
+    t = tactic.lower()
+    if any(k in t for k in ("crm", "analytic", "tracking", "tag manager", "dashboard",
+                            "attribution", "pixel", "utm", "brand identity", "logo",
+                            "style guide", "asset library", "consent", "platform",
+                            "audit", "reporting", "warmup", "segmentation")):
+        return "Enabler"
+    if any(k in t for k in ("seo", "blog", "pillar", "content", "organic", "backlink",
+                            "guest post", "youtube channel", "podcast (own", "launch your own",
+                            "authority", "e-e-a-t", "glossary", "loyalty", "membership",
+                            "community", "scholarship", "aeo", "generative engine")):
+        return "Slow"
+    if any(k in t for k in (" ads", "ads ", "ad)", "lsa", "local service", "retarget",
+                            "remarketing", "geofenc", "sms", "text-back", "speed-to-lead",
+                            "eddm", "door hanger", "yard sign", "flyer", "lead-form",
+                            "marketplace", "angi", "thumbtack", "yelp", "mobile billboard",
+                            "mobile led", "truck", "review request", "review-request",
+                            "missed-call", "chat", "popup", "click-to-call", "blast")):
+        return "Fast"
+    cat = category.lower()
+    if any(k in cat for k in ("search", "social", "email", "sms")):
+        return "Fast"
+    if any(k in cat for k in ("content", "loyalty", "cause", "b2b")):
+        return "Slow"
+    if any(k in cat for k in ("analytics", "branding", "sales enablement")):
+        return "Enabler"
+    return "Medium"
+
+
+# Fallback notes for rows the original workbook left blank — honest one-liners
+# aligned with the Legend's relevance definitions.
+_NOTE_FALLBACK = {
+    "High": "Worth testing for local trades - start small and track cost-per-lead.",
+    "Med": "Situational - fits specific campaigns/audiences; test before committing.",
+    "Low": "Scale/brand play - generally skip on a local trades budget.",
+}
+
+
+def derive_note(tactic, relevance):
+    t = tactic.lower()
+    rules = [
+        (("billboard", "bulletin", "poster (", "wallscape", "spectacular"),
+         "Sold in 4-week flights; price tracks traffic count + location - see metro rate bands."),
+        (("transit", "bus ", "rail", "shelter", "subway"),
+         "Bought via the transit contractor (often OUTFRONT/JCDecaux) for the metro."),
+        (("radio", "audio ad"), "Buy through the ownership group's local cluster; dayparts matter."),
+        (("tv ", " tv", "television", "cable"),
+         "Zoned cable (Spectrum Reach/Effectv) makes this affordable locally."),
+        (("magnet", "keychain", "pen", "sticker", "koozie", "opener", "calendar"),
+         "Cheap keep-forever item; brand + phone + QR only."),
+        (("banner", "sign", "decal", "wrap"), "Producible in-house with cutter/printer; place legally."),
+        (("facebook", "instagram", "meta"), "Geo-target service-area ZIPs; pair with lead forms + fast follow-up."),
+        (("tiktok", "reels", "shorts", "vertical"), "Short-form organic reach engine; repurpose one video everywhere."),
+        (("linkedin",), "B2B only - property managers, GCs, facility managers."),
+        (("email", "newsletter", "drip", "nurture"), "Owned audience; automation makes it near-zero marginal cost."),
+        (("landing page", "microsite", "squeeze"), "One page per offer; measure conversion, not traffic."),
+        (("influencer", "creator", "ambassador"), "Local nano/micro beats celebrity for trades; pay on performance where possible."),
+        (("sponsor", "booth", "fair", "show", "expo", "event"),
+         "Negotiate signage + lead capture, not just a logo; work the booth with demos."),
+        (("press", "pitch", "media", "journalist", "haro"),
+         "Local reporters need expert sources - offer data and availability, not ads."),
+        (("referral", "partner", "cross-", "co-market", "alliance"),
+         "Cheapest high-trust leads; formalize the incentive and track it."),
+        (("ai ", "chatbot", "voice agent", "automation", "predictive"),
+         "Build in-house - your moat; competitors rent this from agencies."),
+    ]
+    for keys, note in rules:
+        if any(k in t for k in keys):
+            return note
+    return _NOTE_FALLBACK.get(relevance, "")
 
 
 def extract_existing(src):
@@ -146,13 +228,17 @@ def write_master_sheet(wb, all_rows, sheet_name="Master List",
         if rel in REL_FILL:
             rc.fill = REL_FILL[rel]
         ws.cell(r, 6, inhouse).alignment = CENTER
-        ws.cell(r, 7, notes).alignment = LEFT
-        for i in range(1, 8):
+        tti = derive_time(cat, tactic)
+        tc = ws.cell(r, 7, tti); tc.alignment = CENTER
+        if tti in TIME_FILL:
+            tc.fill = TIME_FILL[tti]
+        ws.cell(r, 8, notes).alignment = LEFT
+        for i in range(1, 9):
             ws.cell(r, i).border = BORDER
     for i, w in enumerate(MASTER_W, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:G{len(all_rows) + 2}"
+    ws.auto_filter.ref = f"A2:H{len(all_rows) + 2}"
     return ws
 
 
@@ -190,24 +276,24 @@ def write_metro_reference(wb):
     headers = ["Rank", "Metro", "State", "DMA Rank (approx)", "Metro Pop",
                "OOH Rate ($/mo)", "OOH Ops (#)", "Major Newspaper",
                "Business Journal", "Big-4 TV Affiliates", "Major Radio Groups",
-               "Notable Ad Agencies", "Market Notes"]
-    style_title(ws, "US METRO MARKETING REFERENCE - 42 MARKETS", len(headers))
+               "Spanish-Language Media", "Notable Ad Agencies", "Market Notes"]
+    style_title(ws, "US METRO MARKETING REFERENCE - 42 MARKETS + PBC", len(headers))
     style_header(ws, headers)
     for n, d in enumerate(rows, 1):
         r = n + 2
         vals = [d["rank"], d["metro"], d["state"], d["dma"], d["pop"], d["rate"],
                 d["ops"], d["paper"], d["bizj"], d["tv"], d["radio"],
-                d["agencies"], d["note"]]
+                d.get("spanish", "-"), d["agencies"], d["note"]]
         for i, v in enumerate(vals, 1):
             cell = ws.cell(r, i, v)
             cell.alignment = CENTER if i in (1, 3, 4, 5, 6, 7) else LEFT
             cell.border = BORDER
             if str(d["metro"]).startswith("Palm Beach"):
                 cell.fill = REL_FILL["High"]
-    for i, w in enumerate([6, 15, 7, 10, 16, 15, 9, 28, 26, 34, 36, 34, 48], 1):
+    for i, w in enumerate([6, 15, 7, 10, 16, 15, 9, 28, 26, 34, 36, 40, 34, 48], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:M{len(rows) + 2}"
+    ws.auto_filter.ref = f"A2:N{len(rows) + 2}"
     return ws
 
 
@@ -266,6 +352,99 @@ def write_metro_companies(wb):
     return ws
 
 
+BUDGETS = [
+    # (channel, $2.5k, $5k, $10k, rationale)
+    ("Google Local Services Ads", 800, 1500, 2000, "Best trades lead quality; pay-per-lead, Google Guaranteed."),
+    ("Google Search ads", 400, 800, 1500, "Emergency + high-intent terms; call-only campaigns."),
+    ("GBP / reviews / automation tools", 150, 250, 400, "CallRail, review software, missed-call text-back."),
+    ("Meta / Nextdoor local ads", 300, 600, 1000, "Geo-targeted awareness + lead forms in service-area ZIPs."),
+    ("Retargeting", 100, 200, 400, "Cheapest re-touch of site visitors and quote abandoners."),
+    ("EDDM / direct mail", 300, 600, 1000, "Carrier-route saturation around completed jobs."),
+    ("Yard signs / wraps / promo (materials)", 150, 250, 500, "In-house production; magnets + shutoff tags."),
+    ("Email/SMS platform", 100, 150, 300, "Reminders, reactivation, review requests - runs itself."),
+    ("Community sponsorships", 100, 250, 500, "Youth sports, chamber, local events."),
+    ("SEO / content (contractor or time)", 0, 300, 800, "DIY at $2.5k; buy help as budget grows - compounds."),
+    ("Local OOH / radio flight test", 0, 0, 1500, "Only at $10k+: one measured 4-week flight, one corridor."),
+    ("Testing reserve", 100, 100, 100, "Always keep something for the next experiment."),
+]
+
+CALENDAR = [
+    ("January", "Snowbird season peak; New Year home projects",
+     "Maintenance plans, water-quality upgrades", "Email/SMS, GBP posts, EDDM to seasonal communities"),
+    ("February", "Tax-refund window opens; South Florida Fair",
+     "Bigger-ticket jobs with financing offers", "Search ads on financing terms, fair booth/sponsorship"),
+    ("March", "Spring training; season population peak",
+     "Spring maintenance specials", "Sponsorships, Nextdoor, direct mail"),
+    ("April", "Snowbirds depart late April",
+     "Pre-departure shutoff/home-watch services", "Email to seasonal list, partner property managers"),
+    ("May", "Hurricane-prep education window; SunFest",
+     "Hurricane plumbing-prep checklists", "PR pitches, content/SEO, event presence"),
+    ("June", "Hurricane season opens June 1",
+     "Prep packages, generator/backflow checks", "Search ads, emergency-magnet distribution, radio"),
+    ("July", "Peak heat + daily storms",
+     "Emergency response positioning", "LSA + call-only ads, after-hours AI chatbot capture"),
+    ("August", "Peak hurricane threat builds; back-to-school",
+     "Readiness campaigns; review pushes on slow days", "SMS blasts, review automation, retargeting"),
+    ("September", "Statistical hurricane peak",
+     "Storm response + restoration partnerships", "Standby PR, partner restoration/insurance channels"),
+    ("October", "Season winds down; snowbirds return",
+     "Returning-resident inspections", "EDDM wave, new-mover mail, GBP offers"),
+    ("November", "Hurricane season ends Nov 30; holidays approach",
+     "Guest-ready plumbing offers, Black Friday promo", "Email/SMS promo, social offers"),
+    ("December", "Holiday hosting; year-end",
+     "Gift-card/loyalty gifts; plan next year", "Customer-appreciation touches, year-in-review email"),
+]
+
+
+def write_budgets(wb):
+    ws = wb.create_sheet("Sample Budgets")
+    headers = ["Channel", "$2,500/mo", "$5,000/mo", "$10,000/mo", "Why"]
+    style_title(ws, "SAMPLE MONTHLY BUDGET SPLITS - PBC TRADES BUSINESS", len(headers))
+    style_header(ws, headers)
+    r = 3
+    for (ch, a, b, c, why) in BUDGETS:
+        for i, v in enumerate([ch, a, b, c, why], 1):
+            cell = ws.cell(r, i, v)
+            cell.alignment = LEFT if i in (1, 5) else CENTER
+            cell.border = BORDER
+            if i in (2, 3, 4):
+                cell.number_format = "$#,##0"
+        r += 1
+    # totals
+    ws.cell(r, 1, "TOTAL").font = Font(bold=True)
+    for i, col in enumerate((2, 3, 4), 1):
+        total = sum(row[i] for row in BUDGETS)
+        cell = ws.cell(r, col, total)
+        cell.font = Font(bold=True)
+        cell.number_format = "$#,##0"
+        cell.alignment = CENTER
+        cell.fill = REL_FILL["High"]
+    for i, w in enumerate([38, 12, 12, 12, 62], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+    return ws
+
+
+def write_calendar(wb):
+    ws = wb.create_sheet("Seasonal Calendar")
+    headers = ["Month", "PBC Context", "What to Push", "Lead Channels"]
+    style_title(ws, "PALM BEACH COUNTY SEASONAL MARKETING CALENDAR", len(headers))
+    style_header(ws, headers)
+    hurricane = {"June", "July", "August", "September", "October", "November"}
+    for n, (m, ctx, push, ch) in enumerate(CALENDAR, 1):
+        r = n + 2
+        for i, v in enumerate([m, ctx, push, ch], 1):
+            cell = ws.cell(r, i, v)
+            cell.alignment = LEFT
+            cell.border = BORDER
+        if m in hurricane:
+            ws.cell(r, 1).fill = REL_FILL["Med"]  # hurricane season shading
+    for i, w in enumerate([12, 44, 44, 52], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+    return ws
+
+
 _INDEX_DESC = {
     "Legend": "How to use this workbook (cost / relevance / in-house keys)",
     "Master List": "All tactics, every category - filter by Cost, Relevance, In-House",
@@ -274,6 +453,8 @@ _INDEX_DESC = {
     "Metro OOH Companies": "110 scraped billboard/OOH operators by metro",
     "Quick-Start by Metro": "Who to call in each market + universal foundation",
     "Metro Category Contacts": "All 13 categories x every metro - filter to any city",
+    "Sample Budgets": "$2.5k / $5k / $10k monthly allocation models for a trades business",
+    "Seasonal Calendar": "PBC month-by-month: what to push and where (hurricane season shaded)",
     "PBC Priority Playbook": "What to actually do first in Palm Beach County",
 }
 
@@ -363,6 +544,8 @@ def main():
                 notes = f"{notes} {tag}".strip() if notes else tag
             else:
                 seen_cat.setdefault(k, master)
+            if not notes:  # fill blanks with an honest derived one-liner
+                notes = derive_note(tactic, rel)
             new_rows.append((tactic, cost, rel, ih, notes))
         marked.append((master, band, out_tab, new_rows))
     categories = marked
@@ -402,6 +585,15 @@ def main():
                     "= same self-serve platform everywhere, just geo-target it. "
                     "TV/radio/agency/event data is reference-level - verify before buying.")
         legend.cell(nr2, 2).alignment = LEFT
+        nr3 = legend.max_row + 1
+        legend.cell(nr3, 1, "Derived fields").font = Font(bold=True)
+        legend.cell(nr3, 2,
+                    "Time-to-Impact (Master List / Quick Wins): Fast = days-weeks, "
+                    "Medium = 1-3 months, Slow = 3+ months (compounds), Enabler = "
+                    "infrastructure that powers other channels - derived by rule, not "
+                    "hand-rated. Notes that were blank in the original are auto-derived "
+                    "one-liners; hand-written notes were left untouched.")
+        legend.cell(nr3, 2).alignment = LEFT
 
     # 2) Master List (aggregate of every category)
     master_rows = []
@@ -452,7 +644,11 @@ def main():
                 cell.fill = REL_FILL["High"]
             r += 1
 
-    # 6) Index / table of contents, placed first
+    # 6) Budget models + seasonal calendar
+    write_budgets(wb)
+    write_calendar(wb)
+
+    # 7) Index / table of contents, placed first
     write_index(wb)
 
     wb.save(OUT)

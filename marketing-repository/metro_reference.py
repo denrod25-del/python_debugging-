@@ -40,6 +40,7 @@ PBC_FACTS = {
     "chamber": "Chamber of Commerce of the Palm Beaches · Palm Beach North Chamber",
     "note": "HOME MARKET. 17 verified PBC OOH operators with contacts in the Florida "
             "billboard workbook (florida-billboard-scraper).",
+    "spanish": "Miami Spanish media covers PBC: WLTV Univision 23 · WSCV Telemundo 51 · SBS radio",
 }
 
 
@@ -249,6 +250,7 @@ def metro_reference_rows():
         "ops": len(_pbc_companies()), "paper": PBC_FACTS["paper"],
         "bizj": PBC_FACTS["bizj"], "tv": PBC_FACTS["tv"], "radio": PBC_FACTS["radio"],
         "agencies": PBC_FACTS["agencies"], "note": PBC_FACTS["note"],
+        "spanish": PBC_FACTS["spanish"],
     }]
     for i, city in enumerate(nat.TOP_CITIES, 1):
         lo, hi, tier, note = rate[city]
@@ -269,8 +271,57 @@ def metro_reference_rows():
             "radio": radio,
             "agencies": agencies,
             "note": note,
+            "spanish": METRO_SPANISH.get(city, "-"),
         })
     return rows
+
+
+# Metro -> Spanish-language media (Univision/Telemundo affiliates + Latino radio).
+# 'Limited' = no major OTA affiliate; reach via cable/streaming + local Latino radio.
+METRO_SPANISH = {
+    "New York":       "WXTV Univision 41 · WNJU Telemundo 47 · SBS radio (Mega 97.9)",
+    "Los Angeles":    "KMEX Univision 34 (top US Spanish station) · KVEA Telemundo 52 · Uforia/SBS radio",
+    "Chicago":        "WGBO Univision 66 · WSNS Telemundo 44 · SBS radio",
+    "San Francisco":  "KDTV Univision 14 · KSTS Telemundo 48",
+    "Atlanta":        "WUVG Univision 34 · WKTB Telemundo Atlanta",
+    "Washington DC":  "WFDC Univision 14 · WZDC Telemundo 44",
+    "Boston":         "WUNI Univision 27 · WNEU Telemundo 60",
+    "Dallas":         "KUVN Univision 23 · KXTX Telemundo 39 · Uforia radio",
+    "Houston":        "KXLN Univision 45 · KTMD Telemundo 47 · Uforia radio",
+    "Miami":          "WLTV Univision 23 · WSCV Telemundo 51 (Telemundo HQ) · SBS radio HQ",
+    "Philadelphia":   "WUVP Univision 65 · WWSI Telemundo 62",
+    "Detroit":        "Limited — cable/streaming + local Latino radio",
+    "Seattle":        "KUNS Univision 51",
+    "Minneapolis":    "Limited — WUMN Univision (LP) + cable/streaming",
+    "Phoenix":        "KTVW Univision 33 · KTAZ Telemundo 39 · Uforia radio",
+    "Tampa":          "WVEA Univision 62 · WRMD Telemundo 49",
+    "Denver":         "KCEC Univision 50 · KDEN Telemundo 25",
+    "Cleveland":      "Limited — cable/streaming",
+    "Sacramento":     "KUVS Univision 19 · KCSO Telemundo 33",
+    "Orlando":        "WVEN Univision 26 · WTMO Telemundo 31",
+    "St. Louis":      "Limited — cable/streaming",
+    "Pittsburgh":     "Limited — cable/streaming",
+    "San Diego":      "KBNT Univision 17 · KUAN Telemundo 48 (+ Tijuana border stations)",
+    "Baltimore":      "DC stations spill (WFDC Univision / WZDC Telemundo)",
+    "Charlotte":      "Norsan Media (local Spanish radio) · cable/streaming",
+    "Raleigh":        "La Ley radio (Norsan) · cable/streaming",
+    "Indianapolis":   "Limited — cable + local Latino radio",
+    "Cincinnati":     "Limited — cable/streaming",
+    "Las Vegas":      "KINC Univision 15 · KBLR Telemundo 39",
+    "San Antonio":    "KWEX Univision 41 (first US Spanish-language TV station) · KVDA Telemundo 60 · Uforia",
+    "Portland":       "KUNP Univision 16",
+    "Milwaukee":      "WYTU Telemundo 63",
+    "Columbus":       "Limited — cable/streaming",
+    "Kansas City":    "KUKC Univision 20",
+    "Nashville":      "Limited — local Latino radio + cable",
+    "Salt Lake City": "KUTH Univision 32",
+    "New Orleans":    "Limited — cable + local Latino radio",
+    "Oklahoma City":  "KUOK Univision 36",
+    "Memphis":        "Limited — cable/streaming",
+    "Richmond":       "Limited — cable/streaming",
+    "Austin":         "KAKW Univision 62 · Telemundo Austin",
+    "Jacksonville":   "Limited — cable/streaming + local Latino radio",
+}
 
 
 # Metro -> (marquee events/fairs/sports sponsorship properties, chamber of commerce)

@@ -7,7 +7,15 @@ US market reference: **1,116 tactics across 25 categories** (+324 new) **plus a
 
 ## Output
 
-`data/BSymbolic_Marketing_Master_Expanded.xlsx` — 34 sheets:
+`data/BSymbolic_Marketing_Master_Expanded.xlsx` — 36 sheets:
+
+Master List and Quick Wins now carry a color-coded **Time-to-Impact** column
+(Fast / Medium / Slow / Enabler — rule-derived), every blank Note has been
+filled with a derived one-liner (hand-written notes untouched), the metro
+reference gained a **Spanish-Language Media** column (Univision/Telemundo
+affiliates + Latino radio per market), and two planning tabs were added:
+**Sample Budgets** ($2.5k/$5k/$10k monthly splits that sum exactly) and a
+**PBC Seasonal Calendar** (hurricane season shaded).
 
 - **Index** — clickable table of contents for every sheet
 - **Legend** — how to use it (updated counts + notes)
