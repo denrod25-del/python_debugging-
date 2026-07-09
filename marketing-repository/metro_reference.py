@@ -19,6 +19,43 @@ import os
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_HERE, "..", "florida-billboard-scraper"))
 import fbscraper.national as nat  # noqa: E402
+from fbscraper import seed as fl_seed  # noqa: E402  (Palm Beach / Florida operators)
+
+
+# ---------------------------------------------------------------------------
+# Palm Beach County — the HOME market (rank 0, listed first in every metro sheet)
+# ---------------------------------------------------------------------------
+PBC_METRO = "Palm Beach County ★"
+PBC_FACTS = {
+    "dma": 38,                       # West Palm Beach–Ft. Pierce DMA (approx)
+    "pop": "1.5M",
+    "rate": "$800-$15,000",          # static; digital runs to ~$25k (FL market avg)
+    "paper": "The Palm Beach Post",
+    "bizj": "South Florida Business Journal",
+    "tv": "WPBF 25 · WPEC 12 · WPTV 5 · WFLX Fox 29",
+    "radio": "Hubbard (WRMF, WIRK) · iHeart (WJNO)",
+    "agencies": "The O'Donnell Agency (PR); in-house/AI is the edge — see PBC Playbook",
+    "events": "SunFest · South Florida Fair · Palm Beach Intl Boat Show · "
+              "spring training (Ballpark of the Palm Beaches, Roger Dean)",
+    "chamber": "Chamber of Commerce of the Palm Beaches · Palm Beach North Chamber",
+    "note": "HOME MARKET. 17 verified PBC OOH operators with contacts in the Florida "
+            "billboard workbook (florida-billboard-scraper).",
+}
+
+
+def _pbc_companies():
+    return [c for c in fl_seed.load_seed()
+            if (c.serves_palm_beach or "").lower() == "yes"]
+
+
+def _pbc_ooh_contacts(limit=4):
+    conf_rank = {"High": 0, "Medium": 1, "Low": 2}
+    comps = sorted(_pbc_companies(),
+                   key=lambda c: (conf_rank.get(c.confidence, 3), c.company_name.lower()))
+    parts = []
+    for c in comps[:limit]:
+        parts.append(f"{c.company_name}{' ' + c.phone if c.phone else ''}".strip())
+    return "; ".join(parts) + f" — {len(comps)} PBC operators in the Florida workbook"
 
 # Metro -> (DMA rank approx, MSA population, major daily newspaper, business journal)
 METRO_MEDIA = {
@@ -206,7 +243,13 @@ def metro_reference_rows():
     rate = {c: (lo, hi, tier, note) for (r, c, st, tier, lo, hi, note) in
             [(r[0], r[1], r[2], r[3], r[4], r[5], r[6]) for r in nat.CITY_MARKET]}
     state = {r[1]: r[2] for r in nat.CITY_MARKET}
-    rows = []
+    rows = [{
+        "rank": 0, "metro": PBC_METRO, "state": "FL",
+        "dma": PBC_FACTS["dma"], "pop": PBC_FACTS["pop"], "rate": PBC_FACTS["rate"],
+        "ops": len(_pbc_companies()), "paper": PBC_FACTS["paper"],
+        "bizj": PBC_FACTS["bizj"], "tv": PBC_FACTS["tv"], "radio": PBC_FACTS["radio"],
+        "agencies": PBC_FACTS["agencies"], "note": PBC_FACTS["note"],
+    }]
     for i, city in enumerate(nat.TOP_CITIES, 1):
         lo, hi, tier, note = rate[city]
         n_ops = sum(1 for c in comps if city in nat.cities_for(c))
@@ -304,6 +347,34 @@ def category_contacts_rows():
         return ", ".join(names) if names else "Lamar / Clear Channel / OUTFRONT"
 
     rows = []
+    pbc_cats = [
+        ("Outdoor / OOH", "Metro", _pbc_ooh_contacts()),
+        ("Local & Direct", "Mixed",
+         "USPS EDDM by PBC carrier route · Valpak/Money Mailer PBC franchise · Nextdoor "
+         "geo-ads · vehicle wraps + yard signs (in-house)"),
+        ("Print", "Metro", f"{PBC_FACTS['paper']} (ad desk) · {PBC_FACTS['bizj']}"),
+        ("Broadcast", "Metro", f"{PBC_FACTS['tv']} · Spectrum Reach / Comcast Effectv zoned to PBC"),
+        ("Digital - Social Media", "Universal",
+         "Meta/TikTok/Nextdoor self-serve geo-targeted to PBC ZIPs"),
+        ("Digital - Content & Owned", "Universal",
+         "City landing pages per PBC city + interactive tools (Hard Water Map, calculators)"),
+        ("Digital - Search & Display", "Universal",
+         "Google LSA + Search geo to PBC; branded + emergency-intent terms"),
+        ("Digital - Other", "Universal",
+         "Angi/Thumbtack/Yelp service-area PBC; retargeting via Meta/Google"),
+        ("Experiential & Event", "Metro", PBC_FACTS["events"]),
+        ("Promotional & Tangible", "Universal",
+         "In-house printers / heat press / vinyl cutter — magnets, shutoff-valve tags"),
+        ("PR & Earned", "Metro",
+         f"Pitch: {PBC_FACTS['paper']} newsroom · WPBF/WPEC/WPTV news desks · water-quality data stories"),
+        ("Partnership & Channel", "Metro",
+         f"{PBC_FACTS['chamber']} · PBC realtors/inspectors/PMs & HOAs · BNI chapters"),
+        ("Emerging / Niche", "Universal",
+         "Your AI stack (AEO, chatbot, voice agent, n8n geo-triggered funnels) — the moat"),
+    ]
+    for cat, scope, contacts in pbc_cats:
+        rows.append({"rank": 0, "metro": PBC_METRO, "category": cat,
+                     "scope": scope, "contacts": contacts})
     for i, city in enumerate(nat.TOP_CITIES, 1):
         _dma, _pop, paper, bizj = METRO_MEDIA.get(city, ("-", "-", "-", "-"))
         tv, radio, agencies = METRO_BROADCAST.get(city, ("-", "-", "-"))
@@ -348,7 +419,13 @@ def quick_start_rows():
     rate = {r[1]: (r[4], r[5]) for r in nat.CITY_MARKET}
     conf_rank = {"High": 0, "Medium": 1, "Low": 2}
 
-    rows = []
+    rows = [{
+        "rank": 0, "metro": PBC_METRO, "pop": PBC_FACTS["pop"],
+        "ooh": PBC_FACTS["rate"] + "/mo",
+        "ops": _pbc_ooh_contacts(limit=3),
+        "tv": PBC_FACTS["tv"], "radio": PBC_FACTS["radio"],
+        "paper": PBC_FACTS["paper"], "agencies": PBC_FACTS["agencies"],
+    }]
     for i, city in enumerate(nat.TOP_CITIES, 1):
         lo, hi = rate[city]
         serving = [c for c in comps if city in nat.cities_for(c)]

@@ -131,9 +131,10 @@ def write_category_sheet(wb, band, out_tab, rows):
     return ws
 
 
-def write_master_sheet(wb, all_rows):
-    ws = wb.create_sheet("Master List")
-    style_title(ws, "B. SYMBOLIC - MASTER MARKETING CHANNEL REPOSITORY", len(MASTER_HDR))
+def write_master_sheet(wb, all_rows, sheet_name="Master List",
+                       title="B. SYMBOLIC - MASTER MARKETING CHANNEL REPOSITORY"):
+    ws = wb.create_sheet(sheet_name)
+    style_title(ws, title, len(MASTER_HDR))
     style_header(ws, MASTER_HDR)
     for n, (cat, tactic, cost, rel, inhouse, notes) in enumerate(all_rows, 1):
         r = n + 2
@@ -201,6 +202,8 @@ def write_metro_reference(wb):
             cell = ws.cell(r, i, v)
             cell.alignment = CENTER if i in (1, 3, 4, 5, 6, 7) else LEFT
             cell.border = BORDER
+            if str(d["metro"]).startswith("Palm Beach"):
+                cell.fill = REL_FILL["High"]
     for i, w in enumerate([6, 15, 7, 10, 16, 15, 9, 28, 26, 34, 36, 34, 48], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A3"
@@ -226,6 +229,8 @@ def write_quick_start(wb):
             cell = ws.cell(r, i, v)
             cell.alignment = CENTER if i in (1, 3, 4) else LEFT
             cell.border = BORDER
+            if str(d["metro"]).startswith("Palm Beach"):
+                cell.fill = REL_FILL["High"]
     ws.merge_cells(start_row=note_row, start_column=1, end_row=note_row, end_column=len(headers))
     c = ws.cell(note_row, 1, "UNIVERSAL FOUNDATION (every metro, before any media buy): "
                              + M.QUICK_START_FOUNDATION)
@@ -261,6 +266,47 @@ def write_metro_companies(wb):
     return ws
 
 
+_INDEX_DESC = {
+    "Legend": "How to use this workbook (cost / relevance / in-house keys)",
+    "Master List": "All tactics, every category - filter by Cost, Relevance, In-House",
+    "Quick Wins": "Auto-filtered: High relevance x $ cost x producible in-house",
+    "US Metro Reference": "42 metros + PBC: DMA, population, OOH rates, media, agencies",
+    "Metro OOH Companies": "110 scraped billboard/OOH operators by metro",
+    "Quick-Start by Metro": "Who to call in each market + universal foundation",
+    "Metro Category Contacts": "All 13 categories x every metro - filter to any city",
+    "PBC Priority Playbook": "What to actually do first in Palm Beach County",
+}
+
+
+def write_index(wb):
+    ws = wb.create_sheet("Index")
+    style_title(ws, "B. SYMBOLIC - US MARKETING MASTER REFERENCE - INDEX", 2)
+    ws.cell(2, 1, "Sheet").font = HEAD_FONT
+    ws.cell(2, 2, "What's on it").font = HEAD_FONT
+    for i in (1, 2):
+        ws.cell(2, i).fill = HEAD_FILL
+        ws.cell(2, i).border = BORDER
+    r = 3
+    for name in wb.sheetnames:
+        if name == "Index":
+            continue
+        cell = ws.cell(r, 1, name)
+        cell.hyperlink = f"#'{name}'!A1"
+        cell.font = Font(color="FF1F4E79", underline="single")
+        cell.border = BORDER
+        desc = _INDEX_DESC.get(name, "Category tactics - filter by Cost / Relevance / In-House")
+        d = ws.cell(r, 2, desc)
+        d.alignment = LEFT
+        d.border = BORDER
+        r += 1
+    ws.column_dimensions["A"].width = 30
+    ws.column_dimensions["B"].width = 70
+    ws.freeze_panes = "A3"
+    # Move Index to the front.
+    wb.move_sheet("Index", offset=-(len(wb.sheetnames) - 1))
+    return ws
+
+
 def write_category_contacts(wb):
     rows = M.category_contacts_rows()
     ws = wb.create_sheet("Metro Category Contacts")
@@ -278,6 +324,9 @@ def write_category_contacts(wb):
             cell.border = BORDER
         if d["scope"] in scope_fill:
             ws.cell(r, 4).fill = scope_fill[d["scope"]]
+        if str(d["metro"]).startswith("Palm Beach"):
+            for i in (1, 2, 3):
+                ws.cell(r, i).fill = REL_FILL["High"]
     for i, w in enumerate([6, 15, 24, 10, 110], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A3"
@@ -298,6 +347,25 @@ def main():
     for master in X.NEW_CATEGORY_ORDER:
         out_tab, band = X.NEW_CATEGORY_META[master]
         categories.append((master, band, out_tab, X.NEW_CATEGORIES[master]))
+
+    # Mark cross-category duplicates: a tactic already listed in an earlier
+    # category gets a "Cross-listed under X." note instead of silently repeating.
+    import re as _re
+    _norm = lambda s: _re.sub(r"[^a-z0-9]", "", s.lower())
+    seen_cat = {}
+    marked = []
+    for master, band, out_tab, rows in categories:
+        new_rows = []
+        for (tactic, cost, rel, ih, notes) in rows:
+            k = _norm(tactic)
+            if k in seen_cat and seen_cat[k] != master:
+                tag = f"Cross-listed under {seen_cat[k]}."
+                notes = f"{notes} {tag}".strip() if notes else tag
+            else:
+                seen_cat.setdefault(k, master)
+            new_rows.append((tactic, cost, rel, ih, notes))
+        marked.append((master, band, out_tab, new_rows))
+    categories = marked
 
     # Build output workbook.
     wb = openpyxl.Workbook()
@@ -342,6 +410,12 @@ def main():
             master_rows.append((master, tactic, cost, rel, inhouse, notes))
     write_master_sheet(wb, master_rows)
 
+    # 2b) Quick Wins — High relevance, low cost, producible in-house
+    quick_wins = [r for r in master_rows
+                  if r[3] == "High" and r[2] == "$" and r[4] == "Yes"]
+    write_master_sheet(wb, quick_wins, sheet_name="Quick Wins",
+                       title="QUICK WINS - HIGH RELEVANCE x LOW COST x IN-HOUSE")
+
     # 3) One tab per category
     for master, band, out_tab, rows in categories:
         write_category_sheet(wb, band, out_tab, rows)
@@ -353,9 +427,33 @@ def main():
         write_quick_start(wb)
         write_category_contacts(wb)
 
-    # 5) PBC Priority Playbook (preserved)
+    # 5) PBC Priority Playbook (preserved + lifecycle/measurement tiers appended)
     if "PBC Priority Playbook" in src.sheetnames:
-        copy_plain_sheet(wb, src["PBC Priority Playbook"], "PBC Priority Playbook")
+        pb = copy_plain_sheet(wb, src["PBC Priority Playbook"], "PBC Priority Playbook")
+        extra = [
+            ("7 - Lifecycle & Automation (NEW)",
+             "Missed-call text-back + speed-to-lead (<5 min)", "Sales Enablement",
+             "Contact within 5 minutes multiplies close rate; auto-text every missed call. Your n8n stack."),
+            ("7 - Lifecycle & Automation (NEW)",
+             "Review-request automation after every job", "Email/SMS",
+             "Compounds the GBP foundation - reviews are the #1 map-pack lever."),
+            ("7 - Lifecycle & Automation (NEW)",
+             "Maintenance reminders + dead-lead reactivation (email/SMS)", "Email/SMS",
+             "Annual flush/filter reminders = recurring revenue; old quotes are a goldmine."),
+            ("8 - Measure (NEW)",
+             "GA4 + CallRail + Looker Studio ROI dashboard", "Analytics",
+             "One-glance cost-per-lead by channel; kill what doesn't pay."),
+        ]
+        r = pb.max_row + 1
+        for row in extra:
+            for i, v in enumerate(row, 1):
+                cell = pb.cell(r, i, v)
+                cell.alignment = LEFT
+                cell.fill = REL_FILL["High"]
+            r += 1
+
+    # 6) Index / table of contents, placed first
+    write_index(wb)
 
     wb.save(OUT)
 

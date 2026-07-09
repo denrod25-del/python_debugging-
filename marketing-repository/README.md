@@ -7,9 +7,14 @@ US market reference: **1,116 tactics across 25 categories** (+324 new) **plus a
 
 ## Output
 
-`data/BSymbolic_Marketing_Master_Expanded.xlsx` — 30 sheets:
+`data/BSymbolic_Marketing_Master_Expanded.xlsx` — 34 sheets:
 
+- **Index** — clickable table of contents for every sheet
 - **Legend** — how to use it (updated counts + notes)
+- **Quick Wins** — auto-filtered 224 tactics: High relevance × $ cost × in-house
+- **Palm Beach County ★** — the home market leads every metro sheet (rank 0,
+  highlighted green) with its 17 verified PBC OOH operators and phone numbers
+  pulled from the Florida billboard workbook
 - **Master List** — all 1,116 tactics, filterable by Cost / Trades Relevance / In-House?
 - **25 category tabs** — one per category
 - **US Metro Reference** — the 42 largest US markets: market-size rank, Nielsen
