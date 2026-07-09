@@ -188,21 +188,54 @@ def write_metro_reference(wb):
     ws = wb.create_sheet("US Metro Reference")
     headers = ["Rank", "Metro", "State", "DMA Rank (approx)", "Metro Pop",
                "OOH Rate ($/mo)", "OOH Ops (#)", "Major Newspaper",
-               "Business Journal", "Market Notes"]
+               "Business Journal", "Big-4 TV Affiliates", "Major Radio Groups",
+               "Notable Ad Agencies", "Market Notes"]
     style_title(ws, "US METRO MARKETING REFERENCE - 42 MARKETS", len(headers))
     style_header(ws, headers)
     for n, d in enumerate(rows, 1):
         r = n + 2
         vals = [d["rank"], d["metro"], d["state"], d["dma"], d["pop"], d["rate"],
-                d["ops"], d["paper"], d["bizj"], d["note"]]
+                d["ops"], d["paper"], d["bizj"], d["tv"], d["radio"],
+                d["agencies"], d["note"]]
         for i, v in enumerate(vals, 1):
             cell = ws.cell(r, i, v)
             cell.alignment = CENTER if i in (1, 3, 4, 5, 6, 7) else LEFT
             cell.border = BORDER
-    for i, w in enumerate([6, 15, 7, 10, 16, 15, 9, 30, 30, 55], 1):
+    for i, w in enumerate([6, 15, 7, 10, 16, 15, 9, 28, 26, 34, 36, 34, 48], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:J{len(rows) + 2}"
+    ws.auto_filter.ref = f"A2:M{len(rows) + 2}"
+    return ws
+
+
+def write_quick_start(wb):
+    rows = M.quick_start_rows()
+    ws = wb.create_sheet("Quick-Start by Metro")
+    headers = ["Rank", "Metro", "Metro Pop", "OOH Rate Band",
+               "Top Local OOH Operators", "Big-4 TV", "Radio Groups",
+               "Newspaper", "Agencies to Call"]
+    style_title(ws, "US QUICK-START BY METRO - WHO TO CALL IN EACH MARKET", len(headers))
+    style_header(ws, headers)
+    # Universal-foundation note band under the header.
+    note_row = 3 + len(rows) + 1
+    for n, d in enumerate(rows, 1):
+        r = n + 2
+        vals = [d["rank"], d["metro"], d["pop"], d["ooh"], d["ops"], d["tv"],
+                d["radio"], d["paper"], d["agencies"]]
+        for i, v in enumerate(vals, 1):
+            cell = ws.cell(r, i, v)
+            cell.alignment = CENTER if i in (1, 3, 4) else LEFT
+            cell.border = BORDER
+    ws.merge_cells(start_row=note_row, start_column=1, end_row=note_row, end_column=len(headers))
+    c = ws.cell(note_row, 1, "UNIVERSAL FOUNDATION (every metro, before any media buy): "
+                             + M.QUICK_START_FOUNDATION)
+    c.font = Font(bold=True, italic=True)
+    c.alignment = LEFT
+    ws.row_dimensions[note_row].height = 30
+    for i, w in enumerate([6, 15, 14, 16, 38, 34, 36, 28, 34], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+    ws.auto_filter.ref = f"A2:I{len(rows) + 2}"
     return ws
 
 
@@ -266,9 +299,12 @@ def main():
         legend.cell(nr2, 1, "US Metros").font = Font(bold=True)
         legend.cell(nr2, 2,
                     "US Metro Reference = 42 largest markets with DMA rank, population, "
-                    "OOH rate band, # billboard operators, dominant newspaper & business "
-                    "journal. Metro OOH Companies = 110 scraped billboard/OOH operators by "
-                    "metro. Turns the tactic menu into a US market reference.")
+                    "OOH rate band, # billboard operators, newspaper, business journal, "
+                    "Big-4 TV affiliates, major radio groups & notable ad agencies. "
+                    "Metro OOH Companies = 110 scraped billboard/OOH operators by metro. "
+                    "Quick-Start by Metro = who to call in each market (top local OOH "
+                    "operators, TV/radio/paper, agencies) + the universal foundation steps. "
+                    "TV/radio/agency data is reference-level - verify before buying.")
         legend.cell(nr2, 2).alignment = LEFT
 
     # 2) Master List (aggregate of every category)
@@ -286,6 +322,7 @@ def main():
     if HAVE_METRO:
         write_metro_reference(wb)
         write_metro_companies(wb)
+        write_quick_start(wb)
 
     # 5) PBC Priority Playbook (preserved)
     if "PBC Priority Playbook" in src.sheetnames:

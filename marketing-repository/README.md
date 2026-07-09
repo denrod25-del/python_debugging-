@@ -14,10 +14,18 @@ US market reference: **1,116 tactics across 25 categories** (+324 new) **plus a
 - **25 category tabs** — one per category
 - **US Metro Reference** — the 42 largest US markets: market-size rank, Nielsen
   DMA rank (approx), metro population, OOH rate band ($/mo), # billboard operators,
-  dominant daily newspaper, city business journal, and market notes.
+  dominant daily newspaper, city business journal, **Big-4 TV affiliates, major
+  radio ownership groups, notable ad agencies**, and market notes.
 - **Metro OOH Companies** — 110 scraped billboard/OOH operators mapped to the
   metros they serve (type, HQ, website, pricing channel, confidence).
+- **Quick-Start by Metro** — one row per market: OOH rate band, top *local*
+  OOH operators (auto-selected from the scraped dataset), Big-4 TV, radio groups,
+  newspaper, and agencies to call — plus the universal foundation steps (GBP +
+  LSA + reviews → city pages/SEO → geofenced paid → local media).
 - **PBC Priority Playbook** — the original curated shortlist, preserved
+
+> TV call signs are stable; radio is listed at ownership-group level and agency
+> lists are flagship shops per market — all reference-level, verify before buying.
 
 The metro data is imported live from the sibling billboard project
 (`../florida-billboard-scraper/fbscraper/national.py`) so the OOH companies and
