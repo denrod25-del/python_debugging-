@@ -97,3 +97,14 @@ dataset, an FAQ block with JSON-LD schema, a conversion gate into the app, and
 an internal-link mesh (4,400+ links, verified zero broken). The server mounts
 it at `/rates`. Re-run with your real domain before deploying so canonicals and
 the sitemap point at production.
+
+## Acquisition engine (attract → capture → nurture → convert)
+
+- **Attract:** 301 SEO pages at `/rates` (each now links to the plan builder).
+- **Capture:** `/plan` — free Marketing Plan Generator (metro + budget →
+  budget split, 8 fast first-moves, 3 contact teasers, all from `/api/plan`,
+  deliberately ungated). "Email me this plan" posts to `/api/lead` with
+  utm_source/referrer attribution; signups carry a `source` too.
+- **Nurture:** `emails/` — 5-part welcome sequence (0/2/5/9/14 days), ESP-ready
+  markdown with placeholders that fill from `/api/plan` per lead.
+- **Measure:** admin console shows leads captured + leads by source.

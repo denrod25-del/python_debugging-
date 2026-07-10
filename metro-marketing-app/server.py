@@ -54,7 +54,15 @@ def migrate():
       id INTEGER PRIMARY KEY AUTOINCREMENT, company TEXT, metro TEXT,
       claimed_by TEXT, verified_on TEXT DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(company, metro));
+    CREATE TABLE IF NOT EXISTS leads(
+      id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, metro TEXT,
+      budget TEXT, business TEXT, source TEXT,
+      created TEXT DEFAULT CURRENT_TIMESTAMP);
     """)
+    try:  # attribution on signups (additive column; ignore if it exists)
+        conn.execute("ALTER TABLE users ADD COLUMN source TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
     conn.commit(); conn.close()
 
 
@@ -81,6 +89,15 @@ def current_user(request: Request):
 class Credentials(BaseModel):
     email: str
     password: str
+    source: str = ""       # utm/referrer attribution, set by the frontend
+
+
+class Lead(BaseModel):
+    email: str
+    metro: str = ""
+    budget: str = ""
+    business: str = ""
+    source: str = ""
 
 
 class Claim(BaseModel):
@@ -100,8 +117,9 @@ def signup(creds: Credentials, response: Response):
         conn.close()
         raise HTTPException(409, "That email already has an account - log in instead.")
     salt = secrets.token_hex(16)
-    cur = conn.execute("INSERT INTO users(email,pw_hash,salt) VALUES(?,?,?)",
-                       (email, hash_pw(creds.password, salt), salt))
+    cur = conn.execute("INSERT INTO users(email,pw_hash,salt,source) VALUES(?,?,?,?)",
+                       (email, hash_pw(creds.password, salt), salt,
+                        (creds.source or "")[:200]))
     token = secrets.token_urlsafe(32)
     conn.execute("INSERT INTO sessions(token,user_id) VALUES(?,?)", (token, cur.lastrowid))
     conn.commit(); conn.close()
@@ -259,6 +277,59 @@ def playbook(request: Request):
     return {"budgets": budgets, "calendar": calendar}
 
 
+# ------------------------------------------------- lead magnet: free plan
+BUDGET_COL = {"2500": "b25", "5000": "b50", "10000": "b100"}
+
+
+@app.get("/api/plan")
+def plan(metro: str, budget: str = "2500"):
+    """Public, ungated: a personalized starter plan for metro + budget.
+    Deliberately generous - this is the lead magnet that converts SEO traffic."""
+    col = BUDGET_COL.get(budget, "b25")
+    conn = db()
+    m = conn.execute("SELECT * FROM metros WHERE metro=?", (metro,)).fetchone()
+    if not m:
+        conn.close()
+        raise HTTPException(404, "Unknown metro.")
+    budgets = [{"channel": r["channel"], "amount": r[col], "why": r["why"]}
+               for r in conn.execute("SELECT * FROM budgets")
+               if r[col] and r[col] > 0]
+    wins = [dict(r) for r in conn.execute(
+        "SELECT cat,tactic,time,note FROM tactics "
+        "WHERE rel='High' AND cost='$' AND ih='Yes' AND time='Fast' LIMIT 8")]
+    free_contacts = [dict(r) for r in conn.execute(
+        "SELECT category,scope,contacts FROM contacts WHERE metro=? AND category IN "
+        "('Outdoor / OOH','Print','Local & Direct')", (metro,))]
+    conn.close()
+    return {
+        "metro": m["metro"], "state": m["state"], "pop": m["pop"],
+        "dma": m["dma"], "ooh_rate": m["ooh_rate"], "paper": m["paper"],
+        "budget_monthly": int(budget), "allocation": budgets,
+        "first_moves": wins, "local_contacts": free_contacts,
+    }
+
+
+@app.post("/api/lead")
+def capture_lead(body: Lead):
+    if "@" not in body.email:
+        raise HTTPException(400, "A valid email is required.")
+    conn = db()
+    conn.execute("INSERT INTO leads(email,metro,budget,business,source) VALUES(?,?,?,?,?)",
+                 (body.email.strip().lower(), body.metro, body.budget,
+                  body.business[:120], (body.source or "")[:200]))
+    conn.commit(); conn.close()
+    # In production this also enrolls the address in the welcome sequence
+    # (emails/ folder) via your ESP. Dev mode just logs it.
+    print(f"[lead] {body.email} metro={body.metro} budget={body.budget} src={body.source}")
+    return {"ok": True, "note": "Plan saved - check your inbox. (Demo: email delivery "
+                                "activates once SMTP/ESP is configured.)"}
+
+
+@app.get("/plan")
+def plan_page():
+    return FileResponse(os.path.join(HERE, "web", "plan.html"))
+
+
 # ------------------------------------------------------------ password reset
 class ResetRequest(BaseModel):
     email: str
@@ -373,11 +444,16 @@ def admin_overview(request: Request):
     pro = conn.execute("SELECT COUNT(*) n FROM users WHERE plan='pro'").fetchone()["n"]
     pending = conn.execute(
         "SELECT COUNT(*) n FROM claims WHERE status='pending'").fetchone()["n"]
+    leads = conn.execute("SELECT COUNT(*) n FROM leads").fetchone()["n"]
+    by_source = [dict(r) for r in conn.execute(
+        "SELECT COALESCE(NULLIF(source,''),'direct') source, COUNT(*) n "
+        "FROM leads GROUP BY 1 ORDER BY n DESC LIMIT 8")]
     fresh = [dict(r) for r in conn.execute(
         "SELECT last_verified, COUNT(*) rows_ FROM contacts GROUP BY last_verified")]
     conn.close()
     return {"users": users, "pro": pro, "mrr": pro * 49,
-            "claims_pending": pending, "freshness": fresh}
+            "claims_pending": pending, "leads": leads,
+            "leads_by_source": by_source, "freshness": fresh}
 
 
 @app.get("/api/admin/claims")

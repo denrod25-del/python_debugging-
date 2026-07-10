@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import re
+from urllib.parse import quote
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "seo")
@@ -203,6 +204,9 @@ def build_channel_page(base, key, metro, contacts_by_cat, all_metros):
   <p>Every provider for {esc(cityst)} across 13 channel categories - with verified dates,
   rate bands, and a 1,100-tactic playbook.</p>
   <a href="/">Create a free MetroStack account &rarr;</a>
+  <p style="font-size:.85rem;margin:.7rem 0 0"><a style="background:none;color:var(--brand);padding:0"
+     href="/plan?metro={quote(metro['metro'])}&amp;utm_source=rates">
+     or build a free 1-page marketing plan for {esc(city)} &rarr;</a></p>
 </div>
 <div class="panel faq">
   <h2>Frequently asked</h2>
