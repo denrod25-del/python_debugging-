@@ -83,3 +83,17 @@ dist/index.html  generated static demo, deployable anywhere
   Postgres when concurrent writes matter
 - Quarterly re-verification pipeline + user-reported quote benchmarks (the moat —
   the admin freshness table already flags what needs re-verifying)
+
+## Programmatic SEO layer (The Media Ant playbook)
+
+```bash
+python3 build_seo_pages.py --base https://yourdomain.com
+```
+
+Generates `seo/` — **301 landing pages** (43 metros × 7 channels: billboards,
+TV, radio, newspaper, event sponsorship, local PR, partnerships) plus an index,
+`sitemap.xml`, and `robots.txt`. Each page has real rate/contact data from the
+dataset, an FAQ block with JSON-LD schema, a conversion gate into the app, and
+an internal-link mesh (4,400+ links, verified zero broken). The server mounts
+it at `/rates`. Re-run with your real domain before deploying so canonicals and
+the sitemap point at production.

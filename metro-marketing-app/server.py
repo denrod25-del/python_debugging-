@@ -446,6 +446,13 @@ def index():
     return FileResponse(os.path.join(HERE, "web", "index.html"))
 
 
+# Programmatic SEO pages (build_seo_pages.py) served at /rates
+_SEO_DIR = os.path.join(HERE, "seo")
+if os.path.isdir(_SEO_DIR):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/rates", StaticFiles(directory=_SEO_DIR, html=True), name="rates")
+
+
 if __name__ == "__main__":
     import uvicorn
     if not os.path.exists(DB):
