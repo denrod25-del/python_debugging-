@@ -67,7 +67,11 @@ section[hidden]{display:none}
 .home-tag{display:inline-block;font-size:.72rem;font-weight:700;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-left:.5rem}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.8rem}
 .ccard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;
-  padding:.9rem 1rem .6rem;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  padding:.9rem 1rem .6rem;box-shadow:var(--shadow);display:flex;flex-direction:column;
+  width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ccard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ccard .openhint{margin-top:auto;padding-top:.4rem;font-size:.76rem;color:var(--brand);font-weight:700}
+.ccard.locked .openhint{color:var(--accent)}
 .ccard h4{margin:0 0 .35rem;font-family:var(--display);font-size:.95rem;letter-spacing:.03em}
 .ccard .scope{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   padding:.15rem .5rem;border-radius:999px;float:right}
@@ -302,6 +306,18 @@ contacts are reference-level, confirm before buying</footer>
   </form>
 </dialog>
 
+<!-- category detail modal -->
+<dialog id="category-modal" style="max-width:640px">
+  <div style="display:flex;align-items:start;justify-content:space-between;gap:1rem">
+    <div>
+      <h3 id="cat-title" style="margin-bottom:.1rem">Category</h3>
+      <p id="cat-sub" style="margin:0;color:var(--muted);font-size:.88rem"></p>
+    </div>
+    <button type="button" class="cta-ghost" id="cat-close" style="width:auto;padding:.4rem .8rem">Close</button>
+  </div>
+  <div id="cat-body" style="margin-top:.8rem"></div>
+</dialog>
+
 <!-- claim modal -->
 <dialog id="claim-modal">
   <h3>Claim your listing</h3>
@@ -324,7 +340,7 @@ contacts are reference-level, confirm before buying</footer>
 <script>
 const $ = s => document.querySelector(s);
 let ME = {email:null, plan:'free'};
-const authModal = $('#auth-modal'), claimModal = $('#claim-modal');
+const authModal = $('#auth-modal'), claimModal = $('#claim-modal'), categoryModal = $('#category-modal');
 let authMode = 'login';
 
 async function api(path, opts={}){
@@ -490,17 +506,62 @@ async function renderMarket(){
   ]);
   $('#market-cards').innerHTML = data.categories.map(c=>{
     const badges = c.contacts ? claimed.filter(co=>c.contacts.includes(co)) : [];
+    const catArg = esc(c.category).replace(/'/g,"&#39;");
     return `
-    <div class="ccard${c.locked?' locked':''}">
+    <button type="button" class="ccard${c.locked?' locked':''}"
+      onclick="openCategory('${catArg}', ${c.locked})">
       <span class="scope ${c.scope}">${c.scope}</span>
       <h4>${esc(c.category)}</h4>
       <p>${c.locked ? 'Locked — the who-to-call detail for this category is a Pro feature.' : esc(c.contacts)}</p>
-      ${c.locked ? '<div class="locktag"><button onclick="upgrade()">Unlock with Pro</button></div>'
+      ${c.locked ? '<span class="openhint">Click to unlock with Pro &rarr;</span>'
                  : `<span class="verified">✓ verified ${esc(c.last_verified)}${
-                    badges.length ? ' · <b>'+badges.map(esc).join(', ')+' — claimed ✓</b>' : ''}</span>`}
-    </div>`;
+                    badges.length ? ' · <b>'+badges.map(esc).join(', ')+' — claimed ✓</b>' : ''}</span>
+                    <span class="openhint">Click for tactics &amp; quick wins in this category &rarr;</span>`}
+    </button>`;
   }).join('');
 }
+
+/* ---------- category detail modal ---------- */
+async function openCategory(category, locked){
+  if(locked){ upgrade(); return; }
+  const metro = $('#market-select').value;
+  $('#cat-title').textContent = category;
+  $('#cat-sub').textContent = 'in ' + metro;
+  $('#cat-body').innerHTML = '<p class="count">Loading…</p>';
+  categoryModal.showModal();
+  const [contactData, tacticData, winData] = await Promise.all([
+    api('/api/contacts?metro='+encodeURIComponent(metro)),
+    api('/api/tactics?cat='+encodeURIComponent(category)),
+    api('/api/quickwins'),
+  ]);
+  const contact = contactData.categories.find(c=>c.category===category);
+  const wins = (winData.rows||[]).filter(t=>t.cat===category);
+  const rows = tacticData.rows||[];
+  $('#cat-body').innerHTML = `
+    <div class="panel">
+      <h2>Who to contact</h2>
+      <p>${contact ? esc(contact.contacts) : 'No contacts on file for this category yet.'}</p>
+      ${contact && contact.last_verified ? `<span class="verified">✓ verified ${esc(contact.last_verified)}</span>` : ''}
+    </div>
+    ${wins.length ? `<div class="panel">
+      <h2>Quick wins in this category</h2>
+      <ol>${wins.map(w=>`<li><b>${esc(w.tactic)}</b><br><span class="t">${esc(w.note)}</span></li>`).join('')}</ol>
+    </div>` : ''}
+    <div class="panel">
+      <h2>All tactics in this category ${tacticData.capped?`(showing ${rows.length} of ${tacticData.total})`:`(${rows.length})`}</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Tactic</th><th>Cost</th><th>Relevance</th><th>Speed</th><th>DIY</th><th>Note</th></tr></thead>
+        <tbody>${rows.map(t=>`<tr>
+          <td><b>${esc(t.tactic)}</b></td><td>${t.cost}</td>
+          <td><span class="pill ${t.rel}">${t.rel}</span></td>
+          <td><span class="pill ${t.time}">${t.time}</span></td>
+          <td>${t.ih}</td><td>${esc(t.note)}</td></tr>`).join('')}</tbody>
+      </table></div>
+      ${tacticData.capped ? `<div class="gatebar"><p>Free plan shows 25 tactics per category search.</p>
+        <button onclick="upgrade()">Start Pro — $49/mo</button></div>` : ''}
+    </div>`;
+}
+$('#cat-close').addEventListener('click',()=>categoryModal.close());
 
 const tIds = ['t-search','t-cat','t-cost','t-rel','t-time'];
 tIds.forEach(id=>$('#'+id).addEventListener('input',renderTactics));
