@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export the marketing master workbook into JSON for the MetroStack prototype.
+"""Export the marketing master workbook into JSON for the AdAtlas prototype.
 
 Reads ../marketing-repository/data/BSymbolic_Marketing_Master_Expanded.xlsx
 (the workbook is the database) and writes data.json with:

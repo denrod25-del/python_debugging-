@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MetroStack API server (FastAPI + SQLite).
+"""AdAtlas API server (FastAPI + SQLite).
 
 Production-shaped backend for the prototype:
   * auth: signup / login / logout with PBKDF2 password hashing + session tokens
@@ -8,7 +8,7 @@ Production-shaped backend for the prototype:
       - pro   -> everything
     /api/subscribe uses Stripe Checkout when STRIPE_SECRET_KEY is set,
     otherwise runs in mock mode (flips the plan directly) for local demo.
-  * data: served from metrostack.db with last_verified on every contact row
+  * data: served from adatlas.db with last_verified on every contact row
   * vendor side: POST /api/claim files a listing claim (pending review)
 
 Run:  python3 server.py            (http://localhost:8000)
@@ -25,7 +25,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(HERE, "metrostack.db")
+DB = os.path.join(HERE, "adatlas.db")
 STRIPE_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")          # Pro $49/mo price
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "dev-admin")  # set a real one in prod
@@ -35,7 +35,7 @@ FREE_CATS = {"Outdoor / OOH", "Print", "Digital - Search & Display",
 FREE_TACTIC_CAP = 25
 FREE_WINS_CAP = 10
 
-app = FastAPI(title="MetroStack API")
+app = FastAPI(title="AdAtlas API")
 
 
 def db():
@@ -534,5 +534,5 @@ if __name__ == "__main__":
     if not os.path.exists(DB):
         raise SystemExit("Run init_db.py first (needs data.json from export_data.py).")
     mode = "Stripe LIVE" if (STRIPE_KEY and PRICE_ID) else "mock subscription mode"
-    print(f"MetroStack API on http://localhost:8000  ({mode})")
+    print(f"AdAtlas API on http://localhost:8000  ({mode})")
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")

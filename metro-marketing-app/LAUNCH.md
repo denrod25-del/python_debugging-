@@ -1,4 +1,4 @@
-# MetroStack — from this repo to launched
+# AdAtlas — from this repo to launched
 
 Everything in this guide assumes the repo as it stands: the code is done and
 tested; every step below is accounts, keys, and configuration. Budget roughly
@@ -8,7 +8,7 @@ tested; every step below is accounts, keys, and configuration. Budget roughly
 
 ## Step 1 — Name & domain (~$12/yr, 30 min)
 
-"MetroStack" is a working title — check the trademark/domain landscape before
+"AdAtlas" is a working title — check the trademark/domain landscape before
 printing shirts. Buy the domain at any registrar. You'll need it in Steps 3–5.
 
 ## Step 2 — Host the app (~$7–25/mo, 1–2 hrs)
@@ -24,7 +24,7 @@ Pre-deploy, run locally and commit the artifacts the server needs:
 
 ```bash
 python3 export_data.py                                # workbook -> data.json
-python3 init_db.py                                    # -> metrostack.db
+python3 init_db.py                                    # -> adatlas.db
 python3 build_seo_pages.py --base https://YOURDOMAIN  # -> seo/ with real canonicals
 ```
 
@@ -42,7 +42,7 @@ Set these environment variables on the host:
 |---|---|
 | `ADMIN_TOKEN` | A long random string — protects `/admin` |
 | `STRIPE_SECRET_KEY` | From dashboard.stripe.com → Developers → API keys |
-| `STRIPE_PRICE_ID` | Create a Product "MetroStack Pro" @ $49/mo recurring; copy its price id |
+| `STRIPE_PRICE_ID` | Create a Product "AdAtlas Pro" @ $49/mo recurring; copy its price id |
 | `STRIPE_WEBHOOK_SECRET` | Add endpoint `https://YOURDOMAIN/api/stripe-webhook` in Stripe → Webhooks; **then add signature verification** in `stripe_webhook()` (the TODO is marked) |
 | `SMTP_HOST` (+ creds) | Any provider (Resend, Postmark, SES). Wire `send_reset_email()` — the function is the single integration point |
 

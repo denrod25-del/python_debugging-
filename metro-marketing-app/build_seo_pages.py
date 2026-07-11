@@ -6,7 +6,7 @@ rank for long-tail searches ("billboard advertising tampa"), tease the data,
 and convert to the app. Reads data.json; writes seo/ (301 pages + index +
 sitemap.xml + robots.txt). Server mounts this at /rates.
 
-    python3 build_seo_pages.py [--base https://metrostack.example]
+    python3 build_seo_pages.py [--base https://adatlas.example]
 """
 from __future__ import annotations
 
@@ -103,14 +103,14 @@ def page_shell(title, desc, canonical, body, jsonld=""):
 </head>
 <body>
 <header>
-  <a class="wordmark" href="index.html"><span>&#9670;</span>MetroStack</a>
+  <a class="wordmark" href="index.html"><span>&#9670;</span>AdAtlas</a>
   <a class="cta" href="/">Open the app &rarr;</a>
 </header>
 <main>
 {body}
 </main>
 <footer>Rates are market reference bands compiled from public sources and operator data;
-always confirm a live quote. &copy; MetroStack.</footer>
+always confirm a live quote. &copy; AdAtlas.</footer>
 </body>
 </html>"""
 
@@ -130,7 +130,7 @@ def build_channel_page(base, key, metro, contacts_by_cat, all_metros):
     cityst = f"{city}, {st}" if st else city
     slug = f"{slug_prefix}-{slugify(city)}-{slugify(st) if st else 'us'}.html"
     h1 = h1_t.format(city=cityst)
-    title = f"{h1} — Rates, Contacts & Operators (2026) | MetroStack"
+    title = f"{h1} — Rates, Contacts & Operators (2026) | AdAtlas"
 
     # channel-specific content
     if key == "radio":
@@ -165,7 +165,7 @@ def build_channel_page(base, key, metro, contacts_by_cat, all_metros):
     qas = [
         (f"How much does {h1.split(' in ')[0].lower()} cost in {city}?", rate_line),
         (f"Who sells {h1.split(' in ')[0].lower()} in {city}?",
-         f"{teaser_short} The full who-to-call card (all providers, verified dates) is in the MetroStack app."),
+         f"{teaser_short} The full who-to-call card (all providers, verified dates) is in the AdAtlas app."),
         (f"What's the fastest way to start marketing in {city}?",
          "Foundation first: Google Business Profile + Local Services Ads + a review engine, "
          "then city landing pages, then paid local media like this channel."),
@@ -203,7 +203,7 @@ def build_channel_page(base, key, metro, contacts_by_cat, all_metros):
   <h2>The full contact card is free to unlock</h2>
   <p>Every provider for {esc(cityst)} across 13 channel categories - with verified dates,
   rate bands, and a 1,100-tactic playbook.</p>
-  <a href="/">Create a free MetroStack account &rarr;</a>
+  <a href="/">Create a free AdAtlas account &rarr;</a>
   <p style="font-size:.85rem;margin:.7rem 0 0"><a style="background:none;color:var(--brand);padding:0"
      href="/plan?metro={quote(metro['metro'])}&amp;utm_source=rates">
      or build a free 1-page marketing plan for {esc(city)} &rarr;</a></p>
@@ -225,7 +225,7 @@ def build_channel_page(base, key, metro, contacts_by_cat, all_metros):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="https://metrostack.example")
+    ap.add_argument("--base", default="https://adatlas.example")
     args = ap.parse_args()
     base = args.base.rstrip("/")
 
@@ -263,10 +263,10 @@ def main():
     idx_body = f"""
 <h1>Local Advertising Rates &amp; Contacts by Metro</h1>
 <p class="lede">Free reference pages for {len(metros)} US markets x {len(CHANNELS)} channels:
-what it costs, who sells it, and how to start. Built from the MetroStack dataset.</p>
+what it costs, who sells it, and how to start. Built from the AdAtlas dataset.</p>
 {''.join(groups)}"""
     with open(os.path.join(OUT, "index.html"), "w") as fh:
-        fh.write(page_shell("Local Advertising Rates & Contacts by Metro | MetroStack",
+        fh.write(page_shell("Local Advertising Rates & Contacts by Metro | AdAtlas",
                             f"Advertising rates and media contacts for {len(metros)} US metros "
                             f"across billboards, TV, radio, print, events, PR and partnerships.",
                             f"{base}/rates/", idx_body))

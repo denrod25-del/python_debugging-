@@ -1,4 +1,4 @@
-# MetroStack — prototype + production-shaped backend
+# AdAtlas — prototype + production-shaped backend
 
 Subscription "one-stop shop" for local marketing intelligence: who to call in
 each major US metro (billboard operators + rate bands, TV/radio ad desks,
@@ -13,7 +13,7 @@ Two ways to run it:
 ```bash
 pip install -r requirements.txt
 python3 export_data.py   # workbook -> data.json
-python3 init_db.py       # data.json -> metrostack.db (SQLite, last_verified on every row)
+python3 init_db.py       # data.json -> adatlas.db (SQLite, last_verified on every row)
 python3 server.py        # http://localhost:8000
 ```
 
@@ -65,7 +65,7 @@ Open `dist/index.html` anywhere — same UI with a localStorage-mock subscriptio
 
 ```
 export_data.py   reads the Excel master -> data.json
-init_db.py       data.json -> metrostack.db (adds last_verified, users, claims)
+init_db.py       data.json -> adatlas.db (adds last_verified, users, claims)
 server.py        FastAPI backend: auth, gated data API, subscribe, claims
 web/index.html   API-driven frontend (auth modal, claim modal, verified chips)
 template.html    static-demo variant (data injected at /*__DATA__*/)

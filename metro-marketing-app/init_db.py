@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build metrostack.db (SQLite) from data.json.
+"""Build adatlas.db (SQLite) from data.json.
 
 Adds the production fields the static prototype lacked:
   * last_verified / verified_by on every contact + metro row (the trust signal)
@@ -10,9 +10,9 @@ import os
 import sqlite3
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(HERE, "metrostack.db")
+DB = os.path.join(HERE, "adatlas.db")
 DATA_VERIFIED = "2026-07-08"          # when the dataset was compiled/verified
-VERIFIED_BY = "metrostack-research"
+VERIFIED_BY = "adatlas-research"
 
 
 def main():
@@ -75,7 +75,7 @@ def main():
         n = c.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         print(f"  {table}: {n}")
     db.close()
-    print(f"metrostack.db written")
+    print(f"adatlas.db written")
 
 
 if __name__ == "__main__":

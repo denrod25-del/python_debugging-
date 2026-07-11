@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MetroStack — Local marketing intelligence</title>
+<title>AdAtlas — Local marketing intelligence</title>
 <style>
 :root{
   --ground:#F1F4F3; --card:#FFFFFF; --ink:#16292B; --muted:#5C6F6D;
@@ -146,7 +146,7 @@ footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-ali
 </style>
 
 <nav>
-  <span class="wordmark"><span class="pin">◆</span>MetroStack</span>
+  <span class="wordmark"><span class="pin">◆</span>AdAtlas</span>
   <button class="tab" data-view="home" aria-current="true">Home</button>
   <button class="tab" data-view="market">Markets</button>
   <button class="tab" data-view="tactics">Tactics</button>
@@ -161,7 +161,7 @@ footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-ali
 <section id="view-home">
   <div class="hero">
     <h1>Every channel.<br>Every metro.<br><em>One playbook.</em></h1>
-    <p class="lede">MetroStack tells a local business exactly who to call in its market —
+    <p class="lede">AdAtlas tells a local business exactly who to call in its market —
       billboard operators with rate bands, TV and radio ad desks, newspapers, event
       sponsorships, chambers — plus 1,100+ tactics rated by cost, relevance, and
       time-to-impact. The research a $5,000/month agency does, as a subscription.</p>
@@ -242,7 +242,7 @@ footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-ali
 <!-- ================= PRICING ================= -->
 <section id="view-pricing" hidden>
   <h2 class="viewtitle">Pricing</h2>
-  <p class="viewsub">Agencies charge $2,000–$5,000/month for this research. MetroStack is a subscription.</p>
+  <p class="viewsub">Agencies charge $2,000–$5,000/month for this research. AdAtlas is a subscription.</p>
   <div class="plans">
     <div class="plan">
       <h3>Free</h3><div class="price">$0<small>/mo</small></div>
@@ -278,7 +278,7 @@ footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-ali
   <p class="proto-note">Prototype — the subscribe buttons simulate an account; no payment is wired up.</p>
 </section>
 
-<footer>MetroStack prototype · data compiled 2026 from public sources + verified operator lists ·
+<footer>AdAtlas prototype · data compiled 2026 from public sources + verified operator lists ·
 contacts are reference-level, confirm before buying</footer>
 </main>
 
@@ -287,11 +287,11 @@ contacts are reference-level, confirm before buying</footer>
 const DATA = JSON.parse(document.getElementById('data').textContent);
 const $ = s => document.querySelector(s);
 const FREE_CATS = ["Outdoor / OOH","Print","Digital - Search & Display","Local & Direct","Partnership & Channel"];
-let pro = localStorage.getItem('metrostack-pro') === '1';
+let pro = localStorage.getItem('adatlas-pro') === '1';
 
-function upgrade(){ pro = true; localStorage.setItem('metrostack-pro','1'); refresh();
+function upgrade(){ pro = true; localStorage.setItem('adatlas-pro','1'); refresh();
   show('market'); }
-function downgrade(){ pro = false; localStorage.removeItem('metrostack-pro'); refresh(); }
+function downgrade(){ pro = false; localStorage.removeItem('adatlas-pro'); refresh(); }
 function refresh(){
   const f = $('#proflag');
   f.textContent = pro ? 'PRO PLAN' : 'FREE PLAN';
