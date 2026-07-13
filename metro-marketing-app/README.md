@@ -108,3 +108,30 @@ the sitemap point at production.
 - **Nurture:** `emails/` — 5-part welcome sequence (0/2/5/9/14 days), ESP-ready
   markdown with placeholders that fill from `/api/plan` per lead.
 - **Measure:** admin console shows leads captured + leads by source.
+
+## Quarterly re-verification (Apify / Firecrawl)
+
+`verify_contacts.py` is the automation behind LAUNCH.md Step 6. It checks
+stale `contacts` rows against a live source and writes findings to a
+**review queue** — nothing is auto-overwritten. Approve/reject each finding
+at `/admin` under "Re-verification queue"; approving bumps `last_verified`.
+
+```bash
+# 1. Sanity-check parsing/DB logic with zero network calls:
+python3 verify_contacts.py --provider apify --dry-run --limit 5
+
+# 2. Real run (needs open internet - see note below):
+export APIFY_API_KEY=...       # or FIRECRAWL_API_KEY, never on the CLI
+python3 verify_contacts.py --provider apify --limit 20 --metro Tampa
+```
+
+**Note:** this sandbox's network policy blocks `api.apify.com` and
+`api.firecrawl.dev` outright, so the live-call path is written but untested
+from here — confirmed via a local mock server that the HTTP/parsing/DB-write
+path is correct end-to-end. Run real verification from your own machine or
+your deployed host (both have normal outbound internet).
+
+**Security:** never paste API keys into chat or hardcode them in source.
+Set `APIFY_API_KEY` / `FIRECRAWL_API_KEY` as environment variables (local
+`.env`, or your host's secret manager) — both are already `.gitignore`d.
+If a key was ever pasted somewhere it shouldn't have been, rotate it.

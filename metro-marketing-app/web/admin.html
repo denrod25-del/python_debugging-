@@ -80,6 +80,15 @@ td{padding:.5rem .7rem;border-top:1px solid var(--line);vertical-align:top}
     </table></div>
     <p class="muted">Re-verification target: no row older than one quarter. Rows aging past
     90 days should enter the verification queue.</p>
+
+    <h2>Re-verification queue <span class="badge" id="verify-count" style="margin-left:.4rem"></span></h2>
+    <p class="muted">Findings from <code>verify_contacts.py</code> (run separately - see its
+    docstring). Nothing here touches live data until you approve it.</p>
+    <div class="wrap"><table>
+      <thead><tr><th>Metro / Category</th><th>Provider</th><th>Confidence</th>
+        <th>Current contacts</th><th>New finding</th><th>Action</th></tr></thead>
+      <tbody id="verify-queue"></tbody>
+    </table></div>
   </div>
 </main>
 <script>
@@ -103,7 +112,9 @@ async function load(){
       <div class="stat"><b>$${o.mrr.toLocaleString()}</b><span>MRR (at $49)</span></div>
       <div class="stat"><b>${o.leads ?? 0}</b><span>Leads captured</span></div>
       <div class="stat"><b>${o.claims_pending}</b><span>Claims pending</span></div>
+      <div class="stat"><b>${o.verify_pending ?? 0}</b><span>Re-verify pending</span></div>
       <div class="stat" style="grid-column:1/-1"><b style="font-size:.95rem">${srcs}</b><span>Leads by source</span></div>`;
+    $('#verify-count').textContent = (o.verify_pending ?? 0) + ' pending';
     const claims = await api('/api/admin/claims');
     $('#claims').innerHTML = claims.map(c=>`<tr>
       <td><b>${esc(c.company)}</b></td><td>${esc(c.metro)}</td><td>${esc(c.email)}</td>
@@ -120,11 +131,27 @@ async function load(){
       return `<tr><td>${esc(f.last_verified)}</td><td>${f.rows_}</td>
         <td><span class="pill ${ok?'approved':'rejected'}">${ok?'fresh':'re-verify ('+days+'d old)'}</span></td></tr>`;
     }).join('');
+    const queue = await api('/api/admin/verification-queue');
+    $('#verify-queue').innerHTML = queue.map(v=>`<tr>
+      <td><b>${esc(v.metro)}</b><br><span class="muted">${esc(v.category)}</span></td>
+      <td>${esc(v.provider)}</td>
+      <td><span class="pill ${v.confidence==='high'?'approved':v.confidence==='low'?'rejected':'pending'}">${esc(v.confidence)}</span></td>
+      <td style="max-width:220px">${esc(v.old_contacts).slice(0,140)}${v.old_contacts.length>140?'…':''}</td>
+      <td style="max-width:220px"><code style="font-size:.76rem">${esc(v.finding).slice(0,200)}${v.finding.length>200?'…':''}</code></td>
+      <td>
+        <button class="act ok" onclick="verifyAct(${v.id},'approve')">Approve</button>
+        <button class="act no" onclick="verifyAct(${v.id},'reject')">Reject</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6">No pending findings. Run verify_contacts.py to populate this queue.</td></tr>';
     $('#console').hidden = false;
   }catch(e){ $('#err').textContent = e.message; $('#console').hidden = true; }
 }
 async function act(id, action){
   try{ await api('/api/admin/claims/'+id,{method:'POST',body:JSON.stringify({action})}); load(); }
+  catch(e){ $('#err').textContent = e.message; }
+}
+async function verifyAct(id, action){
+  try{ await api('/api/admin/verification-queue/'+id,{method:'POST',body:JSON.stringify({action})}); load(); }
   catch(e){ $('#err').textContent = e.message; }
 }
 </script>

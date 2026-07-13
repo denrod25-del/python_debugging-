@@ -72,9 +72,10 @@ You already own the perfect beachhead: **Palm Beach County trades**.
 
 ## Step 6 — Spin the flywheel (ongoing, this is the moat)
 
-- **Quarterly re-verification:** the `/admin` freshness table flags rows >90
-  days old. Each quarter, re-confirm contacts (calls, sites, AI-assisted
-  checks) and bump `last_verified`. This is the product.
+- **Quarterly re-verification:** run `verify_contacts.py` (Apify or
+  Firecrawl - set the API key as an env var, never on the command line).
+  It writes findings to a review queue at `/admin` - approve/reject each
+  one; approving bumps `last_verified`. Nothing auto-overwrites contacts.
 - **Capture quote data:** add a "What did they quote you?" prompt after a user
   views a contact card. Real quote benchmarks are the dataset nobody — not
   SRDS, not AdMall — has. That's what an acquirer eventually buys.

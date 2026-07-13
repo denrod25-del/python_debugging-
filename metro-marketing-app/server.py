@@ -58,6 +58,13 @@ def migrate():
       id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, metro TEXT,
       budget TEXT, business TEXT, source TEXT,
       created TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS verification_queue(
+      id INTEGER PRIMARY KEY AUTOINCREMENT, contact_id INTEGER,
+      metro TEXT, category TEXT, provider TEXT,
+      old_contacts TEXT, finding TEXT, confidence TEXT,
+      status TEXT DEFAULT 'pending',
+      created TEXT DEFAULT CURRENT_TIMESTAMP,
+      reviewed TEXT);
     """)
     try:  # attribution on signups (additive column; ignore if it exists)
         conn.execute("ALTER TABLE users ADD COLUMN source TEXT DEFAULT ''")
@@ -444,6 +451,8 @@ def admin_overview(request: Request):
     pro = conn.execute("SELECT COUNT(*) n FROM users WHERE plan='pro'").fetchone()["n"]
     pending = conn.execute(
         "SELECT COUNT(*) n FROM claims WHERE status='pending'").fetchone()["n"]
+    verify_pending = conn.execute(
+        "SELECT COUNT(*) n FROM verification_queue WHERE status='pending'").fetchone()["n"]
     leads = conn.execute("SELECT COUNT(*) n FROM leads").fetchone()["n"]
     by_source = [dict(r) for r in conn.execute(
         "SELECT COALESCE(NULLIF(source,''),'direct') source, COUNT(*) n "
@@ -452,7 +461,7 @@ def admin_overview(request: Request):
         "SELECT last_verified, COUNT(*) rows_ FROM contacts GROUP BY last_verified")]
     conn.close()
     return {"users": users, "pro": pro, "mrr": pro * 49,
-            "claims_pending": pending, "leads": leads,
+            "claims_pending": pending, "verify_pending": verify_pending, "leads": leads,
             "leads_by_source": by_source, "freshness": fresh}
 
 
@@ -486,6 +495,52 @@ def admin_claim_action(claim_id: int, body: ClaimAction, request: Request):
                      "VALUES(?,?,?)", (row["company"], row["metro"], row["email"]))
     conn.commit(); conn.close()
     return {"ok": True, "status": status}
+
+
+# ------------------------------------------------------- re-verification queue
+# Populated by verify_contacts.py (run outside this sandbox - see that file's
+# docstring). Findings sit here for a human to approve/reject in /admin;
+# nothing here ever auto-overwrites a contact row unattended.
+@app.get("/api/admin/verification-queue")
+def admin_verification_queue(request: Request, status: str = "pending"):
+    require_admin(request)
+    conn = db()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT * FROM verification_queue WHERE status=? ORDER BY id DESC", (status,))]
+    conn.close()
+    return rows
+
+
+class VerificationAction(BaseModel):
+    action: str  # approve | reject
+    updated_contacts: str = ""  # optional: admin-edited replacement text
+
+
+@app.post("/api/admin/verification-queue/{item_id}")
+def admin_verification_action(item_id: int, body: VerificationAction, request: Request):
+    require_admin(request)
+    if body.action not in ("approve", "reject"):
+        raise HTTPException(400, "action must be approve or reject")
+    conn = db()
+    row = conn.execute("SELECT * FROM verification_queue WHERE id=?", (item_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(404, "No such queue item.")
+    import datetime
+    today = datetime.date.today().isoformat()
+    if body.action == "approve":
+        new_text = body.updated_contacts.strip() or row["old_contacts"]
+        if row["contact_id"]:
+            conn.execute(
+                "UPDATE contacts SET contacts=?, last_verified=?, verified_by=? WHERE id=?",
+                (new_text, today, f"re-verified via {row['provider']}", row["contact_id"]))
+        conn.execute("UPDATE verification_queue SET status='approved', reviewed=? WHERE id=?",
+                     (today, item_id))
+    else:
+        conn.execute("UPDATE verification_queue SET status='rejected', reviewed=? WHERE id=?",
+                     (today, item_id))
+    conn.commit(); conn.close()
+    return {"ok": True, "status": "approved" if body.action == "approve" else "rejected"}
 
 
 @app.get("/admin")
