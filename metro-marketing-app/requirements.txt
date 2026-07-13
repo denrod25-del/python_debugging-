@@ -1,0 +1,3 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+# stripe>=9  # uncomment when wiring live payments

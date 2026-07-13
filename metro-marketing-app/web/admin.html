@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdAtlas Admin</title>
+<style>
+:root{
+  --ground:#F1F4F3; --card:#FFFFFF; --ink:#16292B; --muted:#5C6F6D;
+  --brand:#1E5E58; --brand-soft:#E1ECEA; --accent:#D9631E;
+  --line:#D7E0DE; --good:#2E7D4F; --good-soft:#E0F0E6; --bad:#B3352C; --bad-soft:#F7E2E0;
+  --display:Futura,"Avenir Next","Century Gothic","Trebuchet MS",sans-serif;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --shadow:0 1px 2px rgba(22,41,43,.06),0 6px 18px rgba(22,41,43,.06);
+}
+@media (prefers-color-scheme: dark){:root{
+  --ground:#0E1B1C; --card:#152627; --ink:#E5ECEA; --muted:#94A8A5;
+  --brand:#53ADA4; --brand-soft:#1C3B39; --accent:#E8834A;
+  --line:#274241; --good:#5DBD87; --good-soft:#14301F; --bad:#E07B72; --bad-soft:#3A1A17;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--ui);line-height:1.5}
+header{display:flex;align-items:center;gap:.6rem;padding:.7rem 1.2rem;border-bottom:1px solid var(--line)}
+.wordmark{font-family:var(--display);font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.wordmark .pin{color:var(--accent)}
+.badge{font-size:.7rem;font-weight:700;letter-spacing:.08em;background:var(--brand-soft);
+  color:var(--brand);padding:.2rem .55rem;border-radius:999px}
+main{max-width:900px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
+.tokenbar{display:flex;gap:.6rem;margin:1rem 0 1.6rem}
+.tokenbar input{flex:1;padding:.6rem .8rem;border:1px solid var(--line);border-radius:8px;
+  background:var(--card);color:var(--ink)}
+.tokenbar button{background:var(--brand);color:#fff;border:none;border-radius:8px;
+  padding:.6rem 1.2rem;font-weight:700;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin-bottom:1.6rem}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem .9rem;box-shadow:var(--shadow)}
+.stat b{display:block;font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.72rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase}
+h2{font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;font-size:1.05rem;margin:1.6rem 0 .6rem}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:.88rem}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+th{font-family:var(--display);font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;
+  text-align:left;padding:.55rem .7rem;background:var(--brand);color:#fff}
+td{padding:.5rem .7rem;border-top:1px solid var(--line);vertical-align:top}
+.pill{font-size:.72rem;font-weight:700;padding:.12rem .5rem;border-radius:999px}
+.pill.pending{background:var(--brand-soft);color:var(--brand)}
+.pill.approved{background:var(--good-soft);color:var(--good)}
+.pill.rejected{background:var(--bad-soft);color:var(--bad)}
+.act{border:none;border-radius:6px;padding:.3rem .7rem;font-weight:700;cursor:pointer;font-size:.78rem}
+.act.ok{background:var(--good);color:#fff}.act.no{background:var(--bad);color:#fff;margin-left:.3rem}
+.err{color:var(--bad);min-height:1.2em}
+.muted{color:var(--muted);font-size:.82rem}
+</style>
+</head>
+<body>
+<header>
+  <span class="wordmark"><span class="pin">◆</span>AdAtlas</span>
+  <span class="badge">ADMIN</span>
+</header>
+<main>
+  <p class="muted">Operations console: subscription stats, claim review, data freshness.
+  Enter the admin token (dev default: <code>dev-admin</code>; set <code>ADMIN_TOKEN</code> in prod).</p>
+  <div class="tokenbar">
+    <input id="token" type="password" placeholder="Admin token" aria-label="Admin token">
+    <button onclick="load()">Load console</button>
+  </div>
+  <p class="err" id="err"></p>
+  <div id="console" hidden>
+    <div class="stats" id="stats"></div>
+    <h2>Listing claims</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Company</th><th>Metro</th><th>Email</th><th>Status</th><th>Filed</th><th>Action</th></tr></thead>
+      <tbody id="claims"></tbody>
+    </table></div>
+    <h2>Data freshness</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Last verified</th><th>Contact rows</th><th>Status</th></tr></thead>
+      <tbody id="fresh"></tbody>
+    </table></div>
+    <p class="muted">Re-verification target: no row older than one quarter. Rows aging past
+    90 days should enter the verification queue.</p>
+
+    <h2>Re-verification queue <span class="badge" id="verify-count" style="margin-left:.4rem"></span></h2>
+    <p class="muted">Findings from <code>verify_contacts.py</code> (run separately - see its
+    docstring). Nothing here touches live data until you approve it.</p>
+    <div class="wrap"><table>
+      <thead><tr><th>Metro / Category</th><th>Provider</th><th>Confidence</th>
+        <th>Current contacts</th><th>New finding</th><th>Action</th></tr></thead>
+      <tbody id="verify-queue"></tbody>
+    </table></div>
+  </div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+async function api(path, opts={}){
+  const res = await fetch(path,{...opts,headers:{'Content-Type':'application/json',
+    'X-Admin-Token':$('#token').value,...(opts.headers||{})}});
+  const b = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(b.detail||res.statusText);
+  return b;
+}
+async function load(){
+  $('#err').textContent='';
+  try{
+    const o = await api('/api/admin/overview');
+    const srcs = (o.leads_by_source||[]).map(s=>`${esc(s.source)}: ${s.n}`).join(' · ') || '—';
+    $('#stats').innerHTML = `
+      <div class="stat"><b>${o.users}</b><span>Accounts</span></div>
+      <div class="stat"><b>${o.pro}</b><span>Pro subscribers</span></div>
+      <div class="stat"><b>$${o.mrr.toLocaleString()}</b><span>MRR (at $49)</span></div>
+      <div class="stat"><b>${o.leads ?? 0}</b><span>Leads captured</span></div>
+      <div class="stat"><b>${o.claims_pending}</b><span>Claims pending</span></div>
+      <div class="stat"><b>${o.verify_pending ?? 0}</b><span>Re-verify pending</span></div>
+      <div class="stat" style="grid-column:1/-1"><b style="font-size:.95rem">${srcs}</b><span>Leads by source</span></div>`;
+    $('#verify-count').textContent = (o.verify_pending ?? 0) + ' pending';
+    const claims = await api('/api/admin/claims');
+    $('#claims').innerHTML = claims.map(c=>`<tr>
+      <td><b>${esc(c.company)}</b></td><td>${esc(c.metro)}</td><td>${esc(c.email)}</td>
+      <td><span class="pill ${c.status}">${c.status}</span></td>
+      <td>${esc((c.created||'').slice(0,10))}</td>
+      <td>${c.status==='pending' ? `
+        <button class="act ok" onclick="act(${c.id},'approve')">Approve</button>
+        <button class="act no" onclick="act(${c.id},'reject')">Reject</button>` : ''}</td>
+    </tr>`).join('') || '<tr><td colspan="6">No claims yet.</td></tr>';
+    const today = new Date();
+    $('#fresh').innerHTML = o.freshness.map(f=>{
+      const days = Math.round((today - new Date(f.last_verified))/86400000);
+      const ok = days <= 90;
+      return `<tr><td>${esc(f.last_verified)}</td><td>${f.rows_}</td>
+        <td><span class="pill ${ok?'approved':'rejected'}">${ok?'fresh':'re-verify ('+days+'d old)'}</span></td></tr>`;
+    }).join('');
+    const queue = await api('/api/admin/verification-queue');
+    $('#verify-queue').innerHTML = queue.map(v=>`<tr>
+      <td><b>${esc(v.metro)}</b><br><span class="muted">${esc(v.category)}</span></td>
+      <td>${esc(v.provider)}</td>
+      <td><span class="pill ${v.confidence==='high'?'approved':v.confidence==='low'?'rejected':'pending'}">${esc(v.confidence)}</span></td>
+      <td style="max-width:220px">${esc(v.old_contacts).slice(0,140)}${v.old_contacts.length>140?'…':''}</td>
+      <td style="max-width:220px"><code style="font-size:.76rem">${esc(v.finding).slice(0,200)}${v.finding.length>200?'…':''}</code></td>
+      <td>
+        <button class="act ok" onclick="verifyAct(${v.id},'approve')">Approve</button>
+        <button class="act no" onclick="verifyAct(${v.id},'reject')">Reject</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6">No pending findings. Run verify_contacts.py to populate this queue.</td></tr>';
+    $('#console').hidden = false;
+  }catch(e){ $('#err').textContent = e.message; $('#console').hidden = true; }
+}
+async function act(id, action){
+  try{ await api('/api/admin/claims/'+id,{method:'POST',body:JSON.stringify({action})}); load(); }
+  catch(e){ $('#err').textContent = e.message; }
+}
+async function verifyAct(id, action){
+  try{ await api('/api/admin/verification-queue/'+id,{method:'POST',body:JSON.stringify({action})}); load(); }
+  catch(e){ $('#err').textContent = e.message; }
+}
+</script>
+</body>
+</html>

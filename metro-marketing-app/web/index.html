@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdAtlas — Local marketing intelligence</title>
+<style>
+:root{
+  --ground:#F1F4F3; --card:#FFFFFF; --ink:#16292B; --muted:#5C6F6D;
+  --brand:#1E5E58; --brand-soft:#E1ECEA; --accent:#D9631E; --accent-soft:#F8E8DC;
+  --line:#D7E0DE; --lock:#8A6D3B; --lock-soft:#F5EDD9;
+  --good:#2E7D4F; --good-soft:#E0F0E6;
+  --display:Futura,"Avenir Next","Century Gothic","Trebuchet MS",sans-serif;
+  --serif:Charter,"Bitstream Charter",Georgia,serif;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --shadow:0 1px 2px rgba(22,41,43,.06),0 6px 18px rgba(22,41,43,.06);
+}
+@media (prefers-color-scheme: dark){:root{
+  --ground:#0E1B1C; --card:#152627; --ink:#E5ECEA; --muted:#94A8A5;
+  --brand:#53ADA4; --brand-soft:#1C3B39; --accent:#E8834A; --accent-soft:#3A2416;
+  --line:#274241; --lock:#CBA35C; --lock-soft:#33290F;
+  --good:#5DBD87; --good-soft:#14301F;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--ui);line-height:1.5}
+a{color:var(--brand)}
+button{font:inherit;cursor:pointer}
+nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:.4rem;
+  padding:.6rem 1.2rem;background:var(--ground);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wordmark{font-family:var(--display);font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;font-size:1rem;margin-right:auto;display:flex;align-items:center;gap:.45rem;white-space:nowrap}
+.wordmark .pin{color:var(--accent)}
+nav .tab{background:none;border:none;padding:.45rem .7rem;border-radius:6px;
+  color:var(--muted);font-weight:600;font-size:.88rem}
+nav .tab[aria-current="true"]{color:var(--ink);background:var(--brand-soft)}
+nav .tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+.acct{display:flex;align-items:center;gap:.5rem;font-size:.82rem}
+.acct .who{color:var(--muted)}
+.pro-flag{font-size:.72rem;font-weight:700;letter-spacing:.08em;padding:.25rem .55rem;
+  border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pro-flag.on{background:var(--good-soft);color:var(--good)}
+.linkbtn{background:none;border:none;color:var(--brand);text-decoration:underline;padding:0}
+main{max-width:1080px;margin:0 auto;padding:1.2rem 1.2rem 4rem}
+section[hidden]{display:none}
+.hero{padding:3rem 0 1.6rem;border-bottom:1px dashed var(--line)}
+.hero h1{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;
+  font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.04;margin:0 0 .9rem;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--brand)}
+.hero p.lede{font-family:var(--serif);font-size:1.12rem;max-width:56ch;color:var(--muted);margin:0 0 1.6rem}
+.hero .demo{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.hero select{padding:.7rem .9rem;font-size:1rem;border:1.5px solid var(--brand);
+  border-radius:8px;background:var(--card);color:var(--ink);min-width:270px}
+.hero .go{background:var(--brand);color:#fff;border:none;border-radius:8px;
+  padding:.72rem 1.2rem;font-weight:700}
+.statline{display:flex;gap:2rem;flex-wrap:wrap;margin-top:2rem;font-variant-numeric:tabular-nums}
+.statline div b{display:block;font-family:var(--display);font-size:1.5rem}
+.statline div span{font-size:.8rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:1.4rem 0 1rem}
+.toolbar select,.toolbar input{padding:.55rem .75rem;border:1px solid var(--line);
+  border-radius:8px;background:var(--card);color:var(--ink);font-size:.92rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin:0 0 1.1rem}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;box-shadow:var(--shadow)}
+.fact b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fact span{font-size:.72rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase}
+.home-tag{display:inline-block;font-size:.72rem;font-weight:700;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-left:.5rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.8rem}
+.ccard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.9rem 1rem .6rem;box-shadow:var(--shadow);display:flex;flex-direction:column;
+  width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ccard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ccard .openhint{margin-top:auto;padding-top:.4rem;font-size:.76rem;color:var(--brand);font-weight:700}
+.ccard.locked .openhint{color:var(--accent)}
+.ccard h4{margin:0 0 .35rem;font-family:var(--display);font-size:.95rem;letter-spacing:.03em}
+.ccard .scope{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:.15rem .5rem;border-radius:999px;float:right}
+.scope.Metro{background:var(--brand-soft);color:var(--brand)}
+.scope.Mixed{background:var(--lock-soft);color:var(--lock)}
+.scope.Universal{background:var(--line);color:var(--muted)}
+.ccard p{margin:0 0 .5rem;font-size:.88rem;flex:1}
+.ccard .verified{font-size:.7rem;color:var(--muted)}
+.ccard.locked p{color:transparent;text-shadow:0 0 9px var(--muted);user-select:none}
+.locktag{text-align:center;margin:.3rem 0 .5rem}
+.locktag button{background:var(--accent);color:#fff;border:none;border-radius:999px;
+  padding:.45rem 1rem;font-weight:700;font-size:.82rem}
+.claimline{margin-top:1rem;font-size:.85rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:.88rem}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+th{font-family:var(--display);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
+  text-align:left;padding:.6rem .7rem;background:var(--brand);color:#fff;white-space:nowrap}
+td{padding:.55rem .7rem;border-top:1px solid var(--line);vertical-align:top}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:.12rem .5rem;border-radius:999px;white-space:nowrap}
+.pill.High,.pill.Fast{background:var(--good-soft);color:var(--good)}
+.pill.Med,.pill.Medium{background:var(--lock-soft);color:var(--lock)}
+.pill.Low,.pill.Slow{background:var(--line);color:var(--muted)}
+.pill.Enabler{background:var(--brand-soft);color:var(--brand)}
+.gatebar{margin:1rem 0;text-align:center;padding:1rem;border:1px dashed var(--accent);
+  border-radius:10px;background:var(--accent-soft)}
+.gatebar button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.6rem 1.2rem;font-weight:700}
+.count{color:var(--muted);font-size:.85rem;margin:.4rem 0 0}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1.4rem}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem;box-shadow:var(--shadow)}
+.plan.feature{border:2px solid var(--accent)}
+.plan h3{font-family:var(--display);letter-spacing:.05em;text-transform:uppercase;margin:0 0 .2rem}
+.plan .price{font-family:var(--display);font-size:2rem;margin:.2rem 0 .6rem}
+.plan .price small{font-size:.85rem;color:var(--muted);font-family:var(--ui)}
+.plan ul{margin:0 0 1rem;padding-left:1.1rem;font-size:.9rem}
+.plan li{margin:.3rem 0}
+.plan button{width:100%;border:none;border-radius:8px;padding:.7rem;font-weight:700}
+.cta-brand{background:var(--brand);color:#fff}
+.cta-accent{background:var(--accent);color:#fff}
+.cta-ghost{background:var(--brand-soft);color:var(--brand)}
+.proto-note{margin-top:1.2rem;font-size:.82rem;color:var(--muted);text-align:center}
+h2.viewtitle{font-family:var(--display);text-transform:uppercase;letter-spacing:.04em;font-size:1.35rem;margin:1.6rem 0 .3rem}
+p.viewsub{color:var(--muted);margin:0 0 1rem;font-family:var(--serif)}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.8rem}
+.month{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;box-shadow:var(--shadow)}
+.month.hurr{border-left:4px solid var(--accent)}
+.month h4{margin:0;font-family:var(--display)}
+.month .ctx{font-size:.8rem;color:var(--muted);margin:.15rem 0 .4rem}
+.month p{margin:.2rem 0;font-size:.86rem}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);
+  max-width:400px;width:92%;padding:1.4rem;box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(14,27,28,.5)}
+dialog h3{font-family:var(--display);margin:0 0 .8rem;letter-spacing:.04em;text-transform:uppercase}
+dialog label{display:block;font-size:.82rem;font-weight:600;margin:.6rem 0 .2rem}
+dialog input,dialog textarea{width:100%;padding:.6rem .7rem;border:1px solid var(--line);
+  border-radius:8px;background:var(--ground);color:var(--ink);font:inherit}
+dialog .row{display:flex;gap:.6rem;margin-top:1rem}
+dialog .row button{flex:1;border:none;border-radius:8px;padding:.65rem;font-weight:700}
+.err{color:#B3352C;font-size:.85rem;min-height:1.2em;margin:.5rem 0 0}
+.okmsg{color:var(--good);font-size:.9rem;margin:.5rem 0 0}
+footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-align:center;color:var(--muted);font-size:.8rem}
+@media (prefers-reduced-motion:no-preference){
+  .ccard,.plan{transition:transform .15s ease}
+  .ccard:hover,.plan:hover{transform:translateY(-2px)}
+}
+</style>
+</head>
+<body>
+<nav>
+  <span class="wordmark"><span class="pin">◆</span>AdAtlas</span>
+  <button class="tab" data-view="home" aria-current="true">Home</button>
+  <button class="tab" data-view="market">Markets</button>
+  <button class="tab" data-view="tactics">Tactics</button>
+  <button class="tab" data-view="wins">Quick Wins</button>
+  <button class="tab" data-view="playbook">Playbook</button>
+  <button class="tab" data-view="pricing">Pricing</button>
+  <span class="acct">
+    <span class="who" id="who"></span>
+    <button class="linkbtn" id="authbtn">Log in</button>
+    <span class="pro-flag" id="proflag">FREE</span>
+  </span>
+</nav>
+
+<main>
+<section id="view-home">
+  <div class="hero">
+    <h1>Every channel.<br>Every metro.<br><em>One playbook.</em></h1>
+    <p class="lede">AdAtlas tells a local business exactly who to call in its market —
+      billboard operators with rate bands, TV and radio ad desks, newspapers, event
+      sponsorships, chambers — plus 1,100+ tactics rated by cost, relevance, and
+      time-to-impact. The research a $5,000/month agency does, as a subscription.</p>
+    <div class="demo">
+      <select id="hero-metro" aria-label="Choose your metro"></select>
+      <button class="go" id="hero-go">Show my market →</button>
+    </div>
+    <div class="statline">
+      <div><b id="stat-metros">—</b><span>Metros covered</span></div>
+      <div><b id="stat-tactics">—</b><span>Tactics rated</span></div>
+      <div><b id="stat-wins">—</b><span>Quick wins</span></div>
+      <div><b>13</b><span>Channel categories</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="view-market" hidden>
+  <h2 class="viewtitle">Market intelligence</h2>
+  <p class="viewsub">Pick a metro. Get the who-to-call card across all 13 channel categories — every row carries a last-verified date.</p>
+  <div class="toolbar"><select id="market-select" aria-label="Metro"></select></div>
+  <div class="facts" id="market-facts"></div>
+  <div class="cards" id="market-cards"></div>
+  <p class="claimline">Run one of these companies?
+    <button class="linkbtn" onclick="openClaim()">Claim your listing</button> —
+    verified listings get a badge and direct inquiries.</p>
+</section>
+
+<section id="view-tactics" hidden>
+  <h2 class="viewtitle">Tactic library</h2>
+  <p class="viewsub">Rated for a local service business. Filter to your budget and timeline.</p>
+  <div class="toolbar">
+    <input id="t-search" type="search" placeholder="Search tactics…" aria-label="Search tactics">
+    <select id="t-cat" aria-label="Category"><option value="">All categories</option></select>
+    <select id="t-cost" aria-label="Cost"><option value="">Any cost</option><option>$</option><option>$$</option><option>$$$</option></select>
+    <select id="t-rel" aria-label="Relevance"><option value="">Any relevance</option><option>High</option><option>Med</option><option>Low</option></select>
+    <select id="t-time" aria-label="Speed"><option value="">Any speed</option><option>Fast</option><option>Medium</option><option>Slow</option><option>Enabler</option></select>
+    <button class="linkbtn" onclick="exportCsv('tactics')">Export CSV</button>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Tactic</th><th>Category</th><th>Cost</th><th>Relevance</th><th>Speed</th><th>DIY</th><th>Note</th></tr></thead>
+    <tbody id="t-body"></tbody>
+  </table></div>
+  <p class="count" id="t-count"></p>
+  <div class="gatebar" id="t-gate" hidden>
+    <p><b>Showing 25 of <span id="t-total"></span> matching tactics.</b> Pro unlocks the full library.</p>
+    <button onclick="upgrade()">Start Pro — $49/mo</button>
+  </div>
+</section>
+
+<section id="view-wins" hidden>
+  <h2 class="viewtitle">Quick wins</h2>
+  <p class="viewsub">High relevance × low cost × do-it-yourself. The this-week list.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Tactic</th><th>Category</th><th>Speed</th><th>Note</th></tr></thead>
+    <tbody id="w-body"></tbody>
+  </table></div>
+  <p class="count" id="w-count"></p>
+  <div class="gatebar" id="w-gate" hidden>
+    <p><b>10 of <span id="w-total"></span> quick wins shown.</b> Pro unlocks all of them.</p>
+    <button onclick="upgrade()">Start Pro — $49/mo</button>
+  </div>
+</section>
+
+<section id="view-playbook" hidden>
+  <h2 class="viewtitle">Playbook tools <span class="pro-flag">PRO</span></h2>
+  <p class="viewsub">Budget models and seasonal timing, ready to hand to whoever runs your marketing.</p>
+  <div id="playbook-body"></div>
+</section>
+
+<section id="view-pricing" hidden>
+  <h2 class="viewtitle">Pricing</h2>
+  <p class="viewsub">Agencies charge $2,000–$5,000/month for this research. AdAtlas is a subscription.</p>
+  <div class="plans">
+    <div class="plan">
+      <h3>Free</h3><div class="price">$0<small>/mo</small></div>
+      <ul><li>Every market: 5 of 13 categories</li><li>25 tactics per search</li><li>10 quick wins</li></ul>
+      <button class="cta-ghost" data-view="market" onclick="show('market')">Browse free</button>
+    </div>
+    <div class="plan feature">
+      <h3>Pro</h3><div class="price">$49<small>/mo</small></div>
+      <ul>
+        <li><b>All 43 markets</b> — every category unlocked</li>
+        <li>Full tactic library + filters</li>
+        <li>All quick wins</li>
+        <li>Budget models + seasonal calendar</li>
+        <li>Quarterly re-verified contacts</li>
+      </ul>
+      <button class="cta-accent" onclick="upgrade()">Start Pro</button>
+    </div>
+    <div class="plan">
+      <h3>Team</h3><div class="price">$149<small>/mo</small></div>
+      <ul><li>Everything in Pro, 5 seats</li><li>CSV/CRM export</li><li>Multi-market planner</li><li>Priority data requests</li></ul>
+      <button class="cta-brand" onclick="upgrade()">Start Team</button>
+    </div>
+  </div>
+  <p class="proto-note" id="stripe-note">Demo server: subscribing flips your account to Pro instantly.
+    With STRIPE_SECRET_KEY configured, this becomes a real Stripe Checkout.</p>
+</section>
+
+<footer>AdAtlas · data compiled from public sources + verified operator lists ·
+contacts are reference-level, confirm before buying</footer>
+</main>
+
+<!-- auth modal -->
+<dialog id="auth-modal">
+  <h3 id="auth-title">Log in</h3>
+  <form id="auth-form">
+    <label for="a-email">Email</label>
+    <input id="a-email" type="email" autocomplete="email" required>
+    <label for="a-pass">Password <small>(8+ characters)</small></label>
+    <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required>
+    <p class="err" id="a-err"></p>
+    <div class="row">
+      <button type="submit" class="cta-brand" id="a-submit">Log in</button>
+      <button type="button" class="cta-ghost" onclick="authModal.close()">Cancel</button>
+    </div>
+    <p style="font-size:.83rem;margin:.8rem 0 0">
+      <span id="a-alt-text">New here?</span>
+      <button type="button" class="linkbtn" id="a-alt">Create an account</button>
+      · <button type="button" class="linkbtn" id="a-forgot">Forgot password?</button>
+    </p>
+  </form>
+</dialog>
+
+<!-- password reset modal -->
+<dialog id="reset-modal">
+  <h3>Reset password</h3>
+  <form id="reset-form">
+    <div id="r-step1">
+      <label for="r-email">Account email</label>
+      <input id="r-email" type="email" required>
+    </div>
+    <div id="r-step2" hidden>
+      <p class="okmsg" id="r-sent"></p>
+      <label for="r-token">Reset token</label>
+      <input id="r-token" required disabled>
+      <label for="r-pass">New password (8+ characters)</label>
+      <input id="r-pass" type="password" minlength="8" required disabled>
+    </div>
+    <p class="err" id="r-err"></p>
+    <div class="row">
+      <button type="submit" class="cta-brand" id="r-submit">Send reset link</button>
+      <button type="button" class="cta-ghost" onclick="resetModal.close()">Close</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- category detail modal -->
+<dialog id="category-modal" style="max-width:640px">
+  <div style="display:flex;align-items:start;justify-content:space-between;gap:1rem">
+    <div>
+      <h3 id="cat-title" style="margin-bottom:.1rem">Category</h3>
+      <p id="cat-sub" style="margin:0;color:var(--muted);font-size:.88rem"></p>
+    </div>
+    <button type="button" class="cta-ghost" id="cat-close" style="width:auto;padding:.4rem .8rem">Close</button>
+  </div>
+  <div id="cat-body" style="margin-top:.8rem"></div>
+</dialog>
+
+<!-- claim modal -->
+<dialog id="claim-modal">
+  <h3>Claim your listing</h3>
+  <form id="claim-form">
+    <label for="c-company">Company</label>
+    <input id="c-company" required>
+    <label for="c-email">Work email</label>
+    <input id="c-email" type="email" required>
+    <label for="c-msg">Anything we should know?</label>
+    <textarea id="c-msg" rows="3"></textarea>
+    <p class="err" id="c-err"></p>
+    <p class="okmsg" id="c-ok" hidden>Claim filed — we'll verify ownership and email you a claim link.</p>
+    <div class="row">
+      <button type="submit" class="cta-accent">File claim</button>
+      <button type="button" class="cta-ghost" onclick="claimModal.close()">Close</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+let ME = {email:null, plan:'free'};
+const authModal = $('#auth-modal'), claimModal = $('#claim-modal'), categoryModal = $('#category-modal');
+let authMode = 'login';
+
+async function api(path, opts={}){
+  const res = await fetch(path, {headers:{'Content-Type':'application/json'}, ...opts});
+  const body = await res.json().catch(()=> ({}));
+  if(!res.ok) throw new Error(body.detail || res.statusText);
+  return body;
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+
+/* ---------- nav / views ---------- */
+document.querySelectorAll('nav .tab').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+function show(view){
+  document.querySelectorAll('main > section').forEach(s=>s.hidden = s.id !== 'view-'+view);
+  document.querySelectorAll('nav .tab').forEach(b=>b.setAttribute('aria-current', b.dataset.view===view));
+  if(view==='market') renderMarket();
+  if(view==='tactics') renderTactics();
+  if(view==='wins') renderWins();
+  if(view==='playbook') renderPlaybook();
+  window.scrollTo({top:0});
+}
+
+/* ---------- account ---------- */
+async function refreshMe(){
+  ME = await api('/api/me');
+  $('#who').textContent = ME.email || '';
+  $('#authbtn').textContent = ME.email ? 'Log out' : 'Log in';
+  const f = $('#proflag');
+  f.textContent = ME.plan==='pro' ? 'PRO' : 'FREE';
+  f.classList.toggle('on', ME.plan==='pro');
+}
+$('#authbtn').addEventListener('click', async ()=>{
+  if(ME.email){ await api('/api/logout',{method:'POST'}); await refreshMe();
+    renderMarket(); renderTactics(); renderWins(); }
+  else openAuth('login');
+});
+function openAuth(mode){
+  authMode = mode;
+  $('#auth-title').textContent = mode==='login' ? 'Log in' : 'Create your account';
+  $('#a-submit').textContent = mode==='login' ? 'Log in' : 'Sign up';
+  $('#a-alt-text').textContent = mode==='login' ? 'New here?' : 'Already have an account?';
+  $('#a-alt').textContent = mode==='login' ? 'Create an account' : 'Log in instead';
+  $('#a-err').textContent = '';
+  authModal.showModal();
+}
+$('#a-alt').addEventListener('click',()=>openAuth(authMode==='login'?'signup':'login'));
+
+/* ---------- password reset ---------- */
+const resetModal = $('#reset-modal');
+let resetStep = 1;
+$('#a-forgot').addEventListener('click',()=>{
+  authModal.close(); resetStep = 1;
+  $('#r-step1').hidden = false; $('#r-step2').hidden = true;
+  $('#r-email').disabled = false;
+  $('#r-token').disabled = true; $('#r-pass').disabled = true;
+  $('#r-err').textContent=''; $('#r-submit').textContent='Send reset link';
+  resetModal.showModal();
+});
+$('#reset-form').addEventListener('submit', async e=>{
+  e.preventDefault(); $('#r-err').textContent='';
+  try{
+    if(resetStep===1){
+      const r = await api('/api/request-reset',{method:'POST',
+        body: JSON.stringify({email: $('#r-email').value})});
+      $('#r-sent').textContent = r.note + (r.dev_token ? ' (demo mode: token pre-filled below)' : '');
+      $('#r-step1').hidden = true; $('#r-step2').hidden = false;
+      $('#r-email').disabled = true;
+      $('#r-token').disabled = false; $('#r-pass').disabled = false;
+      if(r.dev_token) $('#r-token').value = r.dev_token;
+      $('#r-submit').textContent = 'Set new password';
+      resetStep = 2;
+    } else {
+      await api('/api/reset',{method:'POST', body: JSON.stringify({
+        token: $('#r-token').value, password: $('#r-pass').value})});
+      resetModal.close(); openAuth('login');
+    }
+  }catch(err){ $('#r-err').textContent = err.message; }
+});
+$('#auth-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  try{
+    await api('/api/'+(authMode==='login'?'login':'signup'), {method:'POST',
+      body: JSON.stringify({email:$('#a-email').value, password:$('#a-pass').value})});
+    authModal.close(); await refreshMe();
+    renderMarket(); renderTactics(); renderWins();
+  }catch(err){ $('#a-err').textContent = err.message; }
+});
+
+async function upgrade(){
+  if(!ME.email){ openAuth('signup'); return; }
+  try{
+    const r = await api('/api/subscribe',{method:'POST'});
+    if(r.checkout_url){ window.location = r.checkout_url; return; }
+    await refreshMe(); renderMarket(); renderTactics(); renderWins(); renderPlaybook();
+    show('market');
+  }catch(err){ alert(err.message); }
+}
+
+/* ---------- csv export ---------- */
+async function exportCsv(what){
+  const res = await fetch('/api/export/'+what+'.csv');
+  if(res.status===402){ if(confirm('CSV export is a Pro feature. Upgrade now?')) upgrade(); return; }
+  if(!res.ok){ alert('Export failed.'); return; }
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = what+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---------- claim ---------- */
+function openClaim(){
+  $('#c-err').textContent=''; $('#c-ok').hidden = true;
+  claimModal.showModal();
+}
+$('#claim-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  try{
+    await api('/api/claim',{method:'POST', body: JSON.stringify({
+      company: $('#c-company').value, metro: $('#market-select').value,
+      email: $('#c-email').value, message: $('#c-msg').value})});
+    $('#c-ok').hidden = false; $('#c-err').textContent='';
+  }catch(err){ $('#c-err').textContent = err.message; }
+});
+
+/* ---------- data views ---------- */
+let METROS = [];
+async function boot(){
+  await refreshMe();
+  METROS = await api('/api/metros');
+  const opts = METROS.map(m=>`<option value="${esc(m.metro)}">${esc(m.metro)}${m.state? ', '+esc(m.state):''}</option>`).join('');
+  $('#hero-metro').innerHTML = opts;
+  $('#market-select').innerHTML = opts;
+  $('#stat-metros').textContent = METROS.length;
+  const t = await api('/api/tactics'); $('#stat-tactics').textContent = t.total.toLocaleString();
+  const w = await api('/api/quickwins'); $('#stat-wins').textContent = w.total;
+  const cats = [...new Set((await api('/api/tactics?cost=&cat=')).rows.map(r=>r.cat))];
+  // full category list comes from a pro-agnostic source: fetch distinct via metros? simplest: hardcode from first page + known set
+  fetch('/api/tactics').then(()=>{});
+  renderMarket();
+}
+$('#hero-go').addEventListener('click',()=>{
+  $('#market-select').value = $('#hero-metro').value;
+  show('market');
+});
+$('#market-select').addEventListener('change',renderMarket);
+
+async function renderMarket(){
+  const name = $('#market-select').value || (METROS[0]&&METROS[0].metro);
+  if(!name) return;
+  const m = METROS.find(x=>x.metro===name);
+  const home = name.startsWith('Palm Beach');
+  $('#market-facts').innerHTML = `
+    <div class="fact"><b>#${m.rank===0?'0 — Home':m.rank}</b><span>Market rank${home?'<span class="home-tag">★ home</span>':''}</span></div>
+    <div class="fact"><b>${esc(m.pop)}</b><span>Metro population</span></div>
+    <div class="fact"><b>${esc(m.dma)}</b><span>Nielsen DMA (approx)</span></div>
+    <div class="fact"><b>${esc(m.ooh_rate)}</b><span>OOH rate band /mo</span></div>
+    <div class="fact"><b>${m.ooh_ops}</b><span>OOH operators</span></div>`;
+  const [data, claimed] = await Promise.all([
+    api('/api/contacts?metro='+encodeURIComponent(name)),
+    api('/api/verified?metro='+encodeURIComponent(name)),
+  ]);
+  $('#market-cards').innerHTML = data.categories.map(c=>{
+    const badges = c.contacts ? claimed.filter(co=>c.contacts.includes(co)) : [];
+    const catArg = esc(c.category).replace(/'/g,"&#39;");
+    return `
+    <button type="button" class="ccard${c.locked?' locked':''}"
+      onclick="openCategory('${catArg}', ${c.locked})">
+      <span class="scope ${c.scope}">${c.scope}</span>
+      <h4>${esc(c.category)}</h4>
+      <p>${c.locked ? 'Locked — the who-to-call detail for this category is a Pro feature.' : esc(c.contacts)}</p>
+      ${c.locked ? '<span class="openhint">Click to unlock with Pro &rarr;</span>'
+                 : `<span class="verified">✓ verified ${esc(c.last_verified)}${
+                    badges.length ? ' · <b>'+badges.map(esc).join(', ')+' — claimed ✓</b>' : ''}</span>
+                    <span class="openhint">Click for tactics &amp; quick wins in this category &rarr;</span>`}
+    </button>`;
+  }).join('');
+}
+
+/* ---------- category detail modal ---------- */
+async function openCategory(category, locked){
+  if(locked){ upgrade(); return; }
+  const metro = $('#market-select').value;
+  $('#cat-title').textContent = category;
+  $('#cat-sub').textContent = 'in ' + metro;
+  $('#cat-body').innerHTML = '<p class="count">Loading…</p>';
+  categoryModal.showModal();
+  const [contactData, tacticData, winData] = await Promise.all([
+    api('/api/contacts?metro='+encodeURIComponent(metro)),
+    api('/api/tactics?cat='+encodeURIComponent(category)),
+    api('/api/quickwins'),
+  ]);
+  const contact = contactData.categories.find(c=>c.category===category);
+  const wins = (winData.rows||[]).filter(t=>t.cat===category);
+  const rows = tacticData.rows||[];
+  $('#cat-body').innerHTML = `
+    <div class="panel">
+      <h2>Who to contact</h2>
+      <p>${contact ? esc(contact.contacts) : 'No contacts on file for this category yet.'}</p>
+      ${contact && contact.last_verified ? `<span class="verified">✓ verified ${esc(contact.last_verified)}</span>` : ''}
+    </div>
+    ${wins.length ? `<div class="panel">
+      <h2>Quick wins in this category</h2>
+      <ol>${wins.map(w=>`<li><b>${esc(w.tactic)}</b><br><span class="t">${esc(w.note)}</span></li>`).join('')}</ol>
+    </div>` : ''}
+    <div class="panel">
+      <h2>All tactics in this category ${tacticData.capped?`(showing ${rows.length} of ${tacticData.total})`:`(${rows.length})`}</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Tactic</th><th>Cost</th><th>Relevance</th><th>Speed</th><th>DIY</th><th>Note</th></tr></thead>
+        <tbody>${rows.map(t=>`<tr>
+          <td><b>${esc(t.tactic)}</b></td><td>${t.cost}</td>
+          <td><span class="pill ${t.rel}">${t.rel}</span></td>
+          <td><span class="pill ${t.time}">${t.time}</span></td>
+          <td>${t.ih}</td><td>${esc(t.note)}</td></tr>`).join('')}</tbody>
+      </table></div>
+      ${tacticData.capped ? `<div class="gatebar"><p>Free plan shows 25 tactics per category search.</p>
+        <button onclick="upgrade()">Start Pro — $49/mo</button></div>` : ''}
+    </div>`;
+}
+$('#cat-close').addEventListener('click',()=>categoryModal.close());
+
+const tIds = ['t-search','t-cat','t-cost','t-rel','t-time'];
+tIds.forEach(id=>$('#'+id).addEventListener('input',renderTactics));
+let catLoaded = false;
+async function renderTactics(){
+  const [q,cat,cost,rel,time] = tIds.map(id=>$('#'+id).value);
+  const p = new URLSearchParams({q,cat,cost,rel,time});
+  const data = await api('/api/tactics?'+p);
+  if(!catLoaded){
+    // build the category dropdown once from an unfiltered pull
+    const all = await api('/api/tactics');
+    const cats = [...new Set(all.rows.map(r=>r.cat))];
+    // free pull is capped; extend with known category names from contacts scope list via metros… fallback: fetch each page? keep simple:
+    catLoaded = true;
+    const KNOWN = ["Outdoor / OOH","Local & Direct","Print","Broadcast","Digital - Social Media",
+      "Digital - Content & Owned","Digital - Search & Display","Digital - Other","Experiential & Event",
+      "Promotional & Tangible","PR & Earned","Partnership & Channel","Emerging / Niche",
+      "Email, SMS & Lifecycle","Content Marketing & SEO","Video, CTV & Streaming","Audio & Podcast",
+      "Influencer & Creator","Loyalty, Retention & Community","Web, CRO & UX",
+      "Sales Enablement & Lead Mgmt","Analytics, Data & MarTech","Branding, Creative & Design",
+      "B2B & Account-Based","Cause, Community & CSR"];
+    $('#t-cat').innerHTML = '<option value="">All categories</option>'+
+      KNOWN.map(c=>`<option>${esc(c)}</option>`).join('');
+  }
+  $('#t-body').innerHTML = data.rows.map(t=>`<tr>
+    <td><b>${esc(t.tactic)}</b></td><td>${esc(t.cat)}</td><td>${t.cost}</td>
+    <td><span class="pill ${t.rel}">${t.rel}</span></td>
+    <td><span class="pill ${t.time}">${t.time}</span></td>
+    <td>${t.ih}</td><td>${esc(t.note)}</td></tr>`).join('');
+  $('#t-count').textContent = data.capped ? '' : `${data.total} tactics`;
+  $('#t-gate').hidden = !data.capped;
+  $('#t-total').textContent = data.total;
+}
+
+async function renderWins(){
+  const data = await api('/api/quickwins');
+  $('#w-body').innerHTML = data.rows.map(t=>`<tr>
+    <td><b>${esc(t.tactic)}</b></td><td>${esc(t.cat)}</td>
+    <td><span class="pill ${t.time}">${t.time}</span></td><td>${esc(t.note)}</td></tr>`).join('');
+  $('#w-count').textContent = data.capped ? '' : `${data.total} quick wins`;
+  $('#w-gate').hidden = !data.capped;
+  $('#w-total').textContent = data.total;
+}
+
+async function renderPlaybook(){
+  const el = $('#playbook-body');
+  try{
+    const d = await api('/api/playbook');
+    const fmt = n => '$'+(+n).toLocaleString();
+    const tot = ['b25','b50','b100'].map(k=>d.budgets.reduce((s,b)=>s+(+b[k]||0),0));
+    const hurr = ['June','July','August','September','October','November'];
+    el.innerHTML = `
+      <h3 style="font-family:var(--display)">Monthly budget models</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Channel</th><th>$2,500/mo</th><th>$5,000/mo</th><th>$10,000/mo</th><th>Why</th></tr></thead>
+        <tbody>${d.budgets.map(b=>`<tr><td><b>${esc(b.channel)}</b></td>
+          <td>${fmt(b.b25)}</td><td>${fmt(b.b50)}</td><td>${fmt(b.b100)}</td><td>${esc(b.why)}</td></tr>`).join('')}
+          <tr><td><b>TOTAL</b></td><td><b>${fmt(tot[0])}</b></td><td><b>${fmt(tot[1])}</b></td><td><b>${fmt(tot[2])}</b></td><td></td></tr>
+        </tbody></table></div>
+      <h3 style="font-family:var(--display);margin-top:1.6rem">Seasonal calendar
+        <span style="font-size:.75rem;color:var(--accent)">■ hurricane season</span></h3>
+      <div class="months">${d.calendar.map(c=>`<div class="month${hurr.includes(c.month)?' hurr':''}">
+        <h4>${c.month}</h4><div class="ctx">${esc(c.context)}</div>
+        <p><b>Push:</b> ${esc(c.push)}</p><p><b>Channels:</b> ${esc(c.channels)}</p></div>`).join('')}</div>`;
+  }catch(err){
+    el.innerHTML = `<div class="gatebar"><p><b>${esc(err.message)}</b></p>
+      <button onclick="upgrade()">Start Pro — $49/mo</button></div>`;
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

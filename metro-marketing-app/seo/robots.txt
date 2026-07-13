@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://adatlas.example/rates/sitemap.xml

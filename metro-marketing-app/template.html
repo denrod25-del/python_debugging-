@@ -1,0 +1,419 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdAtlas — Local marketing intelligence</title>
+<style>
+:root{
+  --ground:#F1F4F3; --card:#FFFFFF; --ink:#16292B; --muted:#5C6F6D;
+  --brand:#1E5E58; --brand-soft:#E1ECEA; --accent:#D9631E; --accent-soft:#F8E8DC;
+  --line:#D7E0DE; --lock:#8A6D3B; --lock-soft:#F5EDD9;
+  --good:#2E7D4F; --good-soft:#E0F0E6;
+  --display:Futura,"Avenir Next","Century Gothic","Trebuchet MS",sans-serif;
+  --serif:Charter,"Bitstream Charter",Georgia,serif;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --shadow:0 1px 2px rgba(22,41,43,.06),0 6px 18px rgba(22,41,43,.06);
+}
+@media (prefers-color-scheme: dark){:root{
+  --ground:#0E1B1C; --card:#152627; --ink:#E5ECEA; --muted:#94A8A5;
+  --brand:#53ADA4; --brand-soft:#1C3B39; --accent:#E8834A; --accent-soft:#3A2416;
+  --line:#274241; --lock:#CBA35C; --lock-soft:#33290F;
+  --good:#5DBD87; --good-soft:#14301F;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1B1C; --card:#152627; --ink:#E5ECEA; --muted:#94A8A5;
+  --brand:#53ADA4; --brand-soft:#1C3B39; --accent:#E8834A; --accent-soft:#3A2416;
+  --line:#274241; --lock:#CBA35C; --lock-soft:#33290F;
+  --good:#5DBD87; --good-soft:#14301F;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
+}
+:root[data-theme="light"]{
+  --ground:#F1F4F3; --card:#FFFFFF; --ink:#16292B; --muted:#5C6F6D;
+  --brand:#1E5E58; --brand-soft:#E1ECEA; --accent:#D9631E; --accent-soft:#F8E8DC;
+  --line:#D7E0DE; --lock:#8A6D3B; --lock-soft:#F5EDD9;
+  --good:#2E7D4F; --good-soft:#E0F0E6;
+  --shadow:0 1px 2px rgba(22,41,43,.06),0 6px 18px rgba(22,41,43,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--ui);line-height:1.5}
+a{color:var(--brand)}
+button{font:inherit;cursor:pointer}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:.4rem;
+  padding:.6rem 1.2rem;background:var(--ground);border-bottom:1px solid var(--line)}
+.wordmark{font-family:var(--display);font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;font-size:1rem;margin-right:auto;display:flex;align-items:center;gap:.45rem;white-space:nowrap}
+.wordmark .pin{color:var(--accent)}
+nav .tab{background:none;border:none;padding:.45rem .7rem;border-radius:6px;
+  color:var(--muted);font-weight:600;font-size:.88rem}
+nav .tab[aria-current="true"]{color:var(--ink);background:var(--brand-soft)}
+nav .tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+.pro-flag{font-size:.72rem;font-weight:700;letter-spacing:.08em;padding:.25rem .55rem;
+  border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pro-flag.on{background:var(--good-soft);color:var(--good)}
+
+main{max-width:1080px;margin:0 auto;padding:1.2rem 1.2rem 4rem}
+section[hidden]{display:none}
+
+/* ---------- hero ---------- */
+.hero{padding:3.2rem 0 1.6rem;border-bottom:1px dashed var(--line)}
+.hero h1{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;
+  font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.04;margin:0 0 .9rem;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--brand)}
+.hero p.lede{font-family:var(--serif);font-size:1.12rem;max-width:56ch;color:var(--muted);margin:0 0 1.6rem}
+.hero .demo{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.hero select{padding:.7rem .9rem;font-size:1rem;border:1.5px solid var(--brand);
+  border-radius:8px;background:var(--card);color:var(--ink);min-width:270px}
+.hero .go{background:var(--brand);color:#fff;border:none;border-radius:8px;
+  padding:.72rem 1.2rem;font-weight:700}
+.statline{display:flex;gap:2rem;flex-wrap:wrap;margin-top:2rem;font-variant-numeric:tabular-nums}
+.statline div b{display:block;font-family:var(--display);font-size:1.5rem}
+.statline div span{font-size:.8rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- market view ---------- */
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:1.4rem 0 1rem}
+.toolbar select,.toolbar input{padding:.55rem .75rem;border:1px solid var(--line);
+  border-radius:8px;background:var(--card);color:var(--ink);font-size:.92rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin:0 0 1.1rem}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;box-shadow:var(--shadow)}
+.fact b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fact span{font-size:.72rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase}
+.home-tag{display:inline-block;font-size:.72rem;font-weight:700;color:var(--accent);
+  letter-spacing:.08em;text-transform:uppercase;margin-left:.5rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.8rem}
+.ccard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.9rem 1rem;box-shadow:var(--shadow)}
+.ccard h4{margin:0 0 .35rem;font-family:var(--display);font-size:.95rem;letter-spacing:.03em}
+.ccard .scope{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:.15rem .5rem;border-radius:999px;float:right}
+.scope.Metro{background:var(--brand-soft);color:var(--brand)}
+.scope.Mixed{background:var(--lock-soft);color:var(--lock)}
+.scope.Universal{background:var(--line);color:var(--muted)}
+.ccard p{margin:0;font-size:.88rem;color:var(--ink)}
+.ccard.locked p{filter:blur(5px);user-select:none}
+.locktag{position:absolute;inset:auto 0 .9rem 0;text-align:center}
+.locktag button{background:var(--accent);color:#fff;border:none;border-radius:999px;
+  padding:.45rem 1rem;font-weight:700;font-size:.82rem}
+
+/* ---------- tactics ---------- */
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;overflow:hidden;font-size:.88rem}
+.tablewrap{overflow-x:auto;border-radius:10px;box-shadow:var(--shadow)}
+th{font-family:var(--display);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
+  text-align:left;padding:.6rem .7rem;background:var(--brand);color:#fff;white-space:nowrap}
+td{padding:.55rem .7rem;border-top:1px solid var(--line);vertical-align:top}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:.12rem .5rem;border-radius:999px;white-space:nowrap}
+.pill.High,.pill.Fast{background:var(--good-soft);color:var(--good)}
+.pill.Med,.pill.Medium{background:var(--lock-soft);color:var(--lock)}
+.pill.Low,.pill.Slow{background:var(--line);color:var(--muted)}
+.pill.Enabler{background:var(--brand-soft);color:var(--brand)}
+.gatebar{margin:1rem 0;text-align:center;padding:1rem;border:1px dashed var(--accent);
+  border-radius:10px;background:var(--accent-soft)}
+.gatebar button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.6rem 1.2rem;font-weight:700}
+.count{color:var(--muted);font-size:.85rem;margin:.4rem 0 0}
+
+/* ---------- pricing ---------- */
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1.4rem}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem;box-shadow:var(--shadow)}
+.plan.feature{border:2px solid var(--accent)}
+.plan h3{font-family:var(--display);letter-spacing:.05em;text-transform:uppercase;margin:0 0 .2rem}
+.plan .price{font-family:var(--display);font-size:2rem;margin:.2rem 0 .6rem}
+.plan .price small{font-size:.85rem;color:var(--muted);font-family:var(--ui)}
+.plan ul{margin:0 0 1rem;padding-left:1.1rem;font-size:.9rem}
+.plan li{margin:.3rem 0}
+.plan button{width:100%;border:none;border-radius:8px;padding:.7rem;font-weight:700}
+.plan .cta-brand{background:var(--brand);color:#fff}
+.plan .cta-accent{background:var(--accent);color:#fff}
+.plan .cta-ghost{background:var(--brand-soft);color:var(--brand)}
+.proto-note{margin-top:1.2rem;font-size:.82rem;color:var(--muted);text-align:center}
+
+h2.viewtitle{font-family:var(--display);text-transform:uppercase;letter-spacing:.04em;
+  font-size:1.35rem;margin:1.6rem 0 .3rem}
+p.viewsub{color:var(--muted);margin:0 0 1rem;font-family:var(--serif)}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.8rem}
+.month{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;box-shadow:var(--shadow)}
+.month.hurr{border-left:4px solid var(--accent)}
+.month h4{margin:0;font-family:var(--display)}
+.month .ctx{font-size:.8rem;color:var(--muted);margin:.15rem 0 .4rem}
+.month p{margin:.2rem 0;font-size:.86rem}
+footer{border-top:1px dashed var(--line);margin-top:3rem;padding:1.2rem;text-align:center;
+  color:var(--muted);font-size:.8rem}
+@media (prefers-reduced-motion:no-preference){
+  .ccard,.plan{transition:transform .15s ease}
+  .ccard:hover,.plan:hover{transform:translateY(-2px)}
+}
+</style>
+
+<nav>
+  <span class="wordmark"><span class="pin">◆</span>AdAtlas</span>
+  <button class="tab" data-view="home" aria-current="true">Home</button>
+  <button class="tab" data-view="market">Markets</button>
+  <button class="tab" data-view="tactics">Tactics</button>
+  <button class="tab" data-view="wins">Quick Wins</button>
+  <button class="tab" data-view="playbook">Playbook</button>
+  <button class="tab" data-view="pricing">Pricing</button>
+  <span class="pro-flag" id="proflag">FREE PLAN</span>
+</nav>
+
+<main>
+<!-- ================= HOME ================= -->
+<section id="view-home">
+  <div class="hero">
+    <h1>Every channel.<br>Every metro.<br><em>One playbook.</em></h1>
+    <p class="lede">AdAtlas tells a local business exactly who to call in its market —
+      billboard operators with rate bands, TV and radio ad desks, newspapers, event
+      sponsorships, chambers — plus 1,100+ tactics rated by cost, relevance, and
+      time-to-impact. The research a $5,000/month agency does, as a subscription.</p>
+    <div class="demo">
+      <select id="hero-metro" aria-label="Choose your metro"></select>
+      <button class="go" id="hero-go">Show my market →</button>
+    </div>
+    <div class="statline">
+      <div><b id="stat-metros">—</b><span>Metros covered</span></div>
+      <div><b id="stat-tactics">—</b><span>Tactics rated</span></div>
+      <div><b id="stat-contacts">—</b><span>Contact cards</span></div>
+      <div><b>13</b><span>Channel categories</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MARKET ================= -->
+<section id="view-market" hidden>
+  <h2 class="viewtitle">Market intelligence</h2>
+  <p class="viewsub">Pick a metro. Get the full who-to-call card across all 13 channel categories.</p>
+  <div class="toolbar">
+    <select id="market-select" aria-label="Metro"></select>
+  </div>
+  <div class="facts" id="market-facts"></div>
+  <div class="cards" id="market-cards"></div>
+</section>
+
+<!-- ================= TACTICS ================= -->
+<section id="view-tactics" hidden>
+  <h2 class="viewtitle">Tactic library</h2>
+  <p class="viewsub">1,100+ marketing tactics rated for a local service business. Filter to what fits your budget and timeline.</p>
+  <div class="toolbar">
+    <input id="t-search" type="search" placeholder="Search tactics…" aria-label="Search tactics">
+    <select id="t-cat" aria-label="Category"></select>
+    <select id="t-cost" aria-label="Cost">
+      <option value="">Any cost</option><option>$</option><option>$$</option><option>$$$</option>
+    </select>
+    <select id="t-rel" aria-label="Relevance">
+      <option value="">Any relevance</option><option>High</option><option>Med</option><option>Low</option>
+    </select>
+    <select id="t-time" aria-label="Time to impact">
+      <option value="">Any speed</option><option>Fast</option><option>Medium</option><option>Slow</option><option>Enabler</option>
+    </select>
+  </div>
+  <div class="tablewrap"><table id="t-table">
+    <thead><tr><th>Tactic</th><th>Category</th><th>Cost</th><th>Relevance</th><th>Speed</th><th>DIY</th><th>Note</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p class="count" id="t-count"></p>
+  <div class="gatebar" id="t-gate" hidden>
+    <p><b>Showing 25 of <span id="t-total"></span> matching tactics.</b> Pro unlocks the full library, exports, and saved shortlists.</p>
+    <button onclick="upgrade()">Start Pro — $49/mo</button>
+  </div>
+</section>
+
+<!-- ================= QUICK WINS ================= -->
+<section id="view-wins" hidden>
+  <h2 class="viewtitle">Quick wins</h2>
+  <p class="viewsub">High relevance × low cost × do-it-yourself. The this-week list.</p>
+  <div class="tablewrap"><table id="w-table">
+    <thead><tr><th>Tactic</th><th>Category</th><th>Speed</th><th>Note</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p class="count" id="w-count"></p>
+  <div class="gatebar" id="w-gate" hidden>
+    <p><b>10 of <span id="w-total"></span> quick wins shown.</b> Pro unlocks all of them.</p>
+    <button onclick="upgrade()">Start Pro — $49/mo</button>
+  </div>
+</section>
+
+<!-- ================= PLAYBOOK ================= -->
+<section id="view-playbook" hidden>
+  <h2 class="viewtitle">Playbook tools <span class="pro-flag">PRO</span></h2>
+  <p class="viewsub">Budget models and seasonal timing, ready to hand to whoever runs your marketing.</p>
+  <div id="playbook-body"></div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section id="view-pricing" hidden>
+  <h2 class="viewtitle">Pricing</h2>
+  <p class="viewsub">Agencies charge $2,000–$5,000/month for this research. AdAtlas is a subscription.</p>
+  <div class="plans">
+    <div class="plan">
+      <h3>Free</h3><div class="price">$0<small>/mo</small></div>
+      <ul>
+        <li>1 metro market card (5 of 13 categories)</li>
+        <li>25 tactics per search</li>
+        <li>10 quick wins</li>
+      </ul>
+      <button class="cta-ghost" onclick="downgrade()">Stay free</button>
+    </div>
+    <div class="plan feature">
+      <h3>Pro</h3><div class="price">$49<small>/mo</small></div>
+      <ul>
+        <li><b>All 43 markets</b> — every category unlocked</li>
+        <li>Full 1,116-tactic library + filters</li>
+        <li>All 224 quick wins</li>
+        <li>Budget models + seasonal calendar</li>
+        <li>Quarterly re-verified contacts</li>
+      </ul>
+      <button class="cta-accent" onclick="upgrade()">Start Pro trial</button>
+    </div>
+    <div class="plan">
+      <h3>Team</h3><div class="price">$149<small>/mo</small></div>
+      <ul>
+        <li>Everything in Pro, 5 seats</li>
+        <li>CSV/CRM export</li>
+        <li>Multi-market campaign planner</li>
+        <li>Priority data requests</li>
+      </ul>
+      <button class="cta-brand" onclick="upgrade()">Start Team trial</button>
+    </div>
+  </div>
+  <p class="proto-note">Prototype — the subscribe buttons simulate an account; no payment is wired up.</p>
+</section>
+
+<footer>AdAtlas prototype · data compiled 2026 from public sources + verified operator lists ·
+contacts are reference-level, confirm before buying</footer>
+</main>
+
+<script id="data" type="application/json">/*__DATA__*/</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const $ = s => document.querySelector(s);
+const FREE_CATS = ["Outdoor / OOH","Print","Digital - Search & Display","Local & Direct","Partnership & Channel"];
+let pro = localStorage.getItem('adatlas-pro') === '1';
+
+function upgrade(){ pro = true; localStorage.setItem('adatlas-pro','1'); refresh();
+  show('market'); }
+function downgrade(){ pro = false; localStorage.removeItem('adatlas-pro'); refresh(); }
+function refresh(){
+  const f = $('#proflag');
+  f.textContent = pro ? 'PRO PLAN' : 'FREE PLAN';
+  f.classList.toggle('on', pro);
+  renderMarket(); renderTactics(); renderWins(); renderPlaybook();
+}
+
+/* ---------- nav ---------- */
+document.querySelectorAll('nav .tab').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+function show(view){
+  document.querySelectorAll('main > section').forEach(s=>s.hidden = s.id !== 'view-'+view);
+  document.querySelectorAll('nav .tab').forEach(b=>b.setAttribute('aria-current', b.dataset.view===view));
+  window.scrollTo({top:0});
+}
+
+/* ---------- home ---------- */
+$('#stat-metros').textContent = DATA.metros.length;
+$('#stat-tactics').textContent = DATA.tactics.length.toLocaleString();
+$('#stat-contacts').textContent = DATA.contacts.length;
+function fillMetroSelect(sel){
+  sel.innerHTML = DATA.metros.map(m=>`<option value="${m.metro}">${m.metro}${m.state? ", "+m.state:""}</option>`).join('');
+}
+fillMetroSelect($('#hero-metro'));
+fillMetroSelect($('#market-select'));
+$('#hero-go').addEventListener('click',()=>{
+  $('#market-select').value = $('#hero-metro').value;
+  renderMarket(); show('market');
+});
+$('#market-select').addEventListener('change',renderMarket);
+
+/* ---------- market ---------- */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function renderMarket(){
+  const name = $('#market-select').value || DATA.metros[0].metro;
+  const m = DATA.metros.find(x=>x.metro===name);
+  if(!m) return;
+  const home = m.metro.startsWith('Palm Beach');
+  $('#market-facts').innerHTML = `
+    <div class="fact"><b>#${m.rank===0?'0 — Home':m.rank}</b><span>Market rank${home?'<span class="home-tag">★ home</span>':''}</span></div>
+    <div class="fact"><b>${esc(m.pop)}</b><span>Metro population</span></div>
+    <div class="fact"><b>${esc(m.dma)}</b><span>Nielsen DMA (approx)</span></div>
+    <div class="fact"><b>${esc(m.oohRate)}</b><span>OOH rate band /mo</span></div>
+    <div class="fact"><b>${m.oohOps}</b><span>OOH operators</span></div>`;
+  const rows = DATA.contacts.filter(c=>c.metro===name);
+  $('#market-cards').innerHTML = rows.map(c=>{
+    const locked = !pro && !FREE_CATS.includes(c.category);
+    return `<div class="ccard${locked?' locked':''}">
+      <span class="scope ${c.scope}">${c.scope}</span>
+      <h4>${esc(c.category)}</h4>
+      <p>${esc(c.contacts)}</p>
+      ${locked?'<div class="locktag"><button onclick="upgrade()">Unlock with Pro</button></div>':''}
+    </div>`;
+  }).join('');
+}
+
+/* ---------- tactics ---------- */
+const cats = [...new Set(DATA.tactics.map(t=>t.cat))];
+$('#t-cat').innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+['t-search','t-cat','t-cost','t-rel','t-time'].forEach(id=>{
+  $('#'+id).addEventListener('input',renderTactics);
+});
+function renderTactics(){
+  const q = $('#t-search').value.toLowerCase();
+  const [cat,cost,rel,time] = ['t-cat','t-cost','t-rel','t-time'].map(id=>$('#'+id).value);
+  let rows = DATA.tactics.filter(t=>
+    (!q || (t.t+' '+t.note).toLowerCase().includes(q)) &&
+    (!cat || t.cat===cat) && (!cost || t.cost===cost) &&
+    (!rel || t.rel===rel) && (!time || t.time===time));
+  const total = rows.length;
+  const capped = !pro && total>25;
+  if(capped) rows = rows.slice(0,25);
+  $('#t-table tbody').innerHTML = rows.map(t=>`<tr>
+    <td><b>${esc(t.t)}</b></td><td>${esc(t.cat)}</td><td>${t.cost}</td>
+    <td><span class="pill ${t.rel}">${t.rel}</span></td>
+    <td><span class="pill ${t.time}">${t.time}</span></td>
+    <td>${t.ih}</td><td>${esc(t.note)}</td></tr>`).join('');
+  $('#t-count').textContent = capped ? '' : `${total} tactics`;
+  $('#t-gate').hidden = !capped;
+  $('#t-total').textContent = total;
+}
+
+/* ---------- quick wins ---------- */
+function renderWins(){
+  let rows = DATA.tactics.filter(t=>t.rel==='High' && t.cost==='$' && t.ih==='Yes');
+  const total = rows.length;
+  const capped = !pro && total>10;
+  if(capped) rows = rows.slice(0,10);
+  $('#w-table tbody').innerHTML = rows.map(t=>`<tr>
+    <td><b>${esc(t.t)}</b></td><td>${esc(t.cat)}</td>
+    <td><span class="pill ${t.time}">${t.time}</span></td><td>${esc(t.note)}</td></tr>`).join('');
+  $('#w-count').textContent = capped ? '' : `${total} quick wins`;
+  $('#w-gate').hidden = !capped;
+  $('#w-total').textContent = total;
+}
+
+/* ---------- playbook ---------- */
+function renderPlaybook(){
+  const el = $('#playbook-body');
+  if(!pro){
+    el.innerHTML = `<div class="gatebar"><p><b>Budget models and the seasonal calendar are Pro tools.</b></p>
+      <button onclick="upgrade()">Start Pro — $49/mo</button></div>`;
+    return;
+  }
+  const fmt = n => typeof n==='number' ? '$'+n.toLocaleString() : n;
+  const bud = DATA.budgets.map(b=>`<tr><td><b>${esc(b.channel)}</b></td>
+    <td>${fmt(b.b25)}</td><td>${fmt(b.b50)}</td><td>${fmt(b.b100)}</td><td>${esc(b.why)}</td></tr>`).join('');
+  const tot = ['b25','b50','b100'].map(k=>DATA.budgets.reduce((s,b)=>s+(+b[k]||0),0));
+  const hurr = ['June','July','August','September','October','November'];
+  const cal = DATA.calendar.map(c=>`<div class="month${hurr.includes(c.month)?' hurr':''}">
+    <h4>${c.month}</h4><div class="ctx">${esc(c.context)}</div>
+    <p><b>Push:</b> ${esc(c.push)}</p><p><b>Channels:</b> ${esc(c.channels)}</p></div>`).join('');
+  el.innerHTML = `
+    <h3 style="font-family:var(--display)">Monthly budget models</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Channel</th><th>$2,500/mo</th><th>$5,000/mo</th><th>$10,000/mo</th><th>Why</th></tr></thead>
+      <tbody>${bud}<tr><td><b>TOTAL</b></td><td><b>$${tot[0].toLocaleString()}</b></td>
+      <td><b>$${tot[1].toLocaleString()}</b></td><td><b>$${tot[2].toLocaleString()}</b></td><td></td></tr></tbody>
+    </table></div>
+    <h3 style="font-family:var(--display);margin-top:1.6rem">Seasonal calendar
+      <span style="font-size:.75rem;color:var(--accent)">■ hurricane season</span></h3>
+    <div class="months">${cal}</div>`;
+}
+
+refresh();
+</script>
